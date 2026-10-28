@@ -133,6 +133,20 @@ describe('NaturalDateParserTests', () => {
     expect(s.matchedText).toBe('tomorrow at 2pm');
     expect(text.slice(s.matchedRange.start, s.matchedRange.end)).toBe(s.matchedText);
   });
+
+  it('reviewFocus_astralCharactersBeforeThePhraseKeepUTF16Offsets', () => {
+    const text = '🎉 party tomorrow at 2pm';                 // "🎉" is two UTF-16 code units
+    const s = NaturalDateParser.parse(text, NOW, ndpCalendar)!;
+    expect(s.matchedText).toBe('tomorrow at 2pm');
+    expect(s.matchedRange).toEqual({ start: 9, end: 24 });
+    expect(text.slice(s.matchedRange.start, s.matchedRange.end)).toBe('tomorrow at 2pm');
+    expect(NaturalDateParser.removingMatch(text, s)).toBe('🎉 party');
+    const cz = '🇨🇿 zítra ve 14:00';                          // regional-indicator pair: four code units
+    const f = NaturalDateParser.parse(cz, NOW, ndpCalendar)!;
+    expect(f.matchedRange).toEqual({ start: 5, end: 19 });
+    expect(f.date).toEqual(ndp(2026, 9, 19, 14, 0));
+    expect(NaturalDateParser.removingMatch(cz, f)).toBe('🇨🇿');
+  });
 });
 
 describe('naturalDateParser (TS)', () => {
