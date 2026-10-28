@@ -144,6 +144,8 @@ export class RecreationStore {
   private calendarMonthValue: Date;
   private timeTextValue = '';
   private timeFieldEditing = false;
+  /** `draft.draft` as last seen: `.onChange(of: model.draft)` fires only when the date changes. */
+  private lastSeenScheduleDraft: number | null = null;
   private scheduleVersionValue = 0;
 
   private panel: PanelView;
@@ -350,6 +352,7 @@ export class RecreationStore {
     });
     this.scheduleDraftValue = draft;
     this.unsubscribeScheduleDraft = draft.subscribe(() => this.scheduleDraftChanged());
+    this.lastSeenScheduleDraft = draft.draft.getTime();
     this.calendarMonthValue = MonthGrid.startOfMonth(draft.draft, this.calendar);
     this.timeFieldEditing = false;
     this.timeTextValue = this.formatter.time(draft.draft);
@@ -367,6 +370,7 @@ export class RecreationStore {
     this.unsubscribeScheduleDraft?.();
     this.unsubscribeScheduleDraft = null;
     this.scheduleDraftValue = null;
+    this.lastSeenScheduleDraft = null;
     this.timeFieldEditing = false;
     this.scheduleVersionValue += 1;
     this.changed();
@@ -395,11 +399,18 @@ export class RecreationStore {
     if (draft) draft.text = text;
   }
 
-  /** pick / setTime / stepTime / moveDay / moveInto on the open draft (never sets `dirty`). */
+  /** pick / setTime / stepTime / moveDay / moveInto on the open draft (never sets `dirty`).
+   *  Swift calls `syncTimeText()` right after `stepTime` (↑ ↓ in the time field) and `setTime`
+   *  (the hour chips), even while the time field has focus: an edit that changes the draft's time
+   *  of day therefore re-syncs the field here too. pick / moveDay / moveInto keep the time of day
+   *  and reach the field only through `.onChange(of: model.draft)`. */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the handle passes every edit's origin
   editSchedule(edit: (d: ScheduleDraft) => void, _origin: Origin): void {
     const draft = this.scheduleDraftValue;
-    if (draft) edit(draft);
+    if (!draft) return;
+    const timeBefore = this.formatter.time(draft.draft);
+    edit(draft);
+    if (this.scheduleDraftValue === draft && this.formatter.time(draft.draft) !== timeBefore) this.syncTimeText(draft);
   }
 
   setTimeText(text: string): void {
@@ -561,14 +572,20 @@ export class RecreationStore {
     this.openedOnce = true;
   }
 
-  /** `.onChange(of: model.draft)`: the time field re-syncs unless it is being edited, and the
-   *  grid follows the draft into another month. */
+  /** Every `ScheduleDraft` notification (text edits included) bumps the version; only a change of
+   *  `draft.draft` runs `.onChange(of: model.draft)`: the time field re-syncs unless it is being
+   *  edited, and the grid follows the draft into another month. A text edit that leaves the date
+   *  alone (invalid or partial text, an invalid `set()`) keeps a paged-away month where it is. */
   private scheduleDraftChanged(): void {
     const draft = this.scheduleDraftValue;
     if (!draft) return;
-    if (!this.timeFieldEditing) this.timeTextValue = this.formatter.time(draft.draft);
-    const first = MonthGrid.startOfMonth(draft.draft, this.calendar);
-    if (first.getTime() !== this.calendarMonthValue.getTime()) this.calendarMonthValue = first;
+    const now = draft.draft.getTime();
+    if (now !== this.lastSeenScheduleDraft) {
+      this.lastSeenScheduleDraft = now;
+      if (!this.timeFieldEditing) this.timeTextValue = this.formatter.time(draft.draft);
+      const first = MonthGrid.startOfMonth(draft.draft, this.calendar);
+      if (first.getTime() !== this.calendarMonthValue.getTime()) this.calendarMonthValue = first;
+    }
     this.scheduleVersionValue += 1;
     this.changed();
   }

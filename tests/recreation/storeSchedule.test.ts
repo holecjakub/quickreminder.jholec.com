@@ -91,3 +91,34 @@ test('the month follows the draft; stepTime snaps to 15 min', () => {
   expect(st.calendarMonth).toEqual(new Date('2026-09-30T22:00:00Z'));
   expect(st.saveDecision().type).toBe('commitThenSave');
 });
+test('↑ ↓ while the time field has focus re-sync it, and blur keeps the step', () => {
+  const st = make();
+  st.openScheduleDraft();
+  st.setTimeFieldEditing(true);
+  st.editSchedule(d => d.stepTime(1), 'user');                   // Swift: model.stepTime(by:); syncTimeText()
+  expect(plainSpaces(st.timeText)).toBe('9:15 AM');
+  expect(st.applyTimeText()).toBe(true);
+  expect(st.scheduleDraft!.draft).toEqual(new Date('2026-09-19T07:15:00Z'));
+  st.editSchedule(d => d.setTime(14), 'user');                   // the hour chip: model.setTime(hour:); syncTimeText()
+  expect(plainSpaces(st.timeText)).toBe('2:00 PM');
+});
+test('a day pick while the time field is being edited keeps the typed text', () => {
+  const st = make();
+  st.openScheduleDraft();
+  st.setTimeFieldEditing(true);
+  st.setTimeText('14');
+  st.editSchedule(d => d.pick(new Date('2026-09-24T22:00:00Z')), 'user');   // 25 Sep 00:00 Prague
+  expect(st.timeText).toBe('14');
+});
+test('a paged-away month stays when a text edit leaves the date alone', () => {
+  const st = make();
+  st.openScheduleDraft();
+  expect(st.pageMonth(1)).toBe(true);
+  const v = st.scheduleVersion;
+  st.setScheduleText('t', 'user');                               // not a date: draft unchanged
+  expect(st.scheduleDraft!.draft).toEqual(sat9);
+  expect(st.calendarMonth).toEqual(new Date('2026-09-30T22:00:00Z'));   // still 1 Oct
+  expect(st.scheduleVersion).toBeGreaterThan(v);                 // the field's text still re-renders
+  expect(st.saveDecision()).toEqual({ type: 'invalid' });        // ✓ → prepareSave → set() re-resolve
+  expect(st.calendarMonth).toEqual(new Date('2026-09-30T22:00:00Z'));
+});
