@@ -101,9 +101,11 @@ Anti-goals (what makes it a failure even if it "works")
   close `spring(0.30, 0.92)`, content `easeOut 0.12`; saved: width +2×72 at notch height with
   `spring(0.45, 0.82)`, 24 pt ✓ badge flies into the right extension (shared-layout animation),
   tick trims in 0.28 s after 0.32 s, bounce 1.18× at 0.55 s, hold 1.0 s, then close.
-- In-notch Set Date: panel grows to the `.controls` height (431) and `.calendar` height (663)
-  with `spring(0.38, 0.8)`; rows stagger in 35 ms apart with a 6 pt drop and 3 pt un-blur.
-  Height clamped to the fake screen like the app clamps to the display.
+- In-notch sections (app 0.5.3, commit `144d620`): the plain panel stays and the blob grows
+  **below the bottom bar** with `spring(0.38, 0.8)`: Set Date `.controls` 519 pt, `.calendar`
+  751 pt, **Location 347 pt** (86 pt section); one section at a time, switching keeps what was
+  typed (`SectionHandoff.swift`); rows stagger in 35 ms apart with a 6 pt drop and 3 pt
+  un-blur. Height clamped to the fake screen like the app clamps to the display.
 - The spring parameters are SwiftUI `response`/`dampingFraction`. The builder converts them to
   physical springs (stiffness = (2π/response)², damping = 4π·dampingFraction/response, mass 1)
   so the curves match, and documents the conversion in code.
@@ -135,8 +137,11 @@ spring on round controls, hand cursor). Text scale fixed at 1.0.
   2 × 3 presets (⌘1…⌘6), day button + typed time (↑/↓ ±15 min, 9/12/15/19 chips), ⌘K month grid
   (six weeks, locale first weekday, past days dimmed, arrows move the day), Clear · Cancel ·
   "Set · Fri 9:00". ↩/⌘↩ inside the section means Set. Esc steps back one level.
-- Location icon: a small popover with a text field; stored as "📍 …" in notes, icon switches to
-  the filled pin. Flag: toggles orange filled flag.
+- Location icon: the **in-notch Location section** (`LocationNotchSection.swift`,
+  `LocationDraft`): field + Clear · Cancel · Done; ↩/⌘↩ = Done; Esc, Cancel or a click on the
+  header/title/notes leave it unchanged; ✓ applies an edited location then saves; stored as
+  "📍 …" in notes, icon switches to the filled pin. No popover anywhere. Flag: toggles orange
+  filled flag.
 - ⌘↩, ↩ in a field or ✓: the saved choreography, then the reminder appears in the **fake
   Reminders window** on the desktop (title, list colour, due label, flag). This is the demo's
   reward; the window is a simplified, original design (not Apple's), sitting bottom-right of the
@@ -256,7 +261,7 @@ keeps the app's own colours (Theme.swift), not the page's.
   below 0.75). The transform origin is the notch (top centre); the lower lid and the keyboard
   deck run out of the pinned area. The shrink transition (hero → features) animates scale and
   origin continuously, so the MacBook frame "draws in" while the camera settles on the notch.
-- The Set Date clamp uses the fake screen height (982 pt), so the 663 pt calendar always fits.
+- The section clamp uses the fake screen height (982 pt), so the 751 pt calendar always fits.
   The pinned column is at least 720 px tall at scale 1 on common laptop viewports; on shorter
   viewports the scale clamp handles it.
 
@@ -285,11 +290,18 @@ keeps the app's own colours (Theme.swift), not the page's.
 - ⌘D, ⌘K, ⌘1…⌘6, ⌘↩, ↩, Tab, Esc, arrows work inside the recreation with `preventDefault`
   (best effort in Safari for ⌘1…⌘6; every shortcut has a click path, which the copy mentions).
 
-### 11.4 Native popups (author's call)
-- The list picker and the location popover are **not** macOS chrome imitations. They are
-  original, in the panel's own language: pure black surface, 12 pt corners, white-alpha fills
-  (6 % rest / 11 % hover / 15 % pressed), accent for the selected list, 1 pt #3D3D3F stroke,
-  anchored below the trigger. Same for any menu the recreation needs.
+### 11.4 Native popups (author's call, revised 2026-10-28)
+- The list picker is **not** a macOS menu imitation. It is original, in the panel's own
+  language: pure black surface, 12 pt corners, white-alpha fills (6 % rest / 11 % hover / 15 %
+  pressed), accent for the selected list, 1 pt #3D3D3F stroke, anchored below the trigger.
+- Location is the app's in-notch section (§5.3), so the recreation has no popover at all.
+
+### 11.6 App moved to 0.5.3 (2026-10-28)
+The app's `main` is `144d620` (0.5.3): Set Date and Location are sections appended below the
+bottom bar (519 / 751 / 347 pt), the window never resizes for a section, the state machine
+has `NotchSection` = none / schedule(controls | calendar) / location. The recreation follows
+this code; §5.1 and §5.3 above are updated, and the plan's "contract deviations" table lists
+every value that changed against the contracts.
 
 ### 11.5 Visual references
 See §9: code is the reference; existing 2× shots are a bonus; fresh captures optional.
