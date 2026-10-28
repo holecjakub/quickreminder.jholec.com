@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-jh-white: var(--jh-white);
+  --color-jh-black: var(--jh-black);
+  --color-jh-black-light: var(--jh-black-light);
+  --color-jh-gray-light: var(--jh-gray-light);
+  --color-jh-gray-medium: var(--jh-gray-medium);
+  --color-jh-gray: var(--jh-gray);
+  --color-jh-gray-dark: var(--jh-gray-dark);
+  --color-jh-accent: var(--jh-accent);
+  --font-sans: var(--jh-font-sans);
+  --font-mono: var(--jh-font-mono);
+  --font-qr: var(--qr-font);
+}
+
+@layer base {
+  html {
+    background: var(--jh-bg);
+    color: var(--jh-fg);
+    font-family: var(--jh-font-sans);
+  }
+}
+
+.qr-font {
+  font-family: var(--qr-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.qr-tabular {
+  font-variant-numeric: tabular-nums;
+}
