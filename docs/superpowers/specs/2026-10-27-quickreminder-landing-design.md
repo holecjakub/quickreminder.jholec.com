@@ -193,7 +193,7 @@ visitor scrolls on to the next section (no fighting).
      Tomorrow preset, then ⌘K opens the calendar.
    - (04) **Your lists, your colour.** Cycles the list picker Reminders → Work → Home; the accent
      recolours header, chevron, ✓, chip, caret.
-   - (05) **Flag it, pin it.** Toggles the flag, adds "📍 Office" via the location popover.
+   - (05) **Flag it, pin it.** Toggles the flag, opens the in-notch Location section, types "Office", Done.
    - (06) **Save, and it flies home.** ⌘↩: saved choreography; the fake Reminders window slides
      in with the saved item.
    - (07) **Everywhere you already are.** Raycast / Shortcuts / `quickreminder://show` /

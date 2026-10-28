@@ -16,7 +16,7 @@ Binding companions (read before any task): the contracts `docs/superpowers/plans
 
 - Source of truth: the Swift code at `144d620` plus `SPEC.md`; code wins over SPEC and over the contracts; nothing is eyeballed or approximated.
 - Units: every recreation and desktop length is in points on a 1512 × 982 pt fake 14" MacBook Pro screen; one CSS variable `--pt` scales the scene; `ui/` writes lengths only as `px(pt)` = `calc(<pt> * var(--pt) * 1px)`.
-- Closed silhouette 235 × 39 (`NotchGeometry.closedShapeSize`: notch 221 × 38 + 2·6 fillets + 2 bleed, +1 tall), radii 6 / 14; open 600 × 241, radii 19 / 32; notch band 39 pt dead zone; hover 257 × 44 (+22 × 5) after a 90 ms dwell; saved 379 × 39 (+2·72); Set Date 600 × 519 (controls) / 600 × 751 (calendar), appended below the bottom bar; open canvas 648 × 775.
+- Closed silhouette 235 × 39 (`NotchGeometry.closedShapeSize`: notch 221 × 38 + 2·6 fillets + 2 bleed, +1 tall), radii 6 / 14; open 600 × 241, radii 19 / 32; notch band 39 pt dead zone; hover 257 × 44 (+22 × 5) after a 90 ms dwell; saved 379 × 39 (+2·72); Set Date 600 × 519 (controls) / 600 × 751 (calendar) and Location 600 × 347 (`LocationMetrics`: field 36 + 14 + footer 36 = 86 pt section), each appended below the bottom bar, one section at a time; open canvas 648 × 775 (the calendar stays the tallest state).
 - Springs are SwiftUI `response` / `dampingFraction` converted to physical springs (`stiffness = (2π/response)²`, `damping = 4π·dampingFraction/response`, mass 1): open 0.42 / 0.78, close 0.30 / 0.92, hover in 0.32 / 0.55, hover out 0.30 / 0.85, saving 0.45 / 0.82, schedule 0.38 / 0.80, chip 0.30 / 0.80, flag 0.25 / 0.70, badge bounce 0.28 / 0.45 (delay 0.55 s, 1.18×), badge settle 0.30 / 0.70 (delay 0.72 s), hover scale duration 0.22 bounce 0.12, press 0.14 / 0.
 - Easings: content in easeOut 0.20 delayed 0.16 (blur 8 → 0, scale 0.94 → 1 from the top, masked to the live silhouette until settled); content out easeOut 0.12; section rows stagger easeOut 0.24 at 0.06 + i·0.035 from y −6 / blur 3; tick trim easeOut 0.28 after 0.32; hold 1.0 s; close 0.36 s; settle 0.5 s; focus retries 0.12 / 0.30 s; reduced motion = easeOut 0.15 everywhere, no swell, blur or scale.
 - Visual (SPEC §4, text scale fixed 1.0): 20 pt horizontal padding (content inset 39); header "Reminders" 22 / 700 in the list accent + chevron 13 / 700 at 7 pt; ⓧ 24 pt circle `#59595D`, glyph 11 / 700, hit 36; dotted circle 21 pt, 1.5 pt, `#59595D`; title 19 / 400 (row 25, line 23, max 2000) placeholder "New Reminder"; notes 15 / 400 (row 20, line 18, max 10000) placeholder "Notes"; pill 44 pt capsule, fill white 3 %, 1 pt `#3D3D3F`, three 18 pt icons, 38 pt hits, 55 pt centre spacing; ✓ 48 pt circle `#474749` disabled / accent enabled, glyph 22 / 600; chip slot 26 pt; hover 1.06× / press 0.94×, pill highlight white 10 % / 18 %.
@@ -26,7 +26,7 @@ Binding companions (read before any task): the contracts `docs/superpowers/plans
 - Fonts: the recreation uses the system stack `-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Inter, sans-serif` with tabular figures where Swift uses `monospacedDigit()`; the page uses Inter; SF Pro is never self-hosted.
 - Icons: Phosphor only, at the app's optical sizes (table in Task 23 (B3)); the app icon comes from `Resources/AppIcon.icns`; the menu-bar glyph is Phosphor `ListChecks` at 16 pt; no SF Symbol files, no Apple wallpapers, no Apple chrome.
 - Time: `now: Date` and `calendar: Calendar` are explicit parameters everywhere in `core/` and `machine/`; production uses `AppClock.now` (`?now=` override) and `currentCalendar()` (visitor's zone, locale `en-US`, 12-hour, first weekday Sunday); Czech phrases parse regardless; tests inject fixed values (parser `now` = Friday 2026-09-18 10:00 Europe/Prague; Vitest runs in `Pacific/Auckland`).
-- Keyboard: shortcuts work only while focus is inside the focusable desktop container and always `preventDefault()`; ⌘ = `metaKey || ctrlKey`; ⌘1…⌘6 by key `code`; Esc steps back one level in the code's order popover → calendar → controls → panel; `show({ source: 'scroll' })` never focuses; a user-originated mutation sets `dirty`, an API one never does.
+- Keyboard: shortcuts work only while focus is inside the focusable desktop container and always `preventDefault()`; ⌘ = `metaKey || ctrlKey`; ⌘1…⌘6 by key `code`; Esc steps back one level in the code's order list picker → calendar → section (Set Date controls or Location, closed without writing) → panel (`QuickReminderView.panelDismissPopovers`, `NotchSection.afterEscape`); there is no Location popover; `show({ source: 'scroll' })` never focuses; a user-originated mutation sets `dirty`, an API one never does.
 - Choreography: sections trigger at `start: 'top center'`; one action at a time, a running action may finish up to 2.5 s before the next starts; demo reminder "Call mum tomorrow at 2pm" typed at 18 cps, chip applied after 900 ms, list Work, flag on, location "Office"; list cycle Reminders → Work → Home → Work; visitor edits win (`dirty`); scrolling up only closes for the hero; `?debug=motion` slows every animation and timer 4×.
 - Camera: hero scale `min(w / 1512, h / 982)` letterboxed; features scale 1 CSS px per point clamped to the pinned column and never below 0.75, origin at the notch top centre (scene 756, 0); no pinning below 810 px, the recreation is scaled, never reflowed.
 - Quality: Vitest mirrors every applicable Swift test case by name; Lighthouse performance ≥ 95 desktop; page copy contrast ≥ 4.5:1; `prefers-reduced-motion` honoured; Playwright smoke = load, notch click opens, "tomorrow at 2pm" shows the chip, Tab applies it, ⌘↩ saves and the item lands in the fake window.
@@ -34,17 +34,17 @@ Binding companions (read before any task): the contracts `docs/superpowers/plans
 
 ### Contract deviations applied to every task (the code at `144d620` wins over `00-contracts.md`)
 
-The contracts were written against app commit `3d93fc7`; `main` moved to `144d620` the same day (`d641200` Set Date grows below the bottom bar, `90956b3` Set Date never resizes the window, `0c87117` Location in the notch). Names from the contracts are kept, values and effect lists follow the code. Tasks 1–21 cite the A list as "D1"…"D16"; Tasks 22–46 cite the B list as "D1"…"D6"; Tasks 47–71 cite the C list as "cross-area note n".
+The contracts were written against app commit `3d93fc7`; `main` moved to `144d620` the same day (`d641200` Set Date grows below the bottom bar, `90956b3` Set Date never resizes the window, `0c87117` Location in the notch). Names from the contracts are kept (except the section names of A-D5 and the Location API of B-D3, which follow Swift), values and effect lists follow the code. Tasks 1–21 cite the A list as "D1"…"D16"; Tasks 22–46 cite the B list as "D1"…"D6"; Tasks 47–71 cite the C list as "cross-area note n".
 
 | # | Contract | This plan (and the Swift source) |
 |---|---|---|
 | A-D1 | `scheduleControlsSize` 600 × 431, `scheduleCalendarSize` 600 × 663 (also landing spec §5.1, §11.1) | **600 × 519** and **600 × 751**: `scheduleContentHeight` = `contentHeight` (202) + section (258 / 490) + 20 (`NotchStateTests.scheduleHeightFollowsTheRhythm`: 480 / 712) |
 | A-D2 | `ScheduleMetrics.topGap 14`; section rows from y 139 | no `topGap`: the section is appended below the bottom bar; `sectionHeight` 258 / 490; rows from y **241**: type field 241–277 · preview 283–301 · presets 311–355 / 363–407 · day/time 419–449 · [calendar 459–681] · footer 463–499 / 695–731 · inset 20 → 519 / 751 |
-| A-D3 | `scheduleSectionTop(band)` = 139, used for click-cancel | `scheduleSectionTop(band)` = band + `contentHeight` = **241** (the section's real top); the click-cancel band is `sectionCancelBandBottom(band)` = band + `topContentHeight` = **139** (Swift `sectionCancelBandBottom`); `clickCancelsSchedule(y, bandBottom, schedule)` |
-| A-D4 | `NotchMachine.canvasGrown`, effects `growCanvasForSchedule` / `fitCanvasToPanel` | **removed** (`90956b3`): every `scheduleChanged` = `[setSettled(false), animateSchedule(x), scheduleSettle(g+1)]`; every settle = `[setSettled(true)]` (`NotchMachineScheduleTests.noScheduleStepTouchesTheWindow`) |
-| A-D5 | `ScheduleExpansion` = none / controls / calendar | Swift `NotchSection` also has `.location`; the site keeps the Location **popover** (landing spec §5.3, §11.4), so `ScheduleExpansion` stays three-valued and the Location tests are not ported; `sectionChanged` / `animateSection` / `section` ⇒ `scheduleChanged` / `animateSchedule` / `schedule` |
-| A-D6 | `ScheduleCommit.textRowSubmit(schedulingInNotch, canSave): 'setSchedule' \| …` | Swift `textRowSubmit(sectionOpen:canSave:)` → `.commitSection`; contract names kept, `'setSchedule'` ≡ `.commitSection` |
-| A-D7 | `ScheduleDraft` without a save decision | adds `isDirty` and `prepareSave(): SaveDecision` (`'saveAsIs' \| 'commitThenSave' \| 'invalid'`, Swift `ScheduleDraft.prepareSave`) |
+| A-D3 | `scheduleSectionTop(band)` = 139, used for click-cancel | `scheduleSectionTop(band)` = band + `contentHeight` = **241** (the section's real top); the click-cancel band is `sectionCancelBandBottom(band)` = band + `topContentHeight` = **139** (Swift `sectionCancelBandBottom`); `clickCancelsSection(y, bandBottom, section)` |
+| A-D4 | `NotchMachine.canvasGrown`, effects `growCanvasForSchedule` / `fitCanvasToPanel` | **removed** (`90956b3`): every `sectionChanged` = `[setSettled(false), animateSection(x), scheduleSettle(g+1)]`; every settle = `[setSettled(true)]` (`NotchMachineScheduleTests.noScheduleStepTouchesTheWindow`) |
+| A-D5 | `ScheduleExpansion` = none / controls / calendar; `scheduleChanged` / `animateSchedule` / field `schedule`; `clickCancelsSchedule` | **Swift names and the fourth case** (`0c87117`, landing spec §5.3, §11.4, §11.6): `NotchSection = 'none' \| 'controls' \| 'calendar' \| 'location'` (Swift `.none`, `.schedule(.controls)`, `.schedule(.calendar)`, `.location`, flattened like the Swift shorthands `NotchSection.controls` / `.calendar`), `isSchedule(s)`, `afterEscape(s)` (calendar → controls, every other → none); event `sectionChanged(section)`, effect `animateSection(section)`, the machine / `NotchFlags` / `RecreationState` / `SectionSnapshot` field `section`, `clickCancelsSection(y, bandBottom, section)`, DOM attribute `data-section`; the Location tests are ported (`NotchStateTests.locationHeightFollowsTheRhythm`, `.locationSizeAndPrecedence`, `NotchMachineScheduleTests.locationIsASectionLikeSetDate`, `.switchingSectionsIsOneStep`, `.escapeAndShowCloseLocation`, `LocationDraftTests`, `ScheduleDraftTests.switchingKeepsTheEdit`). The spring keeps the contract name `Motion.schedule` (Swift `NotchLayout.sectionAnimation`, 0.38 / 0.8) and drives every section |
+| A-D6 | `ScheduleCommit.textRowSubmit(schedulingInNotch, canSave): 'setSchedule' \| …` | Swift `textRowSubmit(sectionOpen:canSave:)` → `.commitSection`; contract names kept, `'setSchedule'` ≡ `.commitSection` = the open section's commit (Set Date: Set, Location: Done) |
+| A-D7 | `ScheduleDraft` without a save decision | adds `isDirty`, `prepareSave(): SaveDecision` (`'saveAsIs' \| 'commitThenSave' \| 'invalid'`, Swift `ScheduleDraft.prepareSave`) and `prepareSwitch()` (= `prepareSave()`, Swift `ScheduleDraft.prepareSwitch`, used when the panel switches from Set Date to Location) |
 | A-D8 | `MonthGrid` without `week` | adds `week(day, calendar)` (`MonthGridTests.weekRowOfADay`) |
 | A-D9 | relative words "Today" / "Tomorrow", "dnes" / "zítra" | as Foundation on macOS 26: en ±1 day `Yesterday` / `Today` / `Tomorrow`; cs ±2 days `Předevčírem` / `Včera` / `Dnes` / `Zítra` / `Pozítří` (capitalised); en glue stays `", "` (SPEC §1 "Tomorrow, 2:00 PM"), cs glue `" "` |
 | A-D10 | `RelativeDistance` en "in 28 hr.", cs "za 28 h"; `string(from, to, locale)` | Foundation `.abbreviated` prints `in 1d`, `in 23h`, `3h ago`, cs `za 1 den`, `za 23 h`; largest calendar component first, so the signature is `string(from, to, locale, calendar)` |
@@ -55,10 +55,10 @@ The contracts were written against app commit `3d93fc7`; `main` moved to `144d62
 | A-D15 | NaturalDateParser "~240 cases" | `NaturalDateParserTests.swift` has 103 argument cases + 4 single tests; all mirrored (Tasks 5–6) |
 | A-D16 | `contains()` "same as Swift" | Swift hit-tests the CoreGraphics flattening of each quadratic into n = max(1, ⌈√(r·√2 / 4)⌉) chords (r 6 → 2, 14 → 3, 19 → 3, 32 → 4); the port hit-tests that polygon; drawing keeps true `Q` curves |
 | B-D1 | Set Date rows from y 153, heights 431 / 663 (= A-D1, A-D2) | section below the bottom bar; chip slot and bottom bar stay visible and live while it is open; `Motion.regularBottomIn/Out` unused |
-| B-D2 | `RecreationHandle.escape()` comment: calendar → controls → popovers → panel | code order **popover → calendar → controls → panel** (`QuickReminderView.panelDismissPopovers`, `PanelController` Esc monitor); signature unchanged |
-| B-D3 | Location popover | kept (the app's in-notch Location section, 86 pt, is a separate follow-up, not in this plan) |
+| B-D2 | `RecreationHandle.escape()` comment: calendar → controls → popovers → panel | code order **list picker → calendar → section → panel** (`QuickReminderView.panelDismissPopovers`: the list picker first, then `setSection(notch.section.afterEscape)`; `PanelController` Esc monitor hides when nothing is open): `'popover'` = the list picker, `'calendar'` = calendar → controls, `'section'` = Set Date controls or Location closed without writing; signature unchanged |
+| B-D3 | Location popover (`LocationPopover.tsx`, `locationPopoverOpen`, `openLocationPopover` / `closeLocationPopover`, `typeLocation` "opens the popover") | **the in-notch Location section is ported** (`0c87117`; `Views/LocationNotchSection.swift`, `Services/LocationDraft.swift`, `Views/SectionHandoff.swift`): `core/locationDraft.ts` (Task 14 (A14)), section `'location'` in the machine (Tasks 19–20), 86 pt section / 600 × 347 panel (Tasks 16, 18), `ui/LocationNotchSection.tsx` (Task 34 (B14)) appended below the bottom bar like Set Date. `RecreationState.locationPopoverOpen` ⇒ `section === 'location'` plus `locationField` (the open section's field text) and the derived `locationInNotch` / `sectionOpen`; handle / controller `openLocationPopover` / `closeLocationPopover` ⇒ `openLocation`, `toggleLocation` (location button), `cancelLocation` (Cancel, Esc, click on header / title / notes: nothing written), `commitLocation` (Done, ↩ / ⌘↩), `clearLocation`, `setLocationText`, `locationDraft()`; `PointerTarget` adds `locationClear`, `locationCancel`; `save()` / ⌘↩ while a section is open commits that section (Set / Done) and resolves null; ✓ applies an edited location then saves (`LocationDraft.saveDecision`); opening one section while the other is shown keeps what was typed (`switchSection`, Swift `QuickReminderView.switchSection` + `SectionHandoff`; an invalid typed date beeps and blocks the switch). No popover for Location anywhere |
 | B-D4 | ✓ while Set Date is open | `ScheduleDraft.prepareSave()` from Task 10 (A10) decides (untouched → close and save as is; edited → Set then save; invalid → beep) — the store keeps no "touched" flag of its own |
-| B-D5 | file tree | adds inside `src/recreation/`: `motionScale.ts`, `controller.ts`, `ui/units.ts`, `ui/transitions.ts`, `ui/motionPrefs.tsx`, `ui/focus.ts`, `ui/RecreationContext.tsx`, `ui/NotchSilhouette.tsx`, `ui/Popover.tsx`, `ui/NumericText.tsx`, `ui/keyboard.ts`, `ui/recreation.css`, `dev/harness.tsx` (+ `recreation-harness.html`); `NotchRuntime.reset()` and option `onDispatched`; `icons.tsx` owns the SF → Phosphor table |
+| B-D5 | file tree | adds inside `src/recreation/`: `motionScale.ts`, `controller.ts`, `ui/units.ts`, `ui/transitions.ts`, `ui/motionPrefs.tsx`, `ui/focus.ts`, `ui/RecreationContext.tsx`, `ui/NotchSilhouette.tsx`, `ui/Popover.tsx`, `ui/NumericText.tsx`, `ui/keyboard.ts`, `ui/recreation.css`, `dev/harness.tsx` (+ `recreation-harness.html`); `NotchRuntime.reset()` and option `onDispatched`; `icons.tsx` owns the SF → Phosphor table; the contract's `ui/LocationPopover.tsx` is replaced by `ui/LocationNotchSection.tsx`, and `core/locationDraft.ts` is added (B-D3) |
 | B-D6 | machine effects | the runtime switches only on the effects Task 19 (A19) emits (no canvas effects, A-D4) |
 | C-N1 | menu-bar glyph from `MenuBarIcon.imageset` | the imageset holds only `Contents.json`; the app's status item is SF `checklist` → Phosphor `ListChecks` at 16 pt; the `.icns` serves the Download section and favicon |
 | C-N2 | `listCycle` "ends on the last" | `['reminders', 'work', 'home', 'work']`: the spec's three lists, ending on the demo list Work |
@@ -93,7 +93,7 @@ Dependencies (a task consumes only tasks listed before it in the document):
 - **Task 1 (A1)** first, alone: scaffold, tokens, lint boundaries, branch `develop`.
 - **Group core — `src/recreation/core/`, Tasks 2–14**, sequential: A2 → A3 → A4 → A5 → A6 → A7 → A8 → A9 → A10 (needs A2–A4, A7–A9) → A11 → A12 (needs A2, A4) → A13 (A7) → A14 (A12).
 - **Group machine — `src/recreation/machine/`, Tasks 15–21**, sequential: A15 → A16 (A15) → A17 (A16) → A18 (A15, A16) → A19 (A16) → A20 (A19) → A21 (nothing). Group machine runs **in parallel with group core** (no imports between them).
-- **Group recreation/ui — Tasks 22–46**, sequential, after groups core and machine: B1 (A21) → B3 → B4 → B5 (A15, A16) → B6 (A5–A6, A12, A14) → B7 (A9, A10) → B8 (A19, A20) → B9 (B6–B8, A8, A18) → B10 → B11 → B12 → B13 → B14 → B15 → B16 (A9) → B17 (A4, A10, A12, A13) → B18 → B19 → B20 → B21 → B22 → B23 (everything above) → B24 → B25 → B26 (Playwright config from A1).
+- **Group recreation/ui — Tasks 22–46**, sequential, after groups core and machine: B1 (A21) → B3 → B4 → B5 (A15, A16) → B6 (A5–A6, A12, A14 incl. `LocationDraft`, A19 `isSchedule`) → B7 (A9, A10 incl. `prepareSwitch`) → B8 (A19, A20) → B9 (B6–B8, A8, A18) → B10 → B11 → B12 → B13 (B9 `toggleLocation`) → B14 (A11, A14, A16 `LocationMetrics`, A17 `Theme.locationField`, B1, B3 `location@12`, B4, B9) → B15 → B16 (A9) → B17 (A4, A10, A12, A13) → B18 → B19 → B20 (B14, B19) → B21 → B22 → B23 (everything above) → B24 → B25 → B26 (Playwright config from A1).
 - **Group desktop+page — Tasks 47–66**, may start as soon as Tasks 1–21 are in, **in parallel with group recreation/ui**: everything in it is tested against the contract types and `tests/fakes/fakeRecreationHandle.ts` (C8) with `vi.mock('src/recreation')`; C2 creates `src/recreation/index.ts` with type re-exports when B23 has not landed yet (B23 then extends it). Order inside the group: C1 → C2 → {C3, C4, C9, C10, C13 in any order} → C5 (C2) → C6 (C2, C4) → C7 (C2) → C8 (C2–C7) → C11 (C1, C4, C8–C10) → C12 (C1, C10) → C14 (C1, C13, C8 fakes) → C15 (C1, C4, C13, C14) → C16 (C11, C13, C15) → {C17, C18, C19} (C12, C16) → C20 (C1, C11, C12, C16–C19).
 - **Join — Tasks 67–71**, after Task 46 and Task 66: C21 (a11y + contrast, A11) → C22 (Playwright smoke) → C23 (choreography + responsive e2e) → C24 (Lighthouse) → C25 (Vercel, README, GitHub, deploy).
 - Three parallel lanes at most: lane 1 = core (2–14), lane 2 = machine (15–21), then lane 1 = recreation/ui (22–46) and lane 2 = desktop+page (47–66); the join (67–71) is single-lane. Each lane commits to `develop`; lanes touch disjoint directories except `package.json` / `package-lock.json` (B1 and C1 each add only their own exact devDependencies; rebase, do not merge-resolve by hand) and `src/recreation/index.ts` (C2 creates, B23 extends).
@@ -972,11 +972,11 @@ Swift cases mirrored (`MonthGridTests.swift`): `octoberStartsOnThursdayInAMonday
 
 **Interfaces:**
 - Consumes: A2 `components`, `daysInMonth`, `addDays`, `startOfDay`; A3 `ScheduleDefaults.compose`, `.at`, `Clock`; A4 `DatePresets.date`, `.highlighted`, `DatePreset`, `PresetPick`; A7 `ScheduleInput.resolve`, `ScheduleInputResult`; A8 `ScheduleCommit.opening`, `.dateToSet`, `.consumesSuggestion`; A9 `MonthGrid.moving`, `.startOfMonth`, `.isSelectable`.
-- Produces (contracts §2.7 + D7): `interface ScheduleOutcome`, `class ScheduleDraft` with every member of §2.7 plus `get isDirty(): boolean` and `prepareSave(): SaveDecision`, `type SaveDecision = { readonly type: 'saveAsIs' } | { readonly type: 'commitThenSave'; readonly outcome: ScheduleOutcome } | { readonly type: 'invalid' }`.
+- Produces (contracts §2.7 + D7): `interface ScheduleOutcome`, `class ScheduleDraft` with every member of §2.7 plus `get isDirty(): boolean`, `prepareSave(): SaveDecision` and `prepareSwitch(): SaveDecision`, `type SaveDecision = { readonly type: 'saveAsIs' } | { readonly type: 'commitThenSave'; readonly outcome: ScheduleOutcome } | { readonly type: 'invalid' }`.
 
-Rules (Swift `ScheduleDraft.swift`): constructor: `opening(selected, initialText, clock())` → `draft`, `text`; `parsed = resolve(text, clock())`; `isDirty false` (the prefilled text is not an edit). `set text(v)`: when `v !== text` → `isDirty = true`, reparse at `clock()`, a date moves `draft`. `setFromControls(d)`: `isDirty = true`, `draft = d`, `text = ''`. `pick(day)` = `setFromControls(compose(day, draft))`. `setTime(h, m = 0)` = `setFromControls(at(h, m, draft))`. `applyTypedTime(s)`: `resolve(s, clock())` not a date → false; else `setFromControls(compose(draft, thatDate))`, true. `stepTime(n)`: `mins = hour·60 + minute` of `draft`; `snapped = n > 0 ? (trunc(mins / 15) + n)·15 : (trunc((mins + 14) / 15) + n)·15` (Swift `Int` division truncates); `wrapped = ((snapped % 1440) + 1440) % 1440`; `setTime(⌊wrapped/60⌋, wrapped % 60)`. `moveDay(n)`: `moved = MonthGrid.moving(draft, n, clock())`; equal to `draft` → false; else `setFromControls(moved)`, true. `moveInto(month)`: `first = startOfMonth(month)`; `day = addDays(first, min(day(draft), daysInMonth(first)) − 1)`; not selectable → `startOfDay(clock())`; `pick(day)`. `set()`: text non-empty → re-resolve at `clock()` (relative phrases count from the moment of Set); committed or `dateToSet` null → null; `draft = date`; outcome `{ date, presetPick: null, consumesSuggestion('set') }`. `apply(p)`: committed → null; `date = DatePresets.date(p, clock())`; `{ date, presetPick: { preset: p, date }, consumesSuggestion('preset') }`. `clear()`: committed → null; `{ date: null, presetPick: null, consumesSuggestion('clear') }`. Each commit sets `committed = true`. `prepareSave()`: `!isDirty || committed` → `saveAsIs`; `set()` null → `invalid`; else `commitThenSave`. `subscribe`: listeners run once after every public mutation.
+Rules (Swift `ScheduleDraft.swift`): constructor: `opening(selected, initialText, clock())` → `draft`, `text`; `parsed = resolve(text, clock())`; `isDirty false` (the prefilled text is not an edit). `set text(v)`: when `v !== text` → `isDirty = true`, reparse at `clock()`, a date moves `draft`. `setFromControls(d)`: `isDirty = true`, `draft = d`, `text = ''`. `pick(day)` = `setFromControls(compose(day, draft))`. `setTime(h, m = 0)` = `setFromControls(at(h, m, draft))`. `applyTypedTime(s)`: `resolve(s, clock())` not a date → false; else `setFromControls(compose(draft, thatDate))`, true. `stepTime(n)`: `mins = hour·60 + minute` of `draft`; `snapped = n > 0 ? (trunc(mins / 15) + n)·15 : (trunc((mins + 14) / 15) + n)·15` (Swift `Int` division truncates); `wrapped = ((snapped % 1440) + 1440) % 1440`; `setTime(⌊wrapped/60⌋, wrapped % 60)`. `moveDay(n)`: `moved = MonthGrid.moving(draft, n, clock())`; equal to `draft` → false; else `setFromControls(moved)`, true. `moveInto(month)`: `first = startOfMonth(month)`; `day = addDays(first, min(day(draft), daysInMonth(first)) − 1)`; not selectable → `startOfDay(clock())`; `pick(day)`. `set()`: text non-empty → re-resolve at `clock()` (relative phrases count from the moment of Set); committed or `dateToSet` null → null; `draft = date`; outcome `{ date, presetPick: null, consumesSuggestion('set') }`. `apply(p)`: committed → null; `date = DatePresets.date(p, clock())`; `{ date, presetPick: { preset: p, date }, consumesSuggestion('preset') }`. `clear()`: committed → null; `{ date: null, presetPick: null, consumesSuggestion('clear') }`. Each commit sets `committed = true`. `prepareSave()`: `!isDirty || committed` → `saveAsIs`; `set()` null → `invalid`; else `commitThenSave`. `prepareSwitch()` = `prepareSave()` (Swift `ScheduleDraft.prepareSwitch`: the panel switching to Location keeps an edit by Setting it, an untouched draft writes nothing, an invalid typed date blocks the switch; the caller writes the outcome without closing, Task 29 (B9) `switchSection`). `subscribe`: listeners run once after every public mutation.
 
-Swift cases mirrored (`ScheduleDraftTests.swift`, now Fri 23 Oct 2026 10:00 Prague): `opensOnTheSharedRules`, `relativeTextResolvesAtSetNotAtTheLastKeystroke`, `typingParsesOnceAndMovesTheDraft`, `controlsClearTheTypedText`, `timeStepsSnapToQuarterHours`, `gridMovementAndPaging`, `setWritesTheTypedDateOnceAndConsumesThePhrase`, `setOnInvalidTextStaysOpen`, `presetRecordsThePickAndClearKeepsTheTitle`, `singleHighlight`, `untouchedSavesAsIs`, `anEditIsCommittedBeforeSaving`, `invalidTextBlocksTheSave`, `afterACommitTheSaveGoesThroughAsIs`. Not ported: `switchingKeepsTheEdit` (`prepareSwitch` exists only for the in-notch Location section, D5).
+Swift cases mirrored (`ScheduleDraftTests.swift`, now Fri 23 Oct 2026 10:00 Prague): `opensOnTheSharedRules`, `relativeTextResolvesAtSetNotAtTheLastKeystroke`, `typingParsesOnceAndMovesTheDraft`, `controlsClearTheTypedText`, `timeStepsSnapToQuarterHours`, `gridMovementAndPaging`, `setWritesTheTypedDateOnceAndConsumesThePhrase`, `setOnInvalidTextStaysOpen`, `presetRecordsThePickAndClearKeepsTheTitle`, `singleHighlight`, `untouchedSavesAsIs`, `anEditIsCommittedBeforeSaving`, `invalidTextBlocksTheSave`, `afterACommitTheSaveGoesThroughAsIs`, `switchingKeepsTheEdit` (D5, D7).
 
 - [ ] **Step 1: Write the failing test** `tests/core/scheduleDraft.test.ts`:
   ```ts
@@ -1113,6 +1113,16 @@ Swift cases mirrored (`ScheduleDraftTests.swift`, now Fri 23 Oct 2026 10:00 Prag
       expect(d.committed).toBe(true);
       expect(d.prepareSave()).toEqual({ type: 'saveAsIs' });
     });
+    it('switchingKeepsTheEdit', () => {
+      expect(make().prepareSwitch()).toEqual({ type: 'saveAsIs' });        // untouched: nothing written
+      const edited = make();
+      edited.setTime(15);
+      const d = edited.prepareSwitch();
+      expect(d.type === 'commitThenSave' && pragueString(d.outcome.date!)).toBe('2026-10-24 15:00');
+      const invalid = make();
+      invalid.text = 'not a date';
+      expect(invalid.prepareSwitch()).toEqual({ type: 'invalid' });       // blocks the switch
+    });
   });
 
   describe('scheduleDraft (TS)', () => {
@@ -1129,7 +1139,7 @@ Swift cases mirrored (`ScheduleDraftTests.swift`, now Fri 23 Oct 2026 10:00 Prag
   ```
 - [ ] **Step 2: Run** `npx vitest run tests/core/scheduleDraft.test.ts` → expected FAIL (module missing).
 - [ ] **Step 3: Implement** `scheduleDraft.ts` per the rules.
-- [ ] **Step 4: Run** → expected PASS (15 tests).
+- [ ] **Step 4: Run** → expected PASS (16 tests).
 - [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(core): ScheduleDraft model shared by every Set Date control"`
 
 ---
@@ -1371,19 +1381,34 @@ Rules (Swift `Views/ScheduleText.swift`, `ScheduleNotchSection.swift:235,239`): 
 
 ---
 
-### Task 14 (A14): `core/lists.ts` + `core/reminder.ts`
+### Task 14 (A14): `core/lists.ts` + `core/reminder.ts` + `core/locationDraft.ts`
 
 **Files:**
-- Create: `src/recreation/core/lists.ts`, `src/recreation/core/reminder.ts`
-- Test: `tests/core/reminder.test.ts`
+- Create: `src/recreation/core/lists.ts`, `src/recreation/core/reminder.ts`, `src/recreation/core/locationDraft.ts`
+- Test: `tests/core/reminder.test.ts`, `tests/core/locationDraft.test.ts`
 
 **Interfaces:**
 - Consumes: A12 `SuggestionDateFormatter.string`.
-- Produces (contracts §2.12, §2.13, exact): `type ListId`, `interface ReminderList`, `FAKE_LISTS`, `DEFAULT_LIST_ID = 'reminders'`, `listById(id)`, `accentFor(id)`; `interface ReminderDraft`, `buildNotes(notes, location)`, `interface SavedReminder`, `toSavedReminder(draft, now, formatter)`.
+- Produces (contracts §2.12, §2.13, exact): `type ListId`, `interface ReminderList`, `FAKE_LISTS`, `DEFAULT_LIST_ID = 'reminders'`, `listById(id)`, `accentFor(id)`; `interface ReminderDraft`, `buildNotes(notes, location)`, `interface SavedReminder`, `toSavedReminder(draft, now, formatter)`; and (B-D3, Swift `Services/LocationDraft.swift`, the in-notch Location section's working state):
+  ```ts
+  // core/locationDraft.ts
+  export type LocationSaveDecision = { readonly type: 'saveAsIs' } | { readonly type: 'applyThenSave'; readonly text: string };   // Swift LocationDraft.SaveDecision
+  export class LocationDraft {
+    constructor(original: string);              // the reminder's location when the section opened ('' = none); text starts equal to it
+    readonly original: string;
+    text: string;                               // the field
+    get isDirty(): boolean;                     // text !== original
+    get committed(): string;                    // what Done writes: the field as typed (the save path trims; blank removes the location)
+    get saveDecision(): LocationSaveDecision;   // ✓ while the section is open: isDirty ? applyThenSave(committed) : saveAsIs
+    get textToKeepOnSwitch(): string | null;    // switching to Set Date: isDirty ? committed : null (nothing to write)
+  }
+  ```
 
 Rules: `accentFor` = the list colour, `'#0A84FF'` (Theme.accent) for an unknown id; `listById` throws on an unknown id. `buildNotes` (Swift `RemindersService.buildNotes`): parts = notes if non-empty, then `'📍 ' + location.trim()` if the trimmed location is non-empty (trim = whitespace and newlines); none → null; `join('\n')`. `toSavedReminder`: `id = crypto.randomUUID()`, `notes = buildNotes(…)`, `listColor = accentFor(listId)`, `dueLabel = dueDate ? formatter.string(dueDate, true, now) : null`, `savedAt = now`, other fields copied.
 
-Swift cases mirrored (`LocationDraftTests.swift`): `BuildNotesTests.notesAndLocation`; the two `buildNotes` assertions of `doneWritesTheFieldAsTyped` and `blankingTheFieldRemovesTheLocation`. Not ported: the rest of `LocationDraftTests` (in-notch Location, D5).
+`LocationDraft`: a plain port, no trimming (Swift writes the text as typed, like the popover; `buildNotes` is the one place it is trimmed).
+
+Swift cases mirrored (`LocationDraftTests.swift`, all six): `BuildNotesTests.notesAndLocation`; `LocationDraftTests.opensOnTheCurrentLocation`, `doneWritesTheFieldAsTyped`, `blankingTheFieldRemovesTheLocation`, `switchingKeepsWhatWasTyped`, `typingBackTheOriginalIsNotAnEdit` (D5).
 
 - [ ] **Step 1: Write the failing test** `tests/core/reminder.test.ts`:
   ```ts
@@ -1399,10 +1424,6 @@ Swift cases mirrored (`LocationDraftTests.swift`): `BuildNotesTests.notesAndLoca
       expect(buildNotes('Bring cake', null)).toBe('Bring cake');
       expect(buildNotes('Bring cake', ' Office ')).toBe('Bring cake\n📍 Office');
       expect(buildNotes('', '\n  \t')).toBeNull();
-    });
-    it('theSavePathTrimsOnce (LocationDraftTests)', () => {
-      expect(buildNotes('', '  Holešovice, Praha \n')).toBe('📍 Holešovice, Praha');
-      expect(buildNotes('', '   ')).toBeNull();
     });
   });
 
@@ -1433,10 +1454,52 @@ Swift cases mirrored (`LocationDraftTests.swift`): `BuildNotesTests.notesAndLoca
     });
   });
   ```
-- [ ] **Step 2: Run** `npx vitest run tests/core/reminder.test.ts` → expected FAIL (modules missing).
-- [ ] **Step 3: Implement** `lists.ts` (constants verbatim from contracts §2.12) and `reminder.ts`.
-- [ ] **Step 4: Run** → expected PASS (5 tests).
-- [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(core): fake reminder lists and the saved-reminder record"`
+  and `tests/core/locationDraft.test.ts` (Swift `LocationDraftTests`, bodies 1:1):
+  ```ts
+  import { describe, expect, it } from 'vitest';
+  import { LocationDraft } from '../../src/recreation/core/locationDraft';
+  import { buildNotes } from '../../src/recreation/core/reminder';
+
+  describe('LocationDraftTests', () => {
+    it('opensOnTheCurrentLocation', () => {
+      const d = new LocationDraft('Café Slavia');
+      expect(d.text).toBe('Café Slavia');
+      expect(d.isDirty).toBe(false);
+      expect(d.saveDecision).toEqual({ type: 'saveAsIs' });
+    });
+    it('doneWritesTheFieldAsTyped', () => {
+      const d = new LocationDraft('');
+      d.text = '  Holešovice, Praha \n';
+      expect(d.isDirty).toBe(true);
+      expect(d.committed).toBe('  Holešovice, Praha \n');
+      expect(d.saveDecision).toEqual({ type: 'applyThenSave', text: '  Holešovice, Praha \n' });
+      expect(buildNotes('', d.committed)).toBe('📍 Holešovice, Praha');
+    });
+    it('blankingTheFieldRemovesTheLocation', () => {
+      const d = new LocationDraft('Office');
+      d.text = '   ';
+      expect(d.saveDecision).toEqual({ type: 'applyThenSave', text: '   ' });
+      expect(buildNotes('', d.committed)).toBeNull();
+    });
+    it('switchingKeepsWhatWasTyped', () => {
+      const d = new LocationDraft('Office');
+      expect(d.textToKeepOnSwitch).toBeNull();
+      d.text = 'Home';
+      expect(d.textToKeepOnSwitch).toBe('Home');
+    });
+    it('typingBackTheOriginalIsNotAnEdit', () => {
+      const d = new LocationDraft('Office');
+      d.text = 'Off';
+      d.text = 'Office';
+      expect(d.isDirty).toBe(false);
+      expect(d.saveDecision).toEqual({ type: 'saveAsIs' });
+    });
+  });
+  ```
+- [ ] **Step 2: Run** `npx vitest run tests/core/reminder.test.ts tests/core/locationDraft.test.ts` → expected FAIL (modules missing).
+- [ ] **Step 3: Implement** `lists.ts` (constants verbatim from contracts §2.12), `reminder.ts` and `locationDraft.ts`.
+- [ ] **Step 4: Run** → expected PASS (9 tests: 4 + 5).
+- [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(core): fake reminder lists, the saved-reminder record and the Location draft"`
 
 ---
 
@@ -1507,9 +1570,9 @@ Swift cases mirrored (`NotchShapeTests.swift`): `widthAddsBothTopFillets`, `clos
 
 ---
 
-### Task 16 (A16): `machine/notchLayout.ts` — `NotchLayout` and `ScheduleMetrics`
+### Task 16 (A16): `machine/notchLayout.ts` — `NotchLayout`, `ScheduleMetrics` and `LocationMetrics`
 
-> Absorbs the recreation plan's guard task B2 ("Layout pins guard"): every value B2 pinned (258 / 490 / 480 / 712 / 519 / 751, canvas 648 × 775, cancel band 139,
+> Absorbs the recreation plan's guard task B2 ("Layout pins guard"): every value B2 pinned (258 / 490 / 480 / 712 / 519 / 751, Location 86 / 308 / 347, canvas 648 × 775, cancel band 139,
 > `openSize(39, 'calendar', maxHeight)` clamped) is asserted here or in Task 18 (A18). B2's `scheduleSectionTop(39, 1) === 139` contradicted the code
 > (`NotchState.swift` has no such function; the section starts at band + `contentHeight` = 241) and is `sectionCancelBandBottom(39, 1)` here.
 
@@ -1519,21 +1582,21 @@ Swift cases mirrored (`NotchShapeTests.swift`): `widthAddsBothTopFillets`, `clos
 
 **Interfaces:**
 - Consumes: A15 `Size`, `NotchRadius`, `widthForNotch`, `NotchGeometry.closedShapeSize`, `contains`.
-- Produces (contracts §2.15, §5.1, §5.3 with D1–D3, D12): `type Size` (re-export), `ScheduleExpansion` is imported from A19's file later, so this file declares `type LayoutSchedule = 'none' | 'controls' | 'calendar'` and A19 declares `type ScheduleExpansion = LayoutSchedule` (same union, contract name). `NotchLayout` = every constant of contracts §5.1 (`baseOpenWidth 600`, `defaultNotchBandHeight 39`, `textScale 1`, `horizontalPadding 20`, `contentInsetX 39`, `closedTopRadius 6`, `closedBottomRadius 14`, `openTopRadius 19`, `openBottomRadius 32`, `overshootPadding 24`, `scheduleScreenMargin 40`, `savedExtension 72`, `savedBadgeSize 24`, `savedBadgeTrailingPadding 30`, `savedHold 1.0`, `hoverGrowth {22, 5}`, `hoverDwell 0.09`, `closedCanvasMargin {16, 8}`, `closeDuration 0.36`, `settleDelay 0.5`, `focusRetryDelays [0.12, 0.30]`, `titleLineHeight 23`, `notesLineHeight 18`, `titleRowHeight 25`, `notesRowHeight 20`, `inputRowSpacing 1`, `headerHeight 36`, `chipSlotHeight 26`, `bottomBarHeight 48`, `NOTCH {221, 38}`, `closedSize {235, 39}`, `openSize` (function below; the 600 × 241 value is `openSize()`), `scheduleControlsSize {600, 519}`, `scheduleCalendarSize {600, 751}`, `savedSize {379, 39}`, `hoverSize {257, 44}`, `closedCanvasSize {273, 52}`) and the functions `lineHeight(pointSize)`, `widthForNotch`, `closedShapeSize`, `topContentHeight(s = 1)`, `contentHeight(s = 1)`, `scheduleContentHeight(s, calendar)`, `openSize(band = 39, schedule = 'none', maxHeight = Infinity)`, `maxPanelHeight(screenHeight, dockHeight)`, `scheduleSectionTop(band = 39, s = 1)`, `sectionCancelBandBottom(band = 39, s = 1)`, `clickCancelsSchedule(y, bandBottom, schedule)`, `canvasSize(open)`, `openCanvasSize(open, tallest)`, `passesMouseThrough(point, canvasWidth, panelSize)`. `ScheduleMetrics = { typeField 36, previewGap 6, preview 18, presetsGap 10, presetRow 44, presetSpacing 8, dayTimeGap 12, dayTimeRow 30, calendarGap 10, monthHeader 26, weekdayRow 18, dayCell 28, dayRowSpacing 2, footerGap 14, footer 36, controlRadius 12, calendarHeight(s = 1), sectionHeight(s = 1, calendar) }`.
+- Produces (contracts §2.15, §5.1, §5.3 with D1–D3, D12): `type Size` (re-export), `export type NotchSection = 'none' | 'controls' | 'calendar' | 'location'` (A-D5: Swift declares `NotchSection` in `NotchMachine.swift`; the layout needs it first, so it lives here and A19 re-exports it with `isSchedule` / `afterEscape`). `NotchLayout` = every constant of contracts §5.1 (`baseOpenWidth 600`, `defaultNotchBandHeight 39`, `textScale 1`, `horizontalPadding 20`, `contentInsetX 39`, `closedTopRadius 6`, `closedBottomRadius 14`, `openTopRadius 19`, `openBottomRadius 32`, `overshootPadding 24`, `scheduleScreenMargin 40`, `savedExtension 72`, `savedBadgeSize 24`, `savedBadgeTrailingPadding 30`, `savedHold 1.0`, `hoverGrowth {22, 5}`, `hoverDwell 0.09`, `closedCanvasMargin {16, 8}`, `closeDuration 0.36`, `settleDelay 0.5`, `focusRetryDelays [0.12, 0.30]`, `titleLineHeight 23`, `notesLineHeight 18`, `titleRowHeight 25`, `notesRowHeight 20`, `inputRowSpacing 1`, `headerHeight 36`, `chipSlotHeight 26`, `bottomBarHeight 48`, `NOTCH {221, 38}`, `closedSize {235, 39}`, `openSize` (function below; the 600 × 241 value is `openSize()`), `scheduleControlsSize {600, 519}`, `scheduleCalendarSize {600, 751}`, `locationSize {600, 347}`, `savedSize {379, 39}`, `hoverSize {257, 44}`, `closedCanvasSize {273, 52}`) and the functions `lineHeight(pointSize)`, `widthForNotch`, `closedShapeSize`, `topContentHeight(s = 1)`, `contentHeight(s = 1)`, `scheduleContentHeight(s, calendar)`, `locationContentHeight(s = 1)`, `openSize(band = 39, section = 'none', maxHeight = Infinity)`, `maxPanelHeight(screenHeight, dockHeight)`, `scheduleSectionTop(band = 39, s = 1)`, `sectionCancelBandBottom(band = 39, s = 1)`, `clickCancelsSection(y, bandBottom, section)`, `canvasSize(open)`, `openCanvasSize(open, tallest)`, `passesMouseThrough(point, canvasWidth, panelSize)`. `ScheduleMetrics = { typeField 36, previewGap 6, preview 18, presetsGap 10, presetRow 44, presetSpacing 8, dayTimeGap 12, dayTimeRow 30, calendarGap 10, monthHeader 26, weekdayRow 18, dayCell 28, dayRowSpacing 2, footerGap 14, footer 36, controlRadius 12, calendarHeight(s = 1), sectionHeight(s = 1, calendar) }`. `LocationMetrics = { field 36, footerGap 14, footer 36, sectionHeight(s = 1) }` (Swift `NotchLayout.LocationMetrics`: `field = ScheduleMetrics.typeField`, `footerGap = ScheduleMetrics.footerGap`, `footer = ScheduleMetrics.footer`).
 
 Rules (Swift `NotchState.swift` `enum NotchLayout`):
 - `sc(v) = roundHalfEven(v · s)` where `roundHalfEven(x) = Math.abs(x % 1) === 0.5 ? 2·Math.round(x / 2) : Math.round(x)` (Swift `.toNearestOrEven`, ties only on exact halves).
 - `lineHeight(p) = ⌈p · 2412 / 2048⌉`: `PlainTextView.lineHeight(for:)` = ⌈ascender − descender + leading⌉ of `NSFont.systemFont`, measured on macOS 26 as ascender 1980/2048 em, descender −432/2048 em, leading 0 (13 → 16, 15 → 18, 16 → 19, 19 → 23, 20 → 24, 24 → 29, 25 → 30, 30 → 36).
-- `topContentHeight = 8 + sc(36) + 10 + (lineHeight(sc(19)) + 2) + 1 + (lineHeight(sc(15)) + 2)`; `contentHeight = topContentHeight + sc(26) + 8 + sc(48) + 20`; `calendarHeight = sc(26) + sc(18) + 6·sc(28) + 5·2`; `sectionHeight = sc(36) + 6 + sc(18) + 10 + 2·sc(44) + 8 + 12 + sc(30) [+ 10 + calendarHeight] + 14 + sc(36)`; `scheduleContentHeight = contentHeight + sectionHeight + 20`.
-- `openSize(band, schedule, maxHeight)`: plain = `{ round(600 · min(1 + (s − 1)·0.5, 1.3)), band + contentHeight }`; `'none'` → plain; else `{ plain.width, max(plain.height, min(band + scheduleContentHeight, floor(maxHeight))) }`.
-- `maxPanelHeight(screenHeight, dockHeight) = screenHeight − dockHeight − 40`; `scheduleSectionTop = band + contentHeight`; `sectionCancelBandBottom = band + topContentHeight`; `clickCancelsSchedule = schedule !== 'none' && y < bandBottom`; `canvasSize(o) = { o.width + 48, o.height + 24 }`; `openCanvasSize(open, tallest) = canvasSize({ open.width, max(open.height, tallest.height) })`; `passesMouseThrough`: outside the bounding box `x ∈ [(cw − w)/2, (cw + w)/2]`, `y ∈ [0, h]` → true; else `!contains(point, cw, panelSize, 19, 32)`.
+- `topContentHeight = 8 + sc(36) + 10 + (lineHeight(sc(19)) + 2) + 1 + (lineHeight(sc(15)) + 2)`; `contentHeight = topContentHeight + sc(26) + 8 + sc(48) + 20`; `calendarHeight = sc(26) + sc(18) + 6·sc(28) + 5·2`; `sectionHeight = sc(36) + 6 + sc(18) + 10 + 2·sc(44) + 8 + 12 + sc(30) [+ 10 + calendarHeight] + 14 + sc(36)`; `scheduleContentHeight = contentHeight + sectionHeight + 20`; `LocationMetrics.sectionHeight = sc(36) + 14 + sc(36)` (86 at 100 %); `locationContentHeight = contentHeight + LocationMetrics.sectionHeight + 20` (308 at 100 %).
+- `openSize(band, section, maxHeight)`: plain = `{ round(600 · min(1 + (s − 1)·0.5, 1.3)), band + contentHeight }`; `'none'` → plain; else `natural` = `band + scheduleContentHeight(s, section === 'calendar')` for `'controls'` / `'calendar'`, `band + locationContentHeight(s)` for `'location'`; `{ plain.width, max(plain.height, min(natural, floor(maxHeight))) }`.
+- `maxPanelHeight(screenHeight, dockHeight) = screenHeight − dockHeight − 40`; `scheduleSectionTop = band + contentHeight`; `sectionCancelBandBottom = band + topContentHeight`; `clickCancelsSection = section !== 'none' && y < bandBottom`; `canvasSize(o) = { o.width + 48, o.height + 24 }`; `openCanvasSize(open, tallest) = canvasSize({ open.width, max(open.height, tallest.height) })`; `passesMouseThrough`: outside the bounding box `x ∈ [(cw − w)/2, (cw + w)/2]`, `y ∈ [0, h]` → true; else `!contains(point, cw, panelSize, 19, 32)`.
 
-Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHeightFollowsTheRhythm`, `scheduleHeightFollowsTheRhythm`, `scheduleSizesGrowOnlyInHeight`, `scheduleHeightIsClampedToTheScreen`, `maxPanelHeightStopsAboveTheDockWithRoomForTheOvershoot`, `clickOnTheTextRowsCancelsScheduling`, `onlyTheBlackShapeTakesTheMouse`, `openCanvasFitsTheTallestScheduleStateInNotchStyle` (notch style only), `openCanvasAtDefaultTextSize` (notch style only). Not ported: `ignoringTheMouseWaitsForTheButtonRelease`, `canvasPointConversion` (AppKit window plumbing), `locationHeightFollowsTheRhythm`, `locationSizeAndPrecedence` (D5). The precedence tests move to A18.
+Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHeightFollowsTheRhythm`, `scheduleHeightFollowsTheRhythm`, `scheduleSizesGrowOnlyInHeight`, `scheduleHeightIsClampedToTheScreen`, `maxPanelHeightStopsAboveTheDockWithRoomForTheOvershoot`, `clickOnTheTextRowsCancelsScheduling`, `onlyTheBlackShapeTakesTheMouse`, `openCanvasFitsTheTallestScheduleStateInNotchStyle` (notch style only), `openCanvasAtDefaultTextSize` (notch style only). `locationHeightFollowsTheRhythm`, `locationSizeAndPrecedence` (its `NotchLayout` half; the `NotchState` half is in A18). Not ported: `ignoringTheMouseWaitsForTheButtonRelease`, `canvasPointConversion` (AppKit window plumbing). The precedence tests move to A18.
 
 - [ ] **Step 1: Write the failing test** `tests/machine/notchLayout.test.ts`:
   ```ts
   import { describe, expect, it } from 'vitest';
-  import { NotchLayout as L, ScheduleMetrics as M } from '../../src/recreation/machine/notchLayout';
+  import { NotchLayout as L, ScheduleMetrics as M, LocationMetrics as LM, type NotchSection } from '../../src/recreation/machine/notchLayout';
 
   describe('NotchStateTests (layout)', () => {
     it('notchLayoutInvariants', () => {
@@ -1555,6 +1618,25 @@ Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHe
       expect(M.calendarHeight(1)).toBe(222);
       expect(L.scheduleContentHeight(1, false)).toBe(202 + 258 + 20);
       expect(L.scheduleContentHeight(1, true)).toBe(480 + 10 + 26 + 18 + 168 + 10);
+    });
+    it.each([[0.85, 76, 276], [1, 86, 308], [1.3, 108, 376], [1.6, 130, 443]])('locationHeightFollowsTheRhythm at %f', (s, section, content) => {
+      expect(LM.sectionHeight(s)).toBe(section);                                  // sc(36) + 14 + sc(36)
+      expect(L.locationContentHeight(s)).toBe(content);
+      expect(content).toBe(L.contentHeight(s) + section + L.horizontalPadding);
+    });
+    it('locationHeightFollowsTheRhythm (sums at 100 %)', () => {
+      expect(LM.sectionHeight(1)).toBe(86);
+      expect(L.locationContentHeight(1)).toBe(202 + 86 + 20);
+      expect([LM.field, LM.footerGap, LM.footer]).toEqual([M.typeField, M.footerGap, M.footer]);
+    });
+    it('locationSizeAndPrecedence (layout)', () => {
+      const plain = L.openSize(39), location = L.openSize(39, 'location'), controls = L.openSize(39, 'controls');
+      expect(location).toEqual({ width: 600, height: 347 });
+      expect(location.width).toBe(plain.width);
+      expect(plain.height < location.height && location.height < controls.height).toBe(true);   // Location is the shortest section
+      expect(L.openSize(39, 'location', plain.height + 10).height).toBe(plain.height + 10);     // clamped like Set Date
+      expect(L.clickCancelsSection(105, L.sectionCancelBandBottom(39, 1), 'location')).toBe(true);   // title cancels Location too
+      expect(L.clickCancelsSection(197, L.sectionCancelBandBottom(39, 1), 'location')).toBe(false);  // the bar does not
     });
     it('scheduleSizesGrowOnlyInHeight', () => {
       const plain = L.openSize(39), controls = L.openSize(39, 'controls'), calendar = L.openSize(39, 'calendar');
@@ -1580,7 +1662,7 @@ Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHe
     it('clickOnTheTextRowsCancelsScheduling', () => {
       const band = L.sectionCancelBandBottom(39, 1);
       expect(band).toBe(139);
-      const cancels = (y: number, s: 'none' | 'controls' | 'calendar' = 'controls') => L.clickCancelsSchedule(y, band, s);
+      const cancels = (y: number, s: NotchSection = 'controls') => L.clickCancelsSection(y, band, s);
       expect(cancels(60, 'calendar')).toBe(true);
       expect(cancels(105)).toBe(true);
       expect(cancels(128)).toBe(true);
@@ -1626,6 +1708,7 @@ Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHe
       expect(L.savedSize).toEqual({ width: 379, height: 39 });
       expect(L.scheduleControlsSize).toEqual({ width: 600, height: 519 });
       expect(L.scheduleCalendarSize).toEqual({ width: 600, height: 751 });
+      expect(L.locationSize).toEqual({ width: 600, height: 347 });
       expect(L.canvasSize(L.openSize())).toEqual({ width: 648, height: 265 });
     });
     it('sectionTopIsBelowTheBottomBar', () => expect(L.scheduleSectionTop(39, 1)).toBe(241));
@@ -1641,13 +1724,15 @@ Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHe
       expect(dayTime).toBe(419);
       expect(dayTime + M.dayTimeRow + M.footerGap).toBe(463);
       expect(dayTime + M.dayTimeRow + M.calendarGap + M.calendarHeight() + M.footerGap).toBe(695);
+      expect(top + LM.field + LM.footerGap).toBe(291);                       // Location footer 291–327
+      expect(top + LM.sectionHeight() + L.horizontalPadding).toBe(347);
     });
   });
   ```
 - [ ] **Step 2: Run** `npx vitest run tests/machine/notchLayout.test.ts` → expected FAIL (module missing).
 - [ ] **Step 3: Implement** `notchLayout.ts` per the rules (constants + functions; the derived `*Size` constants are computed from the functions at module load, not typed in).
-- [ ] **Step 4: Run** → expected PASS (29 tests).
-- [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(machine): NotchLayout and ScheduleMetrics with the below-the-bar Set Date rhythm"`
+- [ ] **Step 4: Run** → expected PASS (35 tests).
+- [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(machine): NotchLayout, ScheduleMetrics and LocationMetrics with the below-the-bar section rhythm"`
 
 ---
 
@@ -1695,12 +1780,12 @@ Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHe
                      weekdaySize: 10, weekdayWeight: 600, weekdayAlpha: 0.55, daySize: 13, dayAlpha: 0.85, pastAlpha: 0.25, hoverFill: [0.09, 0.16],
                      focusRing: { alpha: 0.85, width: 1.5, inset: -3 }, gridRing: { radius: 12, alpha: 0.60, width: 1.5, inset: -4 } },
     listPicker:    { radius: 12, stroke: '#3D3D3F', minWidth: 200, headerSize: 13, headerWeight: 600, headerAlpha: 0.50, headerPad: [16, 12, 6], rowPadX: 16, rowPadY: 8, dot: 10, titleSize: 15, checkSize: 13, checkWeight: 600, rowFill: [0.06, 0.11, 0.15], selectedFillAlpha: 0.20 },
-    locationPopover: { padding: 14, headerSize: 13, headerWeight: 600, fieldWidth: 220, fieldHeight: 28 },
+    locationField: { padX: 12, gap: 8, iconSize: 12, iconWeight: 500, textSize: 14, placeholderAlpha: 0.50, fillAlpha: 0.07, strokeAlpha: 0.08, focusStrokeAlpha: 0.70, radius: 12 },
     savedBadge:    { size: 24, strokeRatio: 0.11, paddingRatio: 0.27, tick: [[0, 0.55], [0.38, 0.92], [1, 0.12]] },
     font: { recreation: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Inter, sans-serif' },
   } as const;
   ```
-  (Values: contracts §5.4; `pill.active*` BottomBar.swift:140; `savedBadge` SavedCheckView.swift:18 and CheckmarkShape; `preview.pastColor` = Theme.flagOrange.)
+  (Values: contracts §5.4; `locationField` = `LocationNotchSection.swift` `field` (HStack spacing 8, `location` 12 pt medium in the accent, `TextField` 14 pt white, prompt white 50 %, `.padding(.horizontal, 12)`, white 7 % fill, 1 pt stroke white 8 % / accent 70 % focused, `ScheduleMetrics.controlRadius`); its footer reuses `footer` (Cancel padX 16, Done = `setPadX` 18, `LocationNotchSection.footer`); the contract's `locationPopover` is dropped (B-D3); `pill.active*` BottomBar.swift:140; `savedBadge` SavedCheckView.swift:18 and CheckmarkShape; `preview.pastColor` = Theme.flagOrange.)
 
 - [ ] **Step 1: Write the failing test** `tests/machine/theme.test.ts` (the derived relations SPEC §4 states):
   ```ts
@@ -1719,11 +1804,17 @@ Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHe
     });
     it('hoverAndPress', () => expect(Theme.hover).toEqual({ scale: 1.06, pressScale: 0.94, highlight: 0.10, pressHighlight: 0.18 }));
     it('activeCalendarIconDisc (BottomBar.swift:140)', () => expect([Theme.pill.activeFillAlpha, Theme.pill.activeInset]).toEqual([0.22, 3]));
+    it('locationFieldIsStyledLikeTheTypeField (LocationNotchSection.swift)', () => {
+      const { padX, textSize, placeholderAlpha, fillAlpha, strokeAlpha, focusStrokeAlpha, radius } = Theme.typeField;
+      expect(Theme.locationField).toMatchObject({ padX, textSize, placeholderAlpha, fillAlpha, strokeAlpha, focusStrokeAlpha, radius });
+      expect([Theme.locationField.gap, Theme.locationField.iconSize, Theme.locationField.iconWeight]).toEqual([8, 12, 500]);
+      expect('locationPopover' in Theme).toBe(false);
+    });
   });
   ```
 - [ ] **Step 2: Run** `npx vitest run tests/machine/theme.test.ts` → expected FAIL (`Theme` is not exported).
 - [ ] **Step 3: Implement** — add the `Theme` constant above to `notchLayout.ts`.
-- [ ] **Step 4: Run** → expected PASS (8 tests).
+- [ ] **Step 4: Run** → expected PASS (9 tests).
 - [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(machine): Theme metrics for every recreation control"`
 
 ---
@@ -1735,19 +1826,19 @@ Swift cases mirrored (`NotchStateTests.swift`): `notchLayoutInvariants`, `openHe
 - Test: `tests/machine/notchState.test.ts`
 
 **Interfaces:**
-- Consumes: A15 `Size`, `NotchGeometry.closedShapeSize`, `contains`; A16 `NotchLayout.openSize`, `.maxPanelHeight`, `.hoverGrowth`, `.closedCanvasMargin`, `.savedExtension`, `.canvasSize`, `LayoutSchedule`.
-- Produces (contracts §2.16 with D1): `interface NotchFlags`, `interface NotchSizes` (`closedSize`, `openSize`, `scheduleSize`, `scheduleCalendarSize`), `INITIAL_FLAGS` (all false, `schedule: 'none'`), `sizesFor(notch, screenHeight, dockHeight = 0)`, `notchBandHeight(s)`, `panelSize(s, schedule)`, `currentSize(f, s)`, `hoverSize(s)`, `closedCanvasSize(s)`, `savedSize(s)`, `radii(f)`.
+- Consumes: A15 `Size`, `NotchGeometry.closedShapeSize`, `contains`; A16 `NotchLayout.openSize`, `.maxPanelHeight`, `.hoverGrowth`, `.closedCanvasMargin`, `.savedExtension`, `.canvasSize`, `NotchSection`.
+- Produces (contracts §2.16 with D1): `interface NotchFlags`, `interface NotchSizes` (`closedSize`, `openSize`, `scheduleSize`, `scheduleCalendarSize`, `locationSize`), `INITIAL_FLAGS` (all false, `section: 'none'`), `sizesFor(notch, screenHeight, dockHeight = 0)`, `notchBandHeight(s)`, `panelSize(s, section)`, `tallestSectionSize(s)`, `currentSize(f, s)`, `hoverSize(s)`, `closedCanvasSize(s)`, `savedSize(s)`, `radii(f)`.
 
-Rules (Swift `NotchState`, `PanelController.configureGeometry`): `sizesFor`: `closed = closedShapeSize(notch, 6)`; `band = closed.height`; `open = openSize(band)`; `max = maxPanelHeight(screenHeight, dockHeight)`; `scheduleSize = openSize(band, 'controls', max)`; `scheduleCalendarSize = openSize(band, 'calendar', max)`. `currentSize`: `isSaving` → saved; `isOpen` → `panelSize(f.schedule)`; `isHovering` → hover; else closed. `radii`: `isOpen` → `{ 19, 32 }` else `{ 6, 14 }`.
+Rules (Swift `NotchState`, `PanelController.configureGeometry`): `sizesFor`: `closed = closedShapeSize(notch, 6)`; `band = closed.height`; `open = openSize(band)`; `max = maxPanelHeight(screenHeight, dockHeight)`; `scheduleSize = openSize(band, 'controls', max)`; `scheduleCalendarSize = openSize(band, 'calendar', max)`; `locationSize = openSize(band, 'location', max)` (`PanelController.configureGeometry`). `panelSize` (Swift `NotchState.size(for:)`): `'none'` → `openSize`, `'controls'` → `scheduleSize`, `'calendar'` → `scheduleCalendarSize`, `'location'` → `locationSize`. `tallestSectionSize` = the tallest of `scheduleSize`, `scheduleCalendarSize`, `locationSize` (Swift `NotchState.tallestSectionSize`; the calendar, so the open canvas never changes for Location). `currentSize`: `isSaving` → saved; `isOpen` → `panelSize(f.section)`; `isHovering` → hover; else closed. `radii`: `isOpen` → `{ 19, 32 }` else `{ 6, 14 }`.
 
-Swift cases mirrored (`NotchStateTests.swift`): `hoverSizeIsClosedPlusGrowth`, `closedCanvasContainsSwollenShapeAndIsSmallerThanOpenCanvas`, `currentSizePrecedence`, `closedHitTest`, `currentSizeFollowsTheScheduleWhileOpen`.
+Swift cases mirrored (`NotchStateTests.swift`): `hoverSizeIsClosedPlusGrowth`, `closedCanvasContainsSwollenShapeAndIsSmallerThanOpenCanvas`, `currentSizePrecedence`, `closedHitTest`, `currentSizeFollowsTheScheduleWhileOpen`, `locationSizeAndPrecedence` (its `NotchState` half; the layout half is in A16).
 
 - [ ] **Step 1: Write the failing test** `tests/machine/notchState.test.ts`:
   ```ts
   import { describe, expect, it } from 'vitest';
   import { NotchLayout } from '../../src/recreation/machine/notchLayout';
   import { contains } from '../../src/recreation/machine/notchShape';
-  import { closedCanvasSize, currentSize, hoverSize, INITIAL_FLAGS, notchBandHeight, radii, savedSize, sizesFor, type NotchFlags } from '../../src/recreation/machine/notchState';
+  import { closedCanvasSize, currentSize, hoverSize, INITIAL_FLAGS, notchBandHeight, panelSize, radii, savedSize, sizesFor, tallestSectionSize, type NotchFlags } from '../../src/recreation/machine/notchState';
 
   const S = sizesFor({ width: 221, height: 38 }, 982);
   const f = (patch: Partial<NotchFlags>): NotchFlags => ({ ...INITIAL_FLAGS, ...patch });
@@ -1775,19 +1866,28 @@ Swift cases mirrored (`NotchStateTests.swift`): `hoverSizeIsClosedPlusGrowth`, `
     });
     it('currentSizeFollowsTheScheduleWhileOpen', () => {
       expect(currentSize(f({ isOpen: true }), S)).toEqual(S.openSize);
-      expect(currentSize(f({ isOpen: true, schedule: 'controls' }), S)).toEqual(S.scheduleSize);
-      expect(currentSize(f({ isOpen: true, schedule: 'calendar' }), S)).toEqual(S.scheduleCalendarSize);
-      expect(currentSize(f({ isOpen: true, schedule: 'calendar', isSaving: true }), S)).toEqual(savedSize(S));
-      expect(currentSize(f({ schedule: 'calendar' }), S)).toEqual(S.closedSize);
+      expect(currentSize(f({ isOpen: true, section: 'controls' }), S)).toEqual(S.scheduleSize);
+      expect(currentSize(f({ isOpen: true, section: 'calendar' }), S)).toEqual(S.scheduleCalendarSize);
+      expect(currentSize(f({ isOpen: true, section: 'calendar', isSaving: true }), S)).toEqual(savedSize(S));
+      expect(currentSize(f({ section: 'calendar' }), S)).toEqual(S.closedSize);
+    });
+    it('locationSizeAndPrecedence (state)', () => {
+      expect(currentSize(f({ isOpen: true, section: 'location' }), S)).toEqual(S.locationSize);
+      expect(panelSize(S, 'location')).toEqual({ width: 600, height: 347 });
+      expect(tallestSectionSize(S)).toEqual(S.scheduleCalendarSize);   // the calendar stays the tallest: the canvas does not change
     });
   });
 
   describe('notchState (TS)', () => {
     it('sizesOnTheFake14InchScreen', () => expect(S).toEqual({
       closedSize: { width: 235, height: 39 }, openSize: { width: 600, height: 241 },
-      scheduleSize: { width: 600, height: 519 }, scheduleCalendarSize: { width: 600, height: 751 },
+      scheduleSize: { width: 600, height: 519 }, scheduleCalendarSize: { width: 600, height: 751 }, locationSize: { width: 600, height: 347 },
     }));
-    it('aShortScreenClampsTheCalendar', () => expect(sizesFor({ width: 221, height: 38 }, 700).scheduleCalendarSize).toEqual({ width: 600, height: 660 }));
+    it('aShortScreenClampsTheCalendar', () => {
+      const short = sizesFor({ width: 221, height: 38 }, 700);
+      expect(short.scheduleCalendarSize).toEqual({ width: 600, height: 660 });
+      expect(short.locationSize).toEqual({ width: 600, height: 347 });            // 347 < 660: unclamped
+    });
     it('bandAndSaved', () => {
       expect(notchBandHeight(S)).toBe(39);
       expect(savedSize(S)).toEqual({ width: 379, height: 39 });
@@ -1796,12 +1896,12 @@ Swift cases mirrored (`NotchStateTests.swift`): `hoverSizeIsClosedPlusGrowth`, `
       expect(radii(f({ isOpen: true }))).toEqual({ top: 19, bottom: 32 });
       expect(radii(f({ isSaving: true }))).toEqual({ top: 6, bottom: 14 });
     });
-    it('initialFlags', () => expect(INITIAL_FLAGS).toEqual({ isOpen: false, contentVisible: false, isSettled: false, isSaving: false, savedBadgeShown: false, isHovering: false, schedule: 'none' }));
+    it('initialFlags', () => expect(INITIAL_FLAGS).toEqual({ isOpen: false, contentVisible: false, isSettled: false, isSaving: false, savedBadgeShown: false, isHovering: false, section: 'none' }));
   });
   ```
 - [ ] **Step 2: Run** `npx vitest run tests/machine/notchState.test.ts` → expected FAIL (module missing).
 - [ ] **Step 3: Implement** `notchState.ts`.
-- [ ] **Step 4: Run** → expected PASS (10 tests).
+- [ ] **Step 4: Run** → expected PASS (11 tests).
 - [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(machine): NotchState size derivation and precedence"`
 
 ---
@@ -1813,20 +1913,20 @@ Swift cases mirrored (`NotchStateTests.swift`): `hoverSizeIsClosedPlusGrowth`, `
 - Test: `tests/machine/notchMachine.test.ts`
 
 **Interfaces:**
-- Consumes: A16 `LayoutSchedule`.
-- Produces (contracts §2.14 with D4): `type NotchPhase`, `type ScheduleExpansion = LayoutSchedule`, `afterEscape(s)` (calendar → controls, else none), `type NotchEvent` (contract list), `type NotchEffect` (contract list **minus** `growCanvasForSchedule` and `fitCanvasToPanel`), `interface NotchMachineSnapshot` (**minus** `canvasGrown`), `class NotchMachine` (`phase`, `badgeShown`, `hoverSwollen`, `hoverArmed`, `hoverDwellPending`, `generation`, `schedule`, `isVisible`, `handle(event, pointerOnNotch = false): NotchEffect[]`, `snapshot()`, `equals(other)`, `clone()`), `phaseEquals(a, b)`. In this task `scheduleChanged` returns `[]` and a show while open returns `[]`; A20 adds both.
+- Consumes: A16 `NotchSection`.
+- Produces (contracts §2.14 with D4, D5): `type NotchPhase`, `type NotchSection` (re-exported from A16: `'none' | 'controls' | 'calendar' | 'location'`), `isSchedule(s)` (`'controls'` or `'calendar'`, Swift `NotchSection.isSchedule`), `afterEscape(s)` (calendar → controls, every other section → none, Swift `NotchSection.afterEscape`), `type NotchEvent` (contract list with `{ type: 'sectionChanged'; section: NotchSection }` for `scheduleChanged`), `type NotchEffect` (contract list with `{ type: 'animateSection'; section: NotchSection }` for `animateSchedule`, **minus** `growCanvasForSchedule` and `fitCanvasToPanel`), `interface NotchMachineSnapshot` (**minus** `canvasGrown`), `class NotchMachine` (`phase`, `badgeShown`, `hoverSwollen`, `hoverArmed`, `hoverDwellPending`, `generation`, `section`, `isVisible`, `handle(event, pointerOnNotch = false): NotchEffect[]`, `snapshot()`, `equals(other)`, `clone()`), `phaseEquals(a, b)`. In this task `sectionChanged` returns `[]` and a show while open returns `[]`; A20 adds both.
 
 Rules (Swift `Panel/NotchMachine.swift`, port `handle` line by line):
-- `show`: open → `[]`. Else: pending dwell → `cancelHoverDwell` (dwell off); `wasVisible = isVisible`, `fromSaved = phase saving`; closing → `cancelClose`, saving → `cancelSaveHold` (both mid-collapse); `badgeShown = false`, `clearBadgeNoAnimation`, `configureGeometry`; not mid-collapse → `switchToOpenCanvas`; `schedule = 'none'`; `setIgnoresMouse(false)`, `makeKeyAndOrderFront`; `!wasVisible` → `installLocalMonitor`; `postWillShow`, `animateOpen(fromSaved)`; `hoverSwollen = false`; phase open; `generation = (generation + 1) >>> 0`; `scheduleSettle(generation)`, `scheduleFocusRetries`.
+- `show`: open → `[]`. Else: pending dwell → `cancelHoverDwell` (dwell off); `wasVisible = isVisible`, `fromSaved = phase saving`; closing → `cancelClose`, saving → `cancelSaveHold` (both mid-collapse); `badgeShown = false`, `clearBadgeNoAnimation`, `configureGeometry`; not mid-collapse → `switchToOpenCanvas`; `section = 'none'`; `setIgnoresMouse(false)`, `makeKeyAndOrderFront`; `!wasVisible` → `installLocalMonitor`; `postWillShow`, `animateOpen(fromSaved)`; `hoverSwollen = false`; phase open; `generation = (generation + 1) >>> 0`; `scheduleSettle(generation)`, `scheduleFocusRetries`.
 - `notchTapped`: only from `closed(parked: true)` → `show`; else `[]`.
 - `hide`: visible → `close(cancellingHold: true)`; else `[]`.
-- `save(reduceMotion)`: not open → `[]`; reduce motion → `close(true)`; else bump generation, phase saving, `badgeShown = true`, `schedule = 'none'`, `[setSettled(false), animateSaving, setIgnoresMouse(true), resignFirstResponder, scheduleSaveHold]`.
+- `save(reduceMotion)`: not open → `[]`; reduce motion → `close(true)`; else bump generation, phase saving, `badgeShown = true`, `section = 'none'`, `[setSettled(false), animateSaving, setIgnoresMouse(true), resignFirstResponder, scheduleSaveHold]`.
 - `saveHoldElapsed`: saving → `close(false)`; else `[]`.
 - `closeTimerFired(hasNotch)`: closing only; `badgeShown = false`; `[clearBadgeNoAnimation, hasNotch ? park(pointerOnNotch) : orderOut()]`.
 - `settleTimerFired(g)`: open and `g === generation` → `[setSettled(true)]`; else `[]`.
 - `hoverEntered`: parked, armed, not swollen, no pending dwell → pending, `[scheduleHoverDwell]`. `hoverDwellElapsed(rm)`: no pending → `[]`; pending off; not parked or not armed → `[]`; `!rm` → swollen, `swellHover`; always `haptic`. `hoverExited`: parked only; pending → off + `cancelHoverDwell`; `hoverArmed = true`; swollen → off + `unswellHover`.
 - `screenChanged(hasNotch)`: `[configureGeometry]` + open/saving → `relayoutOpenWindow`; closing → nothing; closed → `hasNotch ? park(pointerOnNotch)` : (parked ? `orderOut()` : nothing).
-- `close(cancellingHold)`: saving and cancelling → `cancelSaveHold`; phase closing; `schedule = 'none'`; `[postDidHide, removeLocalMonitor, resignFirstResponder, setIgnoresMouse(true), setSettled(false), animateClose, scheduleClose]`.
+- `close(cancellingHold)`: saving and cancelling → `cancelSaveHold`; phase closing; `section = 'none'`; `[postDidHide, removeLocalMonitor, resignFirstResponder, setIgnoresMouse(true), setSettled(false), animateClose, scheduleClose]`.
 - `park(p)`: phase `closed(parked: true)`, `hoverSwollen = false`, `hoverArmed = !p` → `park`. `orderOut()`: phase `closed(parked: false)`, `hoverSwollen = false` → `orderOut`.
 
 Swift cases mirrored (`NotchMachineTests.swift`, all 28): `showFromClosedOpensTheFullChoreography`, `showFromParkedLeavesParkingAndCancelsAPendingDwell`, `showWhileOpenIsANoOp`, `showFromClosingReversesWithoutSnapping`, `reopenDuringSavedHoldCancelsTheHoldAndDropsTheBadge`, `notchTapDuringSavedHoldDoesNothing`, `notchTapOnlyActsOnTheParkedNotch`, `saveThenHoldThenCloseParksOverANotch`, `closeTimerOrdersOutWithoutANotch`, `saveWithReduceMotionIsAPlainHide`, `saveBumpsTheGenerationSoTheSettleTimerCannotDropTheMask`, `settleTimerOnlyCountsForTheCurrentGeneration`, `hoverDwellSwellsWithHapticAndUnswellsOnExit`, `hoverExitDuringDwellCancelsIt`, `hoverDwellWithReduceMotionOnlyTapsTheTrackpad`, `parkingUnderThePointerDisarmsHoverUntilItLeaves`, `parkingAwayFromThePointerArmsHoverImmediately`, `hoverIsIgnoredUnlessParked`, `screenChangeWhileParkedReparksAndRearmsFromThePointer`, `secondSaveIsSwallowed`, `saveIsOnlyPossibleWhileOpen`, `hideDuringSavingCancelsTheHold`, `hideIsANoOpUnlessVisible`, `staleTimersAreIgnored`, `screenChangeRelayoutsTheOpenWindowAndSkipsAClosingOne`, `screenChangeParksAndUnparksClosedWindows`, `everySequenceUpToLengthFiveKeepsTheInvariants`, `handleIsDeterministicAndValueSemantic`. TS-only: the exact show effect list (contracts §2.14).
@@ -1923,41 +2023,41 @@ Swift cases mirrored (`NotchMachineTests.swift`, all 28): `showFromClosedOpensTh
 
 ---
 
-### Task 20 (A20): `machine/notchMachine.ts` — in-notch Set Date expansion
+### Task 20 (A20): `machine/notchMachine.ts` — in-notch sections (Set Date and Location)
 
 **Files:**
 - Modify: `src/recreation/machine/notchMachine.ts`
 - Test: `tests/machine/notchMachineSchedule.test.ts`
 
 **Interfaces:**
-- Consumes: A19 `NotchMachine`, `afterEscape`.
-- Produces: `scheduleChanged` and show-while-scheduled behaviour (no new exports).
+- Consumes: A19 `NotchMachine`, `afterEscape`, `isSchedule`.
+- Produces: `sectionChanged` (also for a switch between Set Date and Location) and show-while-sectioned behaviour (no new exports).
 
-Rules (Swift `changeSection`, `show`): `scheduleChanged(x)`: phase open and `x !== schedule` → `schedule = x`, bump generation, `[setSettled(false), animateSchedule(x), scheduleSettle(generation)]`; else `[]`. `show` while open: `schedule === 'none'` → `[]`, else the same transition to `'none'`.
+Rules (Swift `changeSection`, `show`): `sectionChanged(x)`: phase open and `x !== section` → `section = x`, bump generation, `[setSettled(false), animateSection(x), scheduleSettle(generation)]`; else `[]`. `show` while open: `section === 'none'` → `[]`, else the same transition to `'none'`. A switch (`'calendar'` → `'location'`, `'location'` → `'controls'`, …) is one step, no close first (Swift: "one section at a time: opening one while another is shown switches over in one spring"); what the section being left keeps is the controller's job (Task 29 (B9) `switchSection`), not the machine's.
 
-Swift cases mirrored (`NotchMachineScheduleTests.swift`): `openingTheScheduleOnlyAnimatesUnderTheMask`, `noScheduleStepTouchesTheWindow`, `calendarToggleOnlyAnimatesTheCanvasIsAlreadyTallEnough`, `showWhileScheduledResetsTheSchedule`, `sameExpansionTwiceIsANoOp`, `ignoredUnlessOpen` (hide, save), `closingSettlesUnderTheMask`, `staleSettleFromBeforeTheScheduleChangeIsDropped`, `hideAndSaveResetTheSchedule`, `reopenAfterParkingSwitchesCanvasOnceAndStartsPlain`, `reopenMidCollapseKeepsTheWindow`, `screenChangeWhileScheduledRelayoutsTheOpenWindow`, `escapeStepsBackOneLevel`. Not ported (D5): `locationIsASectionLikeSetDate`, `switchingSectionsIsOneStep`, `escapeAndShowCloseLocation`.
+Swift cases mirrored (`NotchMachineScheduleTests.swift`, all 16): `openingTheScheduleOnlyAnimatesUnderTheMask`, `noScheduleStepTouchesTheWindow`, `calendarToggleOnlyAnimatesTheCanvasIsAlreadyTallEnough`, `showWhileScheduledResetsTheSchedule`, `sameExpansionTwiceIsANoOp`, `ignoredUnlessOpen` (hide, save), `closingSettlesUnderTheMask`, `staleSettleFromBeforeTheScheduleChangeIsDropped`, `hideAndSaveResetTheSchedule`, `reopenAfterParkingSwitchesCanvasOnceAndStartsPlain`, `reopenMidCollapseKeepsTheWindow`, `screenChangeWhileScheduledRelayoutsTheOpenWindow`, `escapeStepsBackOneLevel`, `locationIsASectionLikeSetDate`, `switchingSectionsIsOneStep` (3 arguments), `escapeAndShowCloseLocation` (D5).
 
 - [ ] **Step 1: Write the failing test** `tests/machine/notchMachineSchedule.test.ts` (each Swift test under its name; representative bodies):
   ```ts
   import { describe, expect, it } from 'vitest';
-  import { afterEscape, NotchMachine, type NotchEffect, type NotchEvent, type ScheduleExpansion } from '../../src/recreation/machine/notchMachine';
+  import { afterEscape, isSchedule, NotchMachine, type NotchEffect, type NotchEvent, type NotchSection } from '../../src/recreation/machine/notchMachine';
 
   const open = () => { const m = new NotchMachine(); m.handle({ type: 'show' }); return m; };
-  const step = (x: ScheduleExpansion, g: number): NotchEffect[] =>
-    [{ type: 'setSettled', settled: false }, { type: 'animateSchedule', expansion: x }, { type: 'scheduleSettle', generation: g }];
+  const step = (x: NotchSection, g: number): NotchEffect[] =>
+    [{ type: 'setSettled', settled: false }, { type: 'animateSection', section: x }, { type: 'scheduleSettle', generation: g }];
 
   describe('NotchMachineScheduleTests', () => {
     it('openingTheScheduleOnlyAnimatesUnderTheMask', () => {
       const m = open(), before = m.generation;
-      expect(m.handle({ type: 'scheduleChanged', expansion: 'controls' })).toEqual(step('controls', before + 1));
-      expect(m.schedule).toBe('controls');
+      expect(m.handle({ type: 'sectionChanged', section: 'controls' })).toEqual(step('controls', before + 1));
+      expect(m.section).toBe('controls');
       expect(m.generation).toBe(before + 1);
     });
     it('noScheduleStepTouchesTheWindow', () => {
       const m = open();
       const windowEffects = ['configureGeometry', 'switchToOpenCanvas', 'relayoutOpenWindow', 'park', 'orderOut'];
-      for (const x of ['controls', 'calendar', 'controls', 'none', 'calendar', 'none'] as ScheduleExpansion[]) {
-        const e = m.handle({ type: 'scheduleChanged', expansion: x });
+      for (const x of ['controls', 'calendar', 'controls', 'none', 'calendar', 'none'] as NotchSection[]) {
+        const e = m.handle({ type: 'sectionChanged', section: x });
         expect(e).toEqual(step(x, m.generation));
         expect(e.some((y) => windowEffects.includes(y.type))).toBe(false);
         expect(m.handle({ type: 'settleTimerFired', generation: m.generation })).toEqual([{ type: 'setSettled', settled: true }]);
@@ -1965,38 +2065,65 @@ Swift cases mirrored (`NotchMachineScheduleTests.swift`): `openingTheScheduleOnl
     });
     it('showWhileScheduledResetsTheSchedule', () => {
       const m = open();
-      m.handle({ type: 'scheduleChanged', expansion: 'calendar' });
+      m.handle({ type: 'sectionChanged', section: 'calendar' });
       expect(m.handle({ type: 'show' })).toEqual(step('none', m.generation));
       expect(m.phase).toEqual({ type: 'open' });
-      expect(m.schedule).toBe('none');
+      expect(m.section).toBe('none');
       expect(m.handle({ type: 'settleTimerFired', generation: m.generation })).toEqual([{ type: 'setSettled', settled: true }]);
       expect(m.handle({ type: 'show' })).toEqual([]);
-      expect(m.handle({ type: 'scheduleChanged', expansion: 'controls' })).toContainEqual({ type: 'animateSchedule', expansion: 'controls' });
+      expect(m.handle({ type: 'sectionChanged', section: 'controls' })).toContainEqual({ type: 'animateSection', section: 'controls' });
     });
     it.each<NotchEvent>([{ type: 'hide' }, { type: 'save', reduceMotion: false }])('ignoredUnlessOpen (%j)', (leaving) => {
       const m = open();
       m.handle(leaving);
-      expect(m.handle({ type: 'scheduleChanged', expansion: 'controls' })).toEqual([]);
-      expect(m.schedule).toBe('none');
-      expect(new NotchMachine().handle({ type: 'scheduleChanged', expansion: 'calendar' })).toEqual([]);
+      expect(m.handle({ type: 'sectionChanged', section: 'controls' })).toEqual([]);
+      expect(m.section).toBe('none');
+      expect(new NotchMachine().handle({ type: 'sectionChanged', section: 'calendar' })).toEqual([]);
     });
     it('escapeStepsBackOneLevel', () => {
       expect(afterEscape('calendar')).toBe('controls');
       expect(afterEscape('controls')).toBe('none');
       expect(afterEscape('none')).toBe('none');
       const m = open();
-      m.handle({ type: 'scheduleChanged', expansion: 'calendar' });
-      m.handle({ type: 'scheduleChanged', expansion: afterEscape(m.schedule) });
-      expect([m.schedule, m.phase.type]).toEqual(['controls', 'open']);
-      m.handle({ type: 'scheduleChanged', expansion: afterEscape(m.schedule) });
-      expect([m.schedule, m.phase.type]).toEqual(['none', 'open']);
+      m.handle({ type: 'sectionChanged', section: 'calendar' });
+      m.handle({ type: 'sectionChanged', section: afterEscape(m.section) });
+      expect([m.section, m.phase.type]).toEqual(['controls', 'open']);
+      m.handle({ type: 'sectionChanged', section: afterEscape(m.section) });
+      expect([m.section, m.phase.type]).toEqual(['none', 'open']);
+    });
+    // Location (one section at a time)
+    it('locationIsASectionLikeSetDate', () => {
+      const m = open();
+      const e = m.handle({ type: 'sectionChanged', section: 'location' });
+      expect(m.section).toBe('location');
+      expect(e).toEqual(step('location', m.generation));
+    });
+    it.each<[NotchSection, NotchSection]>([['calendar', 'location'], ['location', 'controls'], ['controls', 'location']])('switchingSectionsIsOneStep (%s → %s)', (from, to) => {
+      const m = open();
+      m.handle({ type: 'sectionChanged', section: from });
+      const e = m.handle({ type: 'sectionChanged', section: to });
+      expect(m.section).toBe(to);
+      expect(e).toEqual(step(to, m.generation));
+    });
+    it('escapeAndShowCloseLocation', () => {
+      expect(afterEscape('location')).toBe('none');
+      expect(isSchedule('location')).toBe(false);
+      expect(isSchedule('controls') && isSchedule('calendar')).toBe(true);
+      expect(isSchedule('none')).toBe(false);
+      const m = open();
+      m.handle({ type: 'sectionChanged', section: 'location' });
+      m.handle({ type: 'show' });
+      expect(m.section).toBe('none');                    // a show while Location is open returns to the plain panel
+      m.handle({ type: 'sectionChanged', section: 'location' });
+      m.handle({ type: 'hide' });
+      expect(m.section).toBe('none');
     });
   });
   ```
-- [ ] **Step 2: Run** `npx vitest run tests/machine/notchMachineSchedule.test.ts` → expected FAIL (A19 returns `[]` for `scheduleChanged`).
-- [ ] **Step 3: Implement** `changeSchedule(x)` and the open branch of `show`.
-- [ ] **Step 4: Run** `npx vitest run tests/machine` → expected PASS (14 schedule tests; A19's 31 still pass, the exhaustive alphabet has no `scheduleChanged`, so its 17 shapes hold).
-- [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(machine): in-notch Set Date expansion in NotchMachine"`
+- [ ] **Step 2: Run** `npx vitest run tests/machine/notchMachineSchedule.test.ts` → expected FAIL (A19 returns `[]` for `sectionChanged`).
+- [ ] **Step 3: Implement** `changeSection(x)` and the open branch of `show`.
+- [ ] **Step 4: Run** `npx vitest run tests/machine` → expected PASS (19 section tests: the 13 Set Date ones with `ignoredUnlessOpen` ×2, plus 5 Location; A19's 31 still pass, the exhaustive alphabet has no `sectionChanged`, so its 17 shapes hold).
+- [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(machine): in-notch Set Date and Location sections in NotchMachine"`
 
 ---
 
@@ -2219,6 +2346,7 @@ Phosphor size = min(SF ink width / Phosphor ink width ratio, SF ink height / rat
 | `calendar.badge.clock@12` | suggestion chip (medium) | 15.12 × 12.25 | composite, scaled 12/18 | regular | box 14.5 × 12.587 |
 | `location@18` | pill | 17.88 × 17.25 | `NavigationArrow`, mirrored (SF points north-east) | regular | 21 |
 | `location.fill@18` | pill, active | 17.12 × 17.25 | `NavigationArrow`, mirrored | fill | 21 |
+| `location@12` | Location section field (medium, `LocationNotchSection.field`) | 11.92 × 11.50 (the @18 box × 12/18; re-measure at 12 pt medium in Task 46 (B26)) | `NavigationArrow`, mirrored | regular | 14 |
 | `flag@18` / `flag.fill@18` | pill | 16.00 × 18.00 | `Flag` | regular / fill | 21.5 |
 | `checkmark@22` | ✓ button (semibold) | 19.25 × 19.00 | `Check` | bold | 23.5 |
 | `checkmark@13` | list picker row (semibold) | 11.25 × 11.88 | `Check` | bold | 14 |
@@ -2272,7 +2400,7 @@ Phosphor size = min(SF ink width / Phosphor ink width ratio, SF ink height / rat
   import { ptOf } from './support';
   test('every table entry renders its Phosphor glyph at the pinned size', () => {
     const expected: Record<string, [string, number, boolean?]> = {
-      'location@18': ['NavigationArrow:regular', 21, true], 'location.fill@18': ['NavigationArrow:fill', 21, true],
+      'location@18': ['NavigationArrow:regular', 21, true], 'location.fill@18': ['NavigationArrow:fill', 21, true], 'location@12': ['NavigationArrow:regular', 14, true],
       'flag@18': ['Flag:regular', 21.5], 'flag.fill@18': ['Flag:fill', 21.5], 'checkmark@22': ['Check:bold', 23.5],
       'checkmark@13': ['Check:bold', 14], 'xmark@11': ['X:bold', 15], 'xmark.circle.fill@13': ['XCircle:fill', 16],
       'chevron.down@13': ['CaretDown:bold', 15.5], 'chevron.down@9': ['CaretDown:bold', 12],
@@ -2545,8 +2673,9 @@ same transition (one SwiftUI transaction). The `<svg>` covers the canvas (`width
 ### Task 26 (B6): RecreationStore — draft, suggestion, lists, flag, location, dirty (`store.ts`, part 1)
 
 Port of `QuickReminderView`'s `@State` (title, notes, dueDate, flagged, locationText, showListPicker,
-showLocationField, saveErrorText, suggestion, dismissedSuggestionText, presetPick) and of `resetState`,
-`updateSuggestion`, `applySuggestionIfAny`, `stripSuggestionPhrase`, plus the `NotchState` flags mirror the views read.
+saveErrorText, suggestion, dismissedSuggestionText, presetPick; `showLocationField` is the Popover style's and is not
+ported, B-D3), of the in-notch Location section's `@State draft: LocationDraft` (`LocationNotchSection.swift`), and of
+`resetState`, `updateSuggestion`, `applySuggestionIfAny`, `stripSuggestionPhrase`, plus the `NotchState` flags mirror the views read.
 
 **Files:**
 - Create: `src/recreation/store.ts`
@@ -2555,11 +2684,12 @@ showLocationField, saveErrorText, suggestion, dismissedSuggestionText, presetPic
 **Interfaces:**
 - Consumes: `RecreationState` shape (contract §3.1); `NaturalDateParser.{parse, removingMatch}`, `DateSuggestion`;
   `ScheduleDefaults.resolveDayOnly`; `SuggestionDateFormatter`; `FAKE_LISTS`, `DEFAULT_LIST_ID`, `accentFor`, `ListId`;
-  `ReminderDraft`, `SavedReminder`; `PresetPick`; `NotchFlags`, `NotchSizes`, `INITIAL_FLAGS`; `NotchMachineSnapshot`,
-  `NotchPhase`; `Clock`; `Calendar`; `FlagAnimation` (B1).
+  `ReminderDraft`, `SavedReminder`, `LocationDraft` (A14); `PresetPick`; `NotchFlags`, `NotchSizes`, `INITIAL_FLAGS`; `NotchMachineSnapshot`,
+  `NotchPhase`, `NotchSection`, `isSchedule` (A19); `Clock`; `Calendar`; `FlagAnimation` (B1).
 - Produces:
   ```ts
-  export interface RecreationState { /* exactly contract §3.1 */ }
+  export interface RecreationState { /* contract §3.1 with A-D5 / B-D3: `section: NotchSection` for `schedule`, `locationField: string | null`
+     (the open Location section's field, null while it is not shown) for `locationPopoverOpen`, derived `locationInNotch`, `sectionOpen` */ }
   export type Origin = 'user' | 'api';
   export interface PanelView { readonly flags: NotchFlags; readonly animation: FlagAnimation; readonly sizes: NotchSizes; readonly ignoresMouse: boolean }
   export interface RecreationStoreOptions { readonly clock: Clock; readonly calendar: Calendar; readonly formatter: SuggestionDateFormatter; readonly sizes: NotchSizes }
@@ -2572,9 +2702,9 @@ showLocationField, saveErrorText, suggestion, dismissedSuggestionText, presetPic
     beep(): void;
     setFlags(patch: Partial<NotchFlags>, animation: FlagAnimation): void;
     setIgnoresMouse(ignores: boolean): void;
-    setMachine(m: NotchMachineSnapshot): void;   // phase, schedule, hoverSwollen, badgeShown → RecreationState; settled/contentVisible come from setFlags
+    setMachine(m: NotchMachineSnapshot): void;   // phase, section, hoverSwollen, badgeShown → RecreationState; settled/contentVisible come from setFlags
     resetDraft(): void;                          // .panelWillShow → resetState(); openedOnce = true
-    closePopovers(): void;                       // .panelDidHide
+    closePopovers(): void;                       // .panelDidHide: list picker closed, Location draft dropped (the section view is gone)
     reset(opts: { keepSaved: boolean }): void;   // resetDraft + flags = INITIAL_FLAGS ('none') + listId default + popovers closed + dirty false + openedOnce false
     setTitle(text: string, origin: Origin): void;
     setNotes(text: string, origin: Origin): void;
@@ -2585,8 +2715,11 @@ showLocationField, saveErrorText, suggestion, dismissedSuggestionText, presetPic
     setListPickerOpen(open: boolean): void;
     setList(id: ListId, origin: Origin): void;
     setFlag(flagged: boolean, origin: Origin): void;
-    setLocationPopoverOpen(open: boolean): void;
-    setLocation(text: string | null, origin: Origin): void;  // "" → null (RecreationState.location never "")
+    setLocation(text: string | null, origin: Origin): void;  // "" → null (RecreationState.location never ""); otherwise as typed (Swift writes the text untrimmed)
+    openLocationDraft(): LocationDraft;          // new LocationDraft(location ?? ''): LocationNotchSection.init; locationField = its text
+    get locationDraft(): LocationDraft | null;
+    setLocationText(text: string): void;         // the field (draft.text); locationField follows; not a draft change (no dirty)
+    closeLocationDraft(): void;                  // locationField = null; the section keeps rendering its own reference while it fades out (B14)
     setSaveError(text: string | null): void;                  // never called on the site; keeps the slot 1:1
     markClean(): void;
     prepareReminder(): ReminderDraft | null;     // applies an undismissed suggestion first (save path), null when the title trims to ""
@@ -2602,8 +2735,10 @@ null; `parse(title, now floored to the second, calendar)`; while `dueDate != nul
 `removingMatch(title, s)`, suggestion = null, title replaced only when the stripped text is not blank.
 `resetDraft` keeps `listId` (the app persists `selectedListId` in `@AppStorage`) and `savedItems`.
 `dirty` is set by every `'user'` change of a **draft field** (title, notes, listId, flagged, location, dueDate,
-presetPick, an applied or dismissed suggestion); opening or closing a popover is not a draft change.
-`canSave` = `title.trim() !== ''`; `accent` = `accentFor(listId)`; `schedulingInNotch` = `schedule !== 'none'`.
+presetPick, an applied or dismissed suggestion); opening or closing a popover or a section, and typing in the Location field, are not
+draft changes (the location itself changes only through Done, ✓, Clear or a switch to Set Date, each a `setLocation(…, origin)`).
+`canSave` = `title.trim() !== ''`; `accent` = `accentFor(listId)`; `schedulingInNotch` = `isSchedule(section)`; `locationInNotch` =
+`section === 'location'`; `sectionOpen` = `section !== 'none'` (Swift `QuickReminderView.schedulingInNotch` / `locationInNotch` / `sectionOpen`).
 
 - [ ] **Step 1: Write the failing test** `tests/recreation/store.test.ts`
   ```ts
@@ -2619,9 +2754,10 @@ presetPick, an applied or dismissed suggestion); opening or closing a popover is
 
   test('initial state', () => {
     const s = make().getState();
-    expect(s).toMatchObject({ phase: { type: 'closed', parked: false }, schedule: 'none', title: '', notes: '', listId: 'reminders',
+    expect(s).toMatchObject({ phase: { type: 'closed', parked: false }, section: 'none', title: '', notes: '', listId: 'reminders',
       flagged: false, location: null, dueDate: null, suggestion: null, canSave: false, accent: '#0A84FF', dirty: false,
-      savedItems: [], openedOnce: false, listPickerOpen: false, locationPopoverOpen: false, saveError: null });
+      savedItems: [], openedOnce: false, listPickerOpen: false, locationField: null, saveError: null,
+      schedulingInNotch: false, locationInNotch: false, sectionOpen: false });
   });
   test('typing a phrase shows the suggestion and turns ✓ on', () => {
     const st = make();
@@ -2682,6 +2818,23 @@ presetPick, an applied or dismissed suggestion); opening or closing a popover is
     st.setLocation('Office', 'user');
     expect(st.getState()).toMatchObject({ flagged: true, location: 'Office' });
   });
+  test('the Location field is not the location until Done (LocationDraft)', () => {
+    const st = make();
+    st.setLocation('Office', 'api');
+    const d = st.openLocationDraft();
+    expect([d.original, d.text]).toEqual(['Office', 'Office']);
+    expect(st.getState().locationField).toBe('Office');
+    st.setLocationText('Home');
+    expect(st.getState()).toMatchObject({ location: 'Office', locationField: 'Home', dirty: false });
+    expect(st.locationDraft!.saveDecision).toEqual({ type: 'applyThenSave', text: 'Home' });
+    st.closeLocationDraft();
+    expect(st.getState()).toMatchObject({ location: 'Office', locationField: null });
+    expect(st.locationDraft).toBeNull();
+    expect(st.openLocationDraft().original).toBe('Office');
+    expect(make().openLocationDraft().original).toBe('');            // no location → an empty field
+    st.closePopovers();
+    expect(st.getState().locationField).toBeNull();
+  });
   test("'api' writes never set dirty; markClean clears it", () => {
     const st = make();
     st.setTitle('x', 'api'); st.setList('home', 'api'); st.setFlag(true, 'api');
@@ -2726,10 +2879,11 @@ presetPick, an applied or dismissed suggestion); opening or closing a popover is
   ```
 - [ ] **Step 2: Run it** — `npx vitest run tests/recreation/store.test.ts`. Expected: FAIL.
 - [ ] **Step 3: Implement** `store.ts` with the signatures above. `RecreationState.contentVisible` / `settled` mirror
-  `flags.contentVisible` / `flags.isSettled`; `phase`, `schedule`, `hoverSwollen`, `badgeShown` come from `setMachine`.
+  `flags.contentVisible` / `flags.isSettled`; `phase`, `section`, `hoverSwollen`, `badgeShown` come from `setMachine` (and the derived
+  `schedulingInNotch` / `locationInNotch` / `sectionOpen` with them).
   `getState()` and `getPanel()` are rebuilt only inside mutations (never in the getters).
-- [ ] **Step 4: Run it** — Expected: PASS (12 tests).
-- [ ] **Step 5: Commit** — `git add src/recreation/store.ts tests/recreation/store.test.ts && git commit -m "feat(recreation): RecreationStore with draft, suggestion, lists, flag, location and dirty tracking"`
+- [ ] **Step 4: Run it** — Expected: PASS (13 tests).
+- [ ] **Step 5: Commit** — `git add src/recreation/store.ts tests/recreation/store.test.ts && git commit -m "feat(recreation): RecreationStore with draft, suggestion, lists, flag, Location draft and dirty tracking"`
 
 ---
 
@@ -2765,6 +2919,7 @@ controller and the `RecreationHandle` reach them without the view.
   moveDayInGrid(days: -7 | -1 | 1 | 7): boolean;  // paged away → moveInto(calendarMonth); else moveDay; false → beep()
   finishSchedule(outcome: ScheduleOutcome | null, origin: Origin): boolean;  // writes dueDate / presetPick, strips the phrase when consumesSuggestion
   saveDecision(): SaveDecision;           // ScheduleDraft.prepareSave
+  switchDecision(): SaveDecision;         // ScheduleDraft.prepareSwitch: the panel is switching to Location (Task 29 (B9) switchSection)
   ```
 
 Rules: the store keeps no "touched" flag of its own: `saveDecision()` returns `scheduleDraft.prepareSave()` (Task 10 (A10) ports Swift
@@ -2822,6 +2977,7 @@ through `finishSchedule` (the reminder's date), not through draft edits.
     st2.openScheduleDraft();
     st2.setScheduleText('tomorrow please', 'user');
     expect(st2.saveDecision()).toEqual({ type: 'invalid' });
+    expect(st2.switchDecision()).toEqual({ type: 'invalid' });            // the same decision blocks a switch to Location
   });
   test('typed time: valid applies, invalid reverts', () => {
     const st = make();
@@ -2900,17 +3056,17 @@ Effect → action (Swift `PanelController.perform`); every delay is seconds × `
 | Effect | Web |
 |---|---|
 | `configureGeometry`, `relayoutOpenWindow`, `makeKeyAndOrderFront`, `installLocalMonitor`, `removeLocalMonitor` | no-op (the canvas is CSS and never resizes; the container listens while `isVisible`) |
-| `switchToOpenCanvas` | `setFlags({ schedule: 'none', isOpen: false, contentVisible: false }, 'none')` |
+| `switchToOpenCanvas` | `setFlags({ section: 'none', isOpen: false, contentVisible: false }, 'none')` |
 | `park` | `setFlags({ isOpen: false, contentVisible: false, isHovering: false }, 'none')` |
 | `orderOut` | `setFlags({ isOpen: false, contentVisible: false }, 'none')` |
 | `setIgnoresMouse(b)` / `resignFirstResponder` / `haptic` | `host.setIgnoresMouse(b)` / `host.blurAll()` / `host.haptic()` |
 | `postWillShow` / `postDidHide` | `host.willShow()` / `host.didHide()` |
 | `animateOpen` | next turn (`setTimeout(…, 0)`, Swift `DispatchQueue.main.async`): `setFlags({ isSaving: false, isHovering: false, isOpen: true, contentVisible: true }, 'open')` |
-| `animateClose` | `setFlags({ contentVisible: false, isOpen: false, isSaving: false, schedule: 'none' }, 'close')` |
-| `animateSaving` | `setFlags({ contentVisible: false, isOpen: false, isSaving: true, schedule: 'none', savedBadgeShown: true }, 'saving')` |
+| `animateClose` | `setFlags({ contentVisible: false, isOpen: false, isSaving: false, section: 'none' }, 'close')` |
+| `animateSaving` | `setFlags({ contentVisible: false, isOpen: false, isSaving: true, section: 'none', savedBadgeShown: true }, 'saving')` |
 | `clearBadgeNoAnimation` / `setSettled(b)` | `setFlags({ savedBadgeShown: false }, 'none')` / `setFlags({ isSettled: b }, 'none')` |
 | `swellHover` / `unswellHover` | `setFlags({ isHovering: true }, 'hoverIn')` / `setFlags({ isHovering: false }, 'hoverOut')` |
-| `animateSchedule(x)` | `setFlags({ schedule: x }, 'schedule')` |
+| `animateSection(x)` | `setFlags({ section: x }, 'schedule')` |
 | `scheduleClose` / `cancelClose` | 0.36 s → `closeTimerFired({ hasNotch: hasNotch() })` / clear |
 | `scheduleSaveHold` / `cancelSaveHold` | 1.0 s → `saveHoldElapsed` / clear |
 | `scheduleSettle(g)` | 0.5 s → `settleTimerFired({ generation: g })` |
@@ -2964,7 +3120,7 @@ Effect → action (Swift `PanelController.perform`); every delay is seconds × `
     rt.dispatch({ type: 'hide' });
     expect(h.didHide).toHaveBeenCalledTimes(1);
     expect(h.blurAll).toHaveBeenCalled();
-    expect(h.setFlags).toHaveBeenCalledWith({ contentVisible: false, isOpen: false, isSaving: false, schedule: 'none' }, 'close');
+    expect(h.setFlags).toHaveBeenCalledWith({ contentVisible: false, isOpen: false, isSaving: false, section: 'none' }, 'close');
     vi.advanceTimersByTime(359); expect(rt.machine.phase).toEqual({ type: 'closing' });
     vi.advanceTimersByTime(1);   expect(rt.machine.phase).toEqual({ type: 'closed', parked: true });
   });
@@ -2972,7 +3128,7 @@ Effect → action (Swift `PanelController.perform`); every delay is seconds × `
     const h = host(); const rt = make(h);
     rt.dispatch({ type: 'show' }); vi.advanceTimersByTime(600);
     rt.dispatch({ type: 'save', reduceMotion: false });
-    expect(h.setFlags).toHaveBeenCalledWith({ contentVisible: false, isOpen: false, isSaving: true, schedule: 'none', savedBadgeShown: true }, 'saving');
+    expect(h.setFlags).toHaveBeenCalledWith({ contentVisible: false, isOpen: false, isSaving: true, section: 'none', savedBadgeShown: true }, 'saving');
     expect(h.setIgnoresMouse).toHaveBeenLastCalledWith(true);
     vi.advanceTimersByTime(999);  expect(rt.machine.phase).toEqual({ type: 'saving' });
     vi.advanceTimersByTime(1);    expect(rt.machine.phase).toEqual({ type: 'closing' });
@@ -2999,14 +3155,20 @@ Effect → action (Swift `PanelController.perform`); every delay is seconds × `
     expect(h2.setFlags).not.toHaveBeenCalledWith({ isHovering: true }, 'hoverIn');
     expect(h2.haptic).toHaveBeenCalledTimes(1);
   });
-  test('Set Date grows with the schedule spring and re-settles', () => {
+  test('a section grows with the schedule spring and re-settles; Set Date → Location is one step', () => {
     const h = host(); const rt = make(h);
     rt.dispatch({ type: 'show' }); vi.advanceTimersByTime(600);
-    rt.dispatch({ type: 'scheduleChanged', expansion: 'controls' });
+    rt.dispatch({ type: 'sectionChanged', section: 'controls' });
     expect(h.setFlags).toHaveBeenCalledWith({ isSettled: false }, 'none');
-    expect(h.setFlags).toHaveBeenLastCalledWith({ schedule: 'controls' }, 'schedule');
+    expect(h.setFlags).toHaveBeenLastCalledWith({ section: 'controls' }, 'schedule');
     vi.advanceTimersByTime(500);
     expect(h.setFlags).toHaveBeenLastCalledWith({ isSettled: true }, 'none');
+    rt.dispatch({ type: 'sectionChanged', section: 'location' });
+    expect(h.setFlags).toHaveBeenLastCalledWith({ section: 'location' }, 'schedule');
+    expect(h.setFlags).not.toHaveBeenCalledWith({ section: 'none' }, 'schedule');      // no close first
+    vi.advanceTimersByTime(500);
+    expect(h.setFlags).toHaveBeenLastCalledWith({ isSettled: true }, 'none');
+    expect(rt.machine.section).toBe('location');
   });
   test('events raised during effects run after the batch', () => {
     const h = host(); let rt!: NotchRuntime;
@@ -3045,8 +3207,8 @@ every `RecreationHandle` method goes through it, with an `origin`.
 
 **Interfaces:**
 - Consumes: B6/B7 store, B8 runtime; `sizesFor`, `panelSize` (contract §2.16); `SuggestionDateFormatter`; `toSavedReminder`;
-  `DatePresets.date`, `DATE_PRESETS`, `DatePreset`; `ScheduleCommit.{textRowSubmit, consumesSuggestion}`; `afterEscape`;
-  `NotchLayout.{sectionCancelBandBottom, clickCancelsSchedule}`; `RUNTIME_TIMERS`; `MotionPrefsProvider` (B1); `ShowSource` (contract §3.2).
+  `DatePresets.date`, `DATE_PRESETS`, `DatePreset`; `ScheduleCommit.{textRowSubmit, consumesSuggestion}`; `afterEscape`, `isSchedule`, `NotchSection`;
+  `LocationDraft` (via the B6 store); `NotchLayout.{sectionCancelBandBottom, clickCancelsSection}`; `RUNTIME_TIMERS`; `MotionPrefsProvider` (B1); `ShowSource` (contract §3.2).
 - Produces:
   ```ts
   // ui/focus.ts
@@ -3075,8 +3237,8 @@ every `RecreationHandle` method goes through it, with an `origin`.
     toggle(): void;                                              // ⇧⌘R: open → hide, else show('hotkey', true)
     hover(entered: boolean): void;                               // hoverEntered / hoverExited + pointerOnNotch bookkeeping
     escape(): EscapeResult;                                      // D2 order
-    save(origin: Origin): Promise<SavedReminder | null>;         // ⌘↩ / API: section open → commitSchedule, resolves null
-    saveFromBar(origin: Origin): Promise<SavedReminder | null>;  // ✓ click: SaveDecision while the section is open
+    save(origin: Origin): Promise<SavedReminder | null>;         // ⌘↩ / API: a section open → commitSection (Set / Done), resolves null
+    saveFromBar(origin: Origin): Promise<SavedReminder | null>;  // ✓ click: SaveDecision (Set Date) / LocationDraft.saveDecision while a section is open
     textRowSubmit(origin: Origin): Promise<SavedReminder | null>;// ↩ in title / notes: ScheduleCommit.textRowSubmit
     setTitle(t: string, o: Origin): void; setNotes(t: string, o: Origin): void;
     applySuggestion(o: Origin): boolean; dismissSuggestion(o: Origin): void;
@@ -3087,8 +3249,12 @@ every `RecreationHandle` method goes through it, with an `origin`.
     stepTime(steps: 1 | -1, o: Origin): void; applyTypedTime(beepOnInvalid: boolean): boolean; pageMonth(d: -1 | 1): void; moveDay(days: -7 | -1 | 1 | 7): void;
     toggleListPicker(): void; openListPicker(): void; closeListPicker(): void; setList(id: ListId, o: Origin): void;
     toggleFlag(o: Origin): void; setFlag(f: boolean, o: Origin): void;
-    openLocationPopover(o: Origin): void; closeLocationPopover(): void; setLocation(t: string | null, o: Origin): void;
-    pointerDownInPanel(yPt: number): void;                       // clickCancelsSchedule band (header / title / notes)
+    openLocation(o: Origin): void; toggleLocation(o: Origin): void; cancelLocation(o: Origin): void; commitLocation(o: Origin): void;
+    clearLocation(o: Origin): void; setLocationText(t: string, o: Origin): void; setLocation(t: string | null, o: Origin): void;
+    switchSection(target: Exclude<NotchSection, 'none'>, o: Origin): boolean;   // QuickReminderView.switchSection; false = not open or blocked (invalid typed date, beep)
+    commitSection(o: Origin): boolean;                           // .sectionCommitRequested / CommandReturnTwin: Set or Done
+    cancelSection(o: Origin): void;                              // .panelCancelSection: the open section closes, nothing written
+    pointerDownInPanel(yPt: number): void;                       // clickCancelsSection band (header / title / notes)
     pointerDownOutside(): void;                                  // a click outside the black shape: closes any popover and hides the panel (global click monitor)
     destroy(): void;
   }
@@ -3105,31 +3271,48 @@ every `RecreationHandle` method goes through it, with an `origin`.
   ```
 
 Rules (Swift sources named):
-- Host (`createRecreationCore`): `focusTitle` focuses `'title'` only when the current show asked for focus, `panel.flags.schedule === 'none'`
+- Host (`createRecreationCore`): `focusTitle` focuses `'title'` only when the current show asked for focus, `panel.flags.section === 'none'`
   and `focus.active()` is neither `'title'` nor `'notes'` (`focusTitleFieldIfNeeded`). `willShow` → `store.resetDraft()`;
   `didHide` → `store.closePopovers()`; `blurAll` → `focus.blur()`; `haptic` no-op; `onDispatched` → `store.setMachine`.
-- `escape()` (D2): not visible → `'none'`; saving → `hide()`, `'panel'` (the Esc monitor hides during the saved hold too); a popover open → close both,
-  `'popover'`; schedule `'calendar'` → `'controls'`, `'calendar'`; `'controls'` → `cancelSchedule`, `'section'`; else `hide()`, `'panel'`.
-- `save`: badge shown → null; schedule ≠ none → `commitSchedule`, null; `store.prepareReminder()` null → null; else
+- `escape()` (D2, `QuickReminderView.panelDismissPopovers` + `NotchSection.afterEscape`): not visible → `'none'`; saving → `hide()`, `'panel'` (the Esc monitor hides during the saved hold too); the list picker open → close it,
+  `'popover'`; section `'calendar'` → `'controls'`, `'calendar'`; `'controls'` → `cancelSchedule`, `'section'`; `'location'` → `cancelLocation`, `'section'` (nothing written); else `hide()`, `'panel'`.
+- `save`: badge shown → null; section ≠ none → `commitSection`, null (⌘↩ belongs to Set / Done while a section is open, `BottomBar.saveButton` drops its shortcut); `store.prepareReminder()` null → null; else
   `item = toSavedReminder(draft, clock(), formatter)`, dispatch `save({ reduceMotion })`; reduced → `appendSaved` + `onSaved` at once,
   otherwise after 0.32 s × scale (the tick starts drawing when the badge has landed, `SavedCheckView` delay 0.32); the promise resolves
   when the machine next reaches `closed` or `open`.
-- `saveFromBar`: section closed → `save`; time field focused and `applyTypedTime(true)` false → null; `saveDecision()`:
-  `saveAsIs` → `cancelSchedule` then `save`; `commitThenSave` → `finishSchedule` + `scheduleChanged(none)` then `save`; `invalid` → `beep`, null.
-- `textRowSubmit`: `ScheduleCommit.textRowSubmit(schedule !== 'none', canSave)`: `'setSchedule'` → `commitSchedule`, null; `'saveReminder'` → `save`; `'none'` → null.
-- `openSchedule`: only when phase open, badge not shown, schedule `'none'` (Swift `openSetDate` guard "⌘D must not collapse it") →
-  `openScheduleDraft()`, dispatch `scheduleChanged('controls')`, `'user'` → focus `'scheduleField'` on the next turn (`setTimeout(…, 0)`, after the section mounts; Swift `DispatchQueue.main.async { focus = .text }`).
-  `toggleSchedule` (calendar icon): open → `cancelSchedule`, else `openSchedule`. `openCalendar`: opens the section if needed, then
-  `'calendar'`, `'user'` → focus `'calendar'`. `closeCalendar` → `'controls'`, `'user'` and focus was in the grid or nowhere → `'scheduleField'`.
-- `cancelSchedule` / every commit: dispatch `scheduleChanged('none')`, `closeScheduleDraft()`; `'user'` and focus inside the root (or on
+- `saveFromBar`: section none → `save`. Location (`LocationNotchSection.saveFromBar`): `locationDraft.saveDecision` `applyThenSave(text)` →
+  `setLocation(text, o)`; either way close (`sectionChanged(none)`, `closeLocationDraft()`), then `save`. Set Date: time field focused and `applyTypedTime(true)` false → null; `saveDecision()`:
+  `saveAsIs` → `cancelSchedule` then `save`; `commitThenSave` → `finishSchedule` + `sectionChanged(none)` then `save`; `invalid` → `beep`, null.
+- `textRowSubmit`: `ScheduleCommit.textRowSubmit(sectionOpen, canSave)`: `'setSchedule'` (≡ `.commitSection`) → `commitSection`, null; `'saveReminder'` → `save`; `'none'` → null.
+- `commitSection`: Set Date shown → `commitSchedule(o)`; Location → `commitLocation(o)`, true; none → false. `cancelSection`: Set Date → `cancelSchedule(o)`; Location → `cancelLocation(o)`.
+- `switchSection(target)` (Swift `QuickReminderView.switchSection` + `SectionHandoff.commitForSwitch`): phase not open or badge shown → false. When a section is
+  shown and `section !== target`, the section being left keeps its edit first, like ✓ would: Location → `locationDraft.textToKeepOnSwitch` non-null →
+  `setLocation(text, o)`, then `closeLocationDraft()`; Set Date (`ScheduleNotchSection.commitForSwitch`) → time field focused and `applyTypedTime(true)` false →
+  false (beep inside, stays); `switchDecision()`: `saveAsIs` → nothing written; `commitThenSave(outcome)` → `finishSchedule(outcome, o)` (Swift `write`: the date,
+  the pick and the phrase strip, without closing); `invalid` → `beep()`, false (the switch is blocked); then `closeScheduleDraft()`. Then the target opens:
+  `openScheduleDraft()` when the target is Set Date and Set Date was not shown, `openLocationDraft()` for `'location'`; dispatch `sectionChanged(target)` (one spring,
+  no close first, A20); `'user'` → focus `'scheduleField'` / `'calendar'` / `'locationField'` on the next turn (`setTimeout(…, 0)`, after the section mounts;
+  Swift `DispatchQueue.main.async { focus = .text }` / `fieldFocused = true`); true. Closing a section (Cancel, Esc, its own button, a click above) never writes.
+- `openSchedule`: only when phase open, badge not shown and Set Date not already shown (Swift `openSetDate` guard "⌘D must not collapse it") →
+  `switchSection('controls', o)` (from Location this keeps what was typed there).
+  `toggleSchedule` (calendar icon, `toggleSetDate`): Set Date shown → `cancelSchedule`, else `openSchedule`. `openCalendar`: Set Date not shown → `openSchedule` (stop when it
+  was blocked), then `'calendar'`, `'user'` → focus `'calendar'`. `closeCalendar` → `'controls'`, `'user'` and focus was in the grid or nowhere → `'scheduleField'`.
+- `cancelSchedule` / every commit: dispatch `sectionChanged('none')`, `closeScheduleDraft()`; `'user'` and focus inside the root (or on
   `body` because the focused field unmounted) → focus `'title'` (`restoreKeyFocus`).
 - `commitSchedule`: time field focused → `applyTypedTime(false)` first; `outcome = draft.set()`; null → `beep()` unless `draft.committed`, false;
   else `finishSchedule`, close, true. `applyPreset`: section open → `draft.apply(p)` → finish + close; closed → `setDueDate(DatePresets.date(p), { preset: p, date }, o)`
   and strip a live phrase when `ScheduleCommit.consumesSuggestion(suggestion?.matchedText ?? null, 'preset')` (BottomBar `consumeLiveSuggestion`).
-  `clearDueDate`: open → `draft.clear()` → finish + close; closed → `setDueDate(null, null, o)` (date-chip ⓧ writes `dueDate = nil` only).
-- `pointerDownInPanel(y)`: `clickCancelsSchedule(y, sectionCancelBandBottom(39, 1), schedule)` → `cancelSchedule('user')`; the click still lands
+  `clearDueDate`: Set Date shown → `draft.clear()` → finish + close; otherwise → `setDueDate(null, null, o)` (date-chip ⓧ writes `dueDate = nil` only).
+  `commitSchedule`, `applyPreset` with the section path and `clearDueDate` with the draft act only while Set Date is shown (`isSchedule(section)`), never on Location.
+- Location (`LocationNotchSection.swift`, `QuickReminderView.toggleLocation`): `openLocation` → Location not shown → `switchSection('location', o)`; `toggleLocation`
+  (location button) → Location shown → `cancelLocation`, else `openLocation`; `cancelLocation` (Cancel, Esc, the location button, a click above) → dispatch
+  `sectionChanged('none')`, `closeLocationDraft()`, nothing written; `commitLocation` (Done, ↩ in the field, ↩ / ⌘↩ anywhere while it is open) →
+  `setLocation(locationDraft.committed, o)` (as typed; `''` → null), then the same close; `clearLocation` (Clear, rendered only while `location !== null`) →
+  `setLocation(null, o)`, close; `setLocationText(t, o)` → `store.setLocationText(t)` while Location is shown. Every Location close with `'user'` and focus inside
+  the root (or on `body`) → focus `'title'` (`restoreKeyFocus`, like `cancelSchedule`). All of them act only while Location is shown.
+- `pointerDownInPanel(y)`: `clickCancelsSection(y, sectionCancelBandBottom(39, 1), section)` → `cancelSection('user')` (Set Date or Location); the click still lands
   (band bottom 139 = band + topContentHeight; `scheduleSectionTop` is the section's own top, 241, Task 16 (A16) A-D3).
-- `openLocationPopover('user')` → focus `'locationField'` on the next turn (`setTimeout(…, 0)`); `setList` closes the picker.
+- `setList` closes the picker.
 
 - [ ] **Step 1: Write the failing test** `tests/recreation/controller.test.ts`
   ```ts
@@ -3176,7 +3359,7 @@ Rules (Swift sources named):
     core.controller.setTitle('Pay rent', 'user');
     core.controller.openSchedule('user');
     await expect(core.controller.save('user')).resolves.toBeNull();
-    expect(core.store.getState()).toMatchObject({ schedule: 'none', dueDate: new Date('2026-09-19T07:00:00Z'), savedItems: [] });
+    expect(core.store.getState()).toMatchObject({ section: 'none', dueDate: new Date('2026-09-19T07:00:00Z'), savedItems: [] });
   });
   test('✓ while open: untouched → saved with no date; edited → Set then saved; invalid → beep', async () => {
     const a = createTestCore(); await openPanel(a);
@@ -3191,14 +3374,14 @@ Rules (Swift sources named):
     c.controller.setTitle('C', 'user'); c.controller.openSchedule('user'); c.controller.setScheduleText('tomorrow please', 'user');
     await expect(c.controller.saveFromBar('user')).resolves.toBeNull();
     expect(c.store.beepCount).toBe(1);
-    expect(c.store.getState().schedule).toBe('controls');
+    expect(c.store.getState().section).toBe('controls');
   });
-  test('Esc steps back one level: popover → calendar → section → panel', async () => {
+  test('Esc steps back one level: list picker → calendar → section → panel', async () => {
     const core = createTestCore(); await openPanel(core);
     core.controller.openCalendar('user'); core.controller.openListPicker();
     expect(core.controller.escape()).toBe('popover');
     expect(core.controller.escape()).toBe('calendar');
-    expect(core.store.getState().schedule).toBe('controls');
+    expect(core.store.getState().section).toBe('controls');
     expect(core.controller.escape()).toBe('section');
     expect(core.controller.escape()).toBe('panel');
     expect(core.controller.escape()).toBe('none');
@@ -3207,13 +3390,13 @@ Rules (Swift sources named):
     const core = createTestCore(); await openPanel(core);
     core.controller.openSchedule('user');
     core.controller.applyPreset('tomorrow', 'user');
-    expect(core.store.getState()).toMatchObject({ schedule: 'none', dueDate: new Date('2026-09-19T07:00:00Z'),
+    expect(core.store.getState()).toMatchObject({ section: 'none', dueDate: new Date('2026-09-19T07:00:00Z'),
       presetPick: { preset: 'tomorrow', date: new Date('2026-09-19T07:00:00Z') } });
     core.controller.openSchedule('user'); core.controller.setScheduleText('nope nope', 'user');
     expect(core.controller.commitSchedule('user')).toBe(false);
-    expect(core.store.getState().schedule).toBe('controls');
+    expect(core.store.getState().section).toBe('controls');
     core.controller.clearDueDate('user');
-    expect(core.store.getState()).toMatchObject({ schedule: 'none', dueDate: null });
+    expect(core.store.getState()).toMatchObject({ section: 'none', dueDate: null });
     core.controller.setDueDate(new Date('2026-09-20T07:00:00Z'), null, 'user');
     core.controller.openSchedule('user'); core.controller.setScheduleText('+3d', 'user'); core.controller.cancelSchedule('user');
     expect(core.store.getState().dueDate).toEqual(new Date('2026-09-20T07:00:00Z'));
@@ -3221,24 +3404,81 @@ Rules (Swift sources named):
   test('a click on header / title / notes cancels the section; chip slot and bar do not', async () => {
     const core = createTestCore(); await openPanel(core);
     core.controller.openSchedule('user');
-    core.controller.pointerDownInPanel(197); expect(core.store.getState().schedule).toBe('controls');
-    core.controller.pointerDownInPanel(152); expect(core.store.getState().schedule).toBe('controls');
-    core.controller.pointerDownInPanel(105); expect(core.store.getState().schedule).toBe('none');
+    core.controller.pointerDownInPanel(197); expect(core.store.getState().section).toBe('controls');
+    core.controller.pointerDownInPanel(152); expect(core.store.getState().section).toBe('controls');
+    core.controller.pointerDownInPanel(105); expect(core.store.getState().section).toBe('none');
   });
   test('calendar icon toggles; ⌘D never collapses an open section; nothing opens while closed', async () => {
     const core = createTestCore();
-    core.controller.openSchedule('user'); expect(core.store.getState().schedule).toBe('none');
+    core.controller.openSchedule('user'); expect(core.store.getState().section).toBe('none');
     await openPanel(core);
-    core.controller.toggleSchedule('user'); expect(core.store.getState().schedule).toBe('controls');
+    core.controller.toggleSchedule('user'); expect(core.store.getState().section).toBe('controls');
     core.controller.openCalendar('user'); core.controller.openSchedule('user');
-    expect(core.store.getState().schedule).toBe('calendar');
-    core.controller.toggleSchedule('user'); expect(core.store.getState().schedule).toBe('none');
+    expect(core.store.getState().section).toBe('calendar');
+    core.controller.toggleSchedule('user'); expect(core.store.getState().section).toBe('none');
   });
-  test('a click outside the shape closes the popover and the panel together (transient popover + global monitor)', async () => {
+  test('a click outside the shape closes the list picker or a section with the panel (global monitor), nothing written', async () => {
     const core = createTestCore(); await openPanel(core);
-    core.controller.openLocationPopover('user');
+    core.controller.openListPicker();
     core.controller.pointerDownOutside();
-    expect(core.store.getState()).toMatchObject({ locationPopoverOpen: false, phase: { type: 'closing' } });
+    expect(core.store.getState()).toMatchObject({ listPickerOpen: false, phase: { type: 'closing' } });
+    const loc = createTestCore(); await openPanel(loc);
+    loc.controller.openLocation('user'); loc.controller.setLocationText('Home', 'user');
+    loc.controller.pointerDownOutside();
+    expect(loc.store.getState()).toMatchObject({ section: 'none', locationField: null, location: null, phase: { type: 'closing' } });
+  });
+  test('Location: Done writes the field; Cancel, Esc, a click above and the location button leave it (LocationNotchSection)', async () => {
+    const core = createTestCore(); await openPanel(core);
+    core.controller.toggleLocation('user');
+    expect(core.store.getState()).toMatchObject({ section: 'location', locationField: '', locationInNotch: true });
+    core.controller.setLocationText('Office', 'user');
+    expect(core.store.getState()).toMatchObject({ location: null, dirty: false });
+    core.controller.commitLocation('user');
+    expect(core.store.getState()).toMatchObject({ section: 'none', location: 'Office', locationField: null, dirty: true });
+    core.controller.openLocation('user'); core.controller.setLocationText('Home', 'user'); core.controller.cancelLocation('user');
+    expect(core.store.getState().location).toBe('Office');
+    core.controller.openLocation('user'); core.controller.setLocationText('Home', 'user');
+    expect(core.controller.escape()).toBe('section');
+    expect(core.store.getState()).toMatchObject({ section: 'none', location: 'Office', phase: { type: 'open' } });
+    core.controller.openLocation('user'); core.controller.setLocationText('Home', 'user');
+    core.controller.pointerDownInPanel(197); expect(core.store.getState().section).toBe('location');   // the bar keeps its meaning
+    core.controller.pointerDownInPanel(105); expect(core.store.getState()).toMatchObject({ section: 'none', location: 'Office' });
+    core.controller.openLocation('user'); core.controller.setLocationText('Home', 'user'); core.controller.toggleLocation('user');
+    expect(core.store.getState()).toMatchObject({ section: 'none', location: 'Office' });
+    core.controller.openLocation('user'); core.controller.clearLocation('user');
+    expect(core.store.getState()).toMatchObject({ section: 'none', location: null });
+  });
+  test('Location: ↩ and ⌘↩ mean Done, never save; ✓ applies an edited location, then saves', async () => {
+    const a = createTestCore(); await openPanel(a);
+    a.controller.setTitle('Call mum', 'user');
+    a.controller.openLocation('user'); a.controller.setLocationText('Office', 'user');
+    await expect(a.controller.textRowSubmit('user')).resolves.toBeNull();
+    expect(a.store.getState()).toMatchObject({ section: 'none', location: 'Office', savedItems: [] });
+    a.controller.openLocation('user'); a.controller.setLocationText('Home', 'user');
+    await expect(a.controller.save('user')).resolves.toBeNull();
+    expect(a.store.getState()).toMatchObject({ section: 'none', location: 'Home', savedItems: [] });
+    a.controller.openLocation('user'); a.controller.setLocationText('Café Slavia', 'user');
+    a.controller.saveFromBar('user'); await adv(320);
+    expect(a.store.getState().savedItems[0]).toMatchObject({ title: 'Call mum', notes: '📍 Café Slavia' });
+    const b = createTestCore(); await openPanel(b);
+    b.controller.setTitle('B', 'user'); b.controller.setLocation('Office', 'user'); b.controller.openLocation('user');
+    b.controller.saveFromBar('user'); await adv(320);
+    expect(b.store.getState().savedItems[0].notes).toBe('📍 Office');                              // untouched: saved as it was
+  });
+  test('switching between Location and Set Date keeps what was typed; an invalid typed date beeps and blocks it (SectionHandoff)', async () => {
+    const core = createTestCore(); await openPanel(core);
+    core.controller.openLocation('user'); core.controller.setLocationText('Office', 'user');
+    core.controller.toggleSchedule('user');                                                         // calendar button while Location is open
+    expect(core.store.getState()).toMatchObject({ section: 'controls', location: 'Office', locationField: null });
+    core.controller.setScheduleText('+2h', 'user');
+    core.controller.toggleLocation('user');                                                         // the edited draft is Set first
+    expect(core.store.getState()).toMatchObject({ section: 'location', dueDate: new Date('2026-09-18T10:00:00Z'), locationField: 'Office' });
+    core.controller.openSchedule('user');                                                           // ⌘D from an untouched Location: nothing written
+    expect(core.store.getState()).toMatchObject({ section: 'controls', location: 'Office' });
+    core.controller.setScheduleText('tomorrow please', 'user');
+    expect(core.controller.switchSection('location', 'user')).toBe(false);
+    expect(core.store.getState().section).toBe('controls');
+    expect(core.store.beepCount).toBe(1);
   });
   ```
 - [ ] **Step 2: Run it** — `npx vitest run tests/recreation/controller.test.ts`. Expected: FAIL.
@@ -3361,7 +3601,7 @@ insert with `setRangeText(…, 'end')`, then `onChange` (Swift `shouldChangeText
   export function HeaderView(): JSX.Element;
   export interface PopoverAnchor { readonly x: number; readonly y: number; readonly align: 'start' | 'center' }   // canvas points
   export const LIST_PICKER_ANCHOR: PopoverAnchor;      // { x: 63, y: 91, align: 'start' }
-  export function PopoverSurface(props: { anchor: PopoverAnchor; name: 'lists' | 'location'; label: string; role: 'menu' | 'dialog';
+  export function PopoverSurface(props: { anchor: PopoverAnchor; name: 'lists'; label: string; role: 'menu';   // the list picker is the only popover (B-D3)
     minWidth?: number; padding?: string; children: ReactNode }): JSX.Element;
   export function ListPickerMenu(): JSX.Element;       // renders only while state.listPickerOpen
   ```
@@ -3508,7 +3748,7 @@ Date chip: flex row gap 6, colour accent: [`HoverButton` `aria-label="Change dat
     expect(plainSpaces(chip.textContent!)).toBe('Tomorrow, 2:00 PM');
     expect(chip.querySelector('[data-sf="calendar@12"]')).not.toBeNull();
     fireEvent.click(chip);
-    expect(core.store.getState().schedule).toBe('controls');
+    expect(core.store.getState().section).toBe('controls');
     core.controller.cancelSchedule('user');
     fireEvent.click(screen.getByRole('button', { name: 'Clear date' }));
     expect(core.store.getState().dueDate).toBeNull();
@@ -3540,13 +3780,13 @@ Date chip: flex row gap 6, colour accent: [`HoverButton` `aria-label="Change dat
 - Test: `tests/ui/BottomBar.test.tsx`
 
 **Interfaces:**
-- Consumes: `HoverHighlightButton`, `HoverButton` (B4); `SFIcon` (B3); `toTransition`, `Motion.{flag, canSave, highlight}`; B9 context.
+- Consumes: `HoverHighlightButton`, `HoverButton` (B4); `SFIcon` (B3); `toTransition`, `Motion.{flag, canSave, highlight}`; B9 context; controller `toggleSchedule`, `toggleLocation`, `toggleFlag`, `saveFromBar`.
 - Produces:
   ```ts
   export const PILL = { height: 44, padX: 11, gap: 17, iconSize: 18, hit: 38 } as const;
   export const SAVE_BUTTON = { size: 48, glyph: 22 } as const;
   export function BottomBar(): JSX.Element;
-  export function saveHelp(state: RecreationState): string;   // 'Save reminder' | 'Applies the date in Set Date, then saves'
+  export function saveHelp(state: RecreationState): string;   // 'Save reminder' | 'Applies the date in Set Date, then saves' | 'Applies the location, then saves' (BottomBar.saveHelp)
   ```
 
 Values: bar `display: flex; align-items: center`; pill `height: px(44)`, `padding: 0 px(11)`, `gap: px(17)`, capsule
@@ -3556,14 +3796,17 @@ Values: bar `display: flex; align-items: center`; pill `height: px(44)`, `paddin
   glyph `calendar.badge.clock@18`, colour accent when `dueDate !== null || schedulingInNotch`, else white; behind the glyph an open-state
   disc inset 3 pt (32 pt) `color-mix(in srgb, var(--qr-list-accent) 22%, transparent)` while the section is open, opacity faded with
   `Motion.highlight`; click → `toggleSchedule('user')`.
-- location: `aria-label` = `location ? 'Location, ' + location : 'Add location'`, `data-qr-target="locationIcon"`, glyph `location.fill@18`
-  in the accent when a location is set, else `location@18` white; click → `openLocationPopover('user')`.
+- location (Swift `BottomBar.locationButton`, notch style): `aria-label` = `location ? 'Location, ' + location : 'Add location'` (the label names the
+  location, the open state is separate), `aria-pressed={locationInNotch}` (toggle trait), `aria-description` = `locationInNotch ? 'Hides Location' : 'Shows Location below'`,
+  `data-qr-target="locationIcon"`; glyph `location.fill@18` when a location is set, else `location@18`; colour accent when `location !== null || locationInNotch`,
+  else white; behind the glyph the same open-state disc as the calendar (inset 3 pt, accent 22 %, `Motion.highlight`) while Location is shown;
+  click → `toggleLocation('user')` (opens Location below the bar, switching over from Set Date if that is shown, or closes it again; never a popover).
 - flag: `aria-label="Toggle flag"`, `aria-pressed={flagged}`, `data-qr-target="flagIcon"`, glyph `flag.fill@18` in `var(--qr-flag-orange)`
   when flagged, else `flag@18` white; click → `toggleFlag('user')`.
 - glyph swaps (`.contentTransition(.symbolEffect(.replace))`): `AnimatePresence mode="popLayout"` keyed by the glyph name, old glyph
   scale → 0.5 and opacity → 0, new glyph from scale 0.5 / opacity 0, `Motion.flag` (spring 0.25 / 0.7); reduced → opacity with `Motion.reduced`.
 - ✓: `HoverButton` with `layoutId="save"` (motion, shared with the saved badge, Swift `matchedGeometryEffect(id: "save")`),
-  `aria-label="Save reminder"`, `title={saveHelp(state)}`, `data-qr-target="save"`, disabled when `!canSave`; a 48 pt circle,
+  `aria-label="Save reminder"`, `title={saveHelp(state)}`, `data-qr-target="save"`, disabled when `!canSave`; it gives up ⌘↩ while a section is open (B22 routes ⌘↩ to Set / Done then); a 48 pt circle,
   `background` `var(--qr-list-accent)` when `canSave` else `var(--qr-gray-circle-disabled)` (colour animated with `Motion.canSave`,
   easeInOut 0.18), `SFIcon checkmark@22` white. While `badgeShown` the button is not rendered; an empty 48 × 48 slot `data-qr-save-slot` keeps
   the row. Click → `saveFromBar('user')`.
@@ -3623,13 +3866,28 @@ Values: bar `display: flex; align-items: center`; pill `height: px(44)`, `paddin
     await openPanel(core);
     const cal = screen.getByRole('button', { name: 'Set date and time' });
     fireEvent.click(cal);
-    expect(core.store.getState().schedule).toBe('controls');
+    expect(core.store.getState().section).toBe('controls');
     expect(cal.getAttribute('aria-pressed')).toBe('true');
     const disc = cal.querySelector('[data-qr-open-disc]') as HTMLElement;
     expect([ptOf(disc.style.inset)]).toEqual([3]);
     expect(screen.getByRole('button', { name: 'Save reminder' }).title).toBe('Applies the date in Set Date, then saves');
     fireEvent.click(cal);
-    expect(core.store.getState().schedule).toBe('none');
+    expect(core.store.getState().section).toBe('none');
+  });
+  test('location icon toggles the in-notch Location section and shows it is open', async () => {
+    const { core } = renderWithCore(<BottomBar />);
+    await openPanel(core);
+    const loc = screen.getByRole('button', { name: 'Add location' });
+    fireEvent.click(loc);
+    expect(core.store.getState().section).toBe('location');
+    expect([loc.getAttribute('aria-pressed'), loc.getAttribute('aria-description')]).toEqual(['true', 'Hides Location']);
+    expect(loc.querySelector('[data-qr-glyph]')!.getAttribute('style')).toContain('color: var(--qr-list-accent)');   // active while shown
+    expect(loc.querySelector('[data-sf="location@18"]')).not.toBeNull();                                            // still no location
+    expect(ptOf((loc.querySelector('[data-qr-open-disc]') as HTMLElement).style.inset)).toBe(3);
+    expect(screen.getByRole('button', { name: 'Save reminder' }).title).toBe('Applies the location, then saves');
+    fireEvent.click(loc);
+    expect(core.store.getState().section).toBe('none');
+    expect([loc.getAttribute('aria-pressed'), loc.getAttribute('aria-description')]).toEqual(['false', 'Shows Location below']);
   });
   test('the ✓ yields its slot to the flying badge', async () => {
     const { core, container } = renderWithCore(<BottomBar />);
@@ -3643,71 +3901,114 @@ Values: bar `display: flex; align-items: center`; pill `height: px(44)`, `paddin
 - [ ] **Step 2: Run it** — `npx vitest run tests/ui/BottomBar.test.tsx`. Expected: FAIL.
 - [ ] **Step 3: Implement** `BottomBar.tsx`. The ✓ disc exposes its target fill as `data-fill` (the animated `background` follows it).
   Each glyph sits in a `span data-qr-glyph` that carries the colour.
-- [ ] **Step 4: Run it** — Expected: PASS (6 tests).
+- [ ] **Step 4: Run it** — Expected: PASS (7 tests).
 - [ ] **Step 5: Commit** — `git add src/recreation/ui/BottomBar.tsx tests/ui/BottomBar.test.tsx && git commit -m "feat(recreation): bottom bar pill with date, location and flag, and the save button"`
 
 ---
 
-### Task 34 (B14): LocationPopover (landing spec §11.4, `BottomBar.locationPopover`)
+### Task 34 (B14): LocationNotchSection — Location in the notch (`LocationNotchSection.swift`, landing spec §5.3, §11.4, B-D3)
+
+The location button grows the panel downward and this short section is appended below the bottom bar, like Set Date (app `0c87117`,
+SPEC §1 "Location icon"): a field, then Clear · Cancel · Done. Nothing reaches the reminder until Done (↩ in the field, ↩ / ⌘↩ anywhere in the
+panel), Clear or ✓ (`LocationDraft.saveDecision`); Cancel, Esc, the location button and a click on the header / title / notes close it without
+writing (Task 29 (B9)). Switching to Set Date keeps what was typed (`LocationDraft.textToKeepOnSwitch`, Task 29 `switchSection`). Heights are
+`LocationMetrics` (Task 16 (A16)): field 36 + 14 + footer 36 = 86 pt, + the 20 pt inset → panel 241 + 86 + 20 = 347 pt.
 
 **Files:**
-- Create: `src/recreation/ui/LocationPopover.tsx`
-- Test: `tests/ui/LocationPopover.test.tsx`
+- Create: `src/recreation/ui/LocationNotchSection.tsx`
+- Test: `tests/ui/LocationNotchSection.test.tsx`
 
 **Interfaces:**
-- Consumes: `PopoverSurface`, `PopoverAnchor` (B11); `NotchFillButton` (B4); `AccentContrast.label`; B9 context.
+- Consumes: `NotchFillButton`, `NotchTextButton` (B4); `SFIcon` (`location@12`, B3); `staggerTransition`, `Motion.focusRing` (B1); `AccentContrast.label` (A11);
+  `Theme.{locationField, footer}`, `LocationMetrics`, `ScheduleMetrics.controlRadius` (A16, A17); `LocationDraft` (A14); `useRecreationState`, `useCore` (B9);
+  store `locationDraft` (B6); controller `setLocationText`, `commitLocation`, `cancelLocation`, `clearLocation` (B9); focus registry `register('locationField', el)`.
 - Produces:
   ```ts
-  export const LOCATION_ANCHOR: PopoverAnchor;   // { x: 148, y: 224, align: 'center' }: icon centre 24 + 124; icon hit 178–216 (38 centred in the 44 pill at 175) + 8
-  export function LocationPopover(): JSX.Element; // renders only while state.locationPopoverOpen
+  export function LocationNotchSection(): JSX.Element;    // mounted by QuickReminderView while panel.flags.section === 'location' (B20)
+  export function doneLabel(committed: string): string;   // 'Done, no location' | `Done, ${committed}` (Swift Done accessibilityLabel)
   ```
 
-Values: surface padding 14, flex column gap 10 (Swift `VStack(spacing: 10).padding(14)`); "Location" 13 / 600 white; field
-`<input>` `aria-label="Location"`, placeholder "Enter location", `data-qr-field="locationField"`, `data-qr-target="locationField"`,
-width 220, height 28, padding-x 12, font 14 / 400 white, `--qr-ph: rgba(255, 255, 255, 0.5)`, background white 7 %, inner stroke white 8 %
-(accent 70 % while focused, `Motion.focusRing`), radius 12 (type-field styling, `ScheduleNotchSection.typeField`); footer row
-`justify-content: flex-end`; Done = `NotchFillButton kind="prominent" radius={12}`, height 28, padding-x 14, 13 / 600, label colour
-`AccentContrast.label(accent)`, `data-qr-target="locationDone"`. The field is bound live (Swift binds `locationText` directly):
-`setLocation(value, 'user')` on every change; ↩ in the field and Done close the popover (B22 maps ↩); opening from the icon focuses the field.
+Layout (Swift `LocationNotchSection.body`, `field`, `footer`; `QuickReminderView` `.frame(maxHeight: .infinity, alignment: .top).padding(.bottom, 20)`):
+- Root `role="group"`, `aria-label="Location"`, `data-qr-section="location"`, flex column, `flex: 1 1 auto; min-height: 0; padding-bottom: 20`.
+- Field row (`data-qr-row`, `data-stagger="0"`): box `data-qr-location-field`, height 36 (`LocationMetrics.field`), padding-x 12, flex gap 8,
+  background white 7 %, inner stroke 1 pt white 8 % (accent 70 % while the input is focused, `Motion.focusRing` easeOut 0.15), radius 12
+  (`ScheduleMetrics.controlRadius`); `SFIcon location@12` in the accent (`aria-hidden`); `<input>` `aria-label="Location"`,
+  `aria-description="Added to the notes with a pin. Return applies it."`, placeholder "Enter location" with `--qr-ph: rgba(255, 255, 255, 0.5)`,
+  14 / 400 white, `data-qr-field="locationField"`, `data-qr-target="locationField"`, value `state.locationField ?? ''`; change →
+  `setLocationText(value, 'user')` (the draft, never the location); a click anywhere on the box focuses the input (`.onTapGesture { fieldFocused = true }`).
+- Footer row (`data-qr-row`, `data-stagger="1"`) `margin-top: 14` (`LocationMetrics.footerGap`); footer `data-qr-footer` flex, gap 8, height 36
+  (`LocationMetrics.footer`): "Clear" `NotchTextButton` only while `state.location !== null` (Swift `!locationText.isEmpty`), `data-qr-target="locationClear"`,
+  `aria-description="Removes the location from the reminder"` → `clearLocation('user')`; spacer `flex: 1 0 0; min-width: 0` (`Spacer(minLength: 0)`);
+  Cancel `NotchFillButton kind="neutral" radius={12}`, 13 / 500 white 85 %, padding-x 16, height 36, `data-qr-target="locationCancel"` →
+  `cancelLocation('user')`; Done `NotchFillButton kind="prominent" radius={12}`, 13 / 600, padding-x 18, height 36, label colour
+  `AccentContrast.label(accent)`, `aria-label` = `doneLabel(draft.committed)`, `data-qr-target="locationDone"` → `commitLocation('user')`.
+- Rows stagger in exactly like B19 (`staggerTransition(0)` field, `staggerTransition(1)` footer: opacity 0 → 1, translateY −6 pt, blur 3 pt, easeOut 0.24 at
+  0.06 + i · 0.035 s; under reduce only the opacity, `Motion.reduced`); the section's own enter / exit opacity (`Motion.sectionIn` / `sectionOut`) is B20's
+  `AnimatePresence`, the same as Set Date's (`notchSectionTransition`).
+- The section keeps the `LocationDraft` it mounted with (`useRef`, replaced when the store hands out a new draft), so it can render during its exit after
+  the store dropped the draft. Keys: ↩ in the field → `commitLocation` and ⌘↩ anywhere → `commitSection` are mapped in B22 (Swift `.onSubmit(done)`,
+  `CommandReturnTwin(action: done)`, Done is the `.defaultAction`). Focus: a `'user'` open focuses the field on the next turn (B9); an `'api'` open never does.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test** `tests/ui/LocationNotchSection.test.tsx`
   ```ts
   // @vitest-environment jsdom
   import './setup';
   import { screen, fireEvent, act } from '@testing-library/react';
-  import { LocationPopover } from '../../src/recreation/ui/LocationPopover';
-  import { renderWithCore, ptOf, useTestTime, openPanel } from './support';
+  import { LocationNotchSection, doneLabel } from '../../src/recreation/ui/LocationNotchSection';
+  import { renderWithCore, ptOf, useTestTime, openPanel, createTestCore } from './support';
   beforeEach(() => useTestTime());
-  test('anchored under the pin, black §11.4 surface, live field, Done closes', async () => {
-    const { core } = renderWithCore(<LocationPopover />);
-    await openPanel(core);
-    act(() => core.controller.openLocationPopover('user'));
-    await act(async () => { vi.advanceTimersByTime(16); });
-    const dlg = screen.getByRole('dialog', { name: 'Location' });
-    expect([ptOf(dlg.style.left), ptOf(dlg.style.top), dlg.style.transform]).toEqual([148, 224, 'translateX(-50%)']);
-    expect([ptOf(dlg.style.padding), ptOf(dlg.style.gap)]).toEqual([14, 10]);
-    const field = screen.getByRole('textbox', { name: 'Location' }) as HTMLInputElement;
-    expect([ptOf(field.style.width), ptOf(field.style.height), ptOf(field.style.borderRadius), field.placeholder]).toEqual([220, 28, 12, 'Enter location']);
+  test('field + Clear · Cancel · Done in the LocationMetrics rhythm (36 + 14 + 36, inset 20)', async () => {
+    const core = createTestCore(); await openPanel(core);
+    act(() => core.controller.openLocation('user'));
+    const { container } = renderWithCore(<LocationNotchSection />, core);
+    const section = screen.getByRole('group', { name: 'Location' });
+    expect([section.dataset.qrSection, ptOf(section.style.paddingBottom)]).toEqual(['location', 20]);
+    const box = container.querySelector('[data-qr-location-field]') as HTMLElement;
+    expect([ptOf(box.style.height), ptOf(box.style.paddingLeft), ptOf(box.style.gap), ptOf(box.style.borderRadius)]).toEqual([36, 12, 8, 12]);
+    expect(box.querySelector('[data-sf="location@12"]')).not.toBeNull();
+    expect((screen.getByRole('textbox', { name: 'Location' }) as HTMLInputElement).placeholder).toBe('Enter location');
+    const footer = container.querySelector('[data-qr-footer]') as HTMLElement;
+    expect([ptOf((footer.closest('[data-qr-row]') as HTMLElement).style.marginTop), ptOf(footer.style.height), ptOf(footer.style.gap)]).toEqual([14, 36, 8]);
+    expect([...container.querySelectorAll('[data-qr-row]')].map(r => (r as HTMLElement).dataset.stagger)).toEqual(['0', '1']);
+    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull();                 // no location yet
+    const cancel = screen.getByRole('button', { name: 'Cancel' }), done = screen.getByRole('button', { name: 'Done, no location' });
+    expect([ptOf(cancel.style.height), ptOf(cancel.style.paddingLeft), ptOf(done.style.height), ptOf(done.style.paddingLeft)]).toEqual([36, 16, 36, 18]);
+    expect(done.style.color).toBe('rgb(255, 255, 255)');                                 // AccentContrast.label('#0A84FF') = '#FFFFFF'
+  });
+  test('typing stays in the field until Done; a visitor open focuses the field', async () => {
+    const core = createTestCore(); await openPanel(core);
+    renderWithCore(<LocationNotchSection />, core);                                     // renders nothing until the section opens
+    act(() => core.controller.openLocation('user'));
+    await act(async () => { vi.advanceTimersByTime(0); });
+    const field = screen.getByRole('textbox', { name: 'Location' });
     expect(document.activeElement).toBe(field);
     fireEvent.change(field, { target: { value: 'Office' } });
-    expect(core.store.getState()).toMatchObject({ location: 'Office', dirty: true });
-    const done = screen.getByRole('button', { name: 'Done' });
-    expect(done.style.color).toBe('rgb(255, 255, 255)');   // AccentContrast.label('#0A84FF') = '#FFFFFF' (jsdom writes rgb)
-    fireEvent.click(done);
-    expect(core.store.getState().locationPopoverOpen).toBe(false);
+    expect(core.store.getState()).toMatchObject({ location: null, locationField: 'Office', dirty: false });
+    fireEvent.click(screen.getByRole('button', { name: 'Done, Office' }));
+    expect(core.store.getState()).toMatchObject({ location: 'Office', section: 'none', locationField: null, dirty: true });
   });
-  test('Done label turns black on a light list colour (AccentContrast)', async () => {
-    const { core } = renderWithCore(<LocationPopover />);
-    await openPanel(core);
-    act(() => { core.controller.setList('home', 'user'); core.controller.openLocationPopover('api'); });
-    expect(screen.getByRole('button', { name: 'Done' }).style.color).toBe('rgb(0, 0, 0)');   // '#000000' on #FF9F0A
-    expect(document.activeElement).not.toBe(screen.getByRole('textbox', { name: 'Location' }));
+  test('Cancel leaves the location; Clear (shown only with a location) removes it; Done turns black on a light list colour', async () => {
+    const core = createTestCore(); await openPanel(core);
+    act(() => { core.controller.setList('home', 'user'); core.controller.setLocation('Office', 'user'); core.controller.openLocation('api'); });
+    renderWithCore(<LocationNotchSection />, core);
+    expect(document.activeElement).not.toBe(screen.getByRole('textbox', { name: 'Location' }));   // an API open never takes focus
+    expect(screen.getByRole('button', { name: 'Done, Office' }).style.color).toBe('rgb(0, 0, 0)');  // '#000000' on #FF9F0A
+    fireEvent.change(screen.getByRole('textbox', { name: 'Location' }), { target: { value: 'Home' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(core.store.getState()).toMatchObject({ location: 'Office', section: 'none' });
+    act(() => core.controller.openLocation('user'));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(core.store.getState()).toMatchObject({ location: null, section: 'none' });
+  });
+  test('doneLabel (Done accessibilityLabel)', () => {
+    expect(doneLabel('')).toBe('Done, no location');
+    expect(doneLabel('Office')).toBe('Done, Office');
   });
   ```
-- [ ] **Step 2: Run it** — `npx vitest run tests/ui/LocationPopover.test.tsx`. Expected: FAIL.
-- [ ] **Step 3: Implement** `LocationPopover.tsx`.
-- [ ] **Step 4: Run it** — Expected: PASS (2 tests).
-- [ ] **Step 5: Commit** — `git add src/recreation/ui/LocationPopover.tsx tests/ui/LocationPopover.test.tsx && git commit -m "feat(recreation): location popover in the panel's own black style"`
+- [ ] **Step 2: Run it** — `npx vitest run tests/ui/LocationNotchSection.test.tsx`. Expected: FAIL (module missing).
+- [ ] **Step 3: Implement** `LocationNotchSection.tsx` (renders `null` while `panel.flags.section !== 'location'` and no draft was captured).
+- [ ] **Step 4: Run it** — Expected: PASS (4 tests).
+- [ ] **Step 5: Commit** — `git add src/recreation/ui/LocationNotchSection.tsx tests/ui/LocationNotchSection.test.tsx && git commit -m "feat(recreation): in-notch Location section with Clear, Cancel and Done"`
 
 ---
 
@@ -3981,7 +4282,7 @@ Values (Swift `typeField`, `previewLine`, `presetGrid`, `presetCard`; heights fr
     expect([ptOf(cards[0].style.height), ptOf(cards[0].style.paddingLeft), ptOf(cards[0].style.borderRadius)]).toEqual([44, 10, 12]);
     expect(plainSpaces(cards[2].getAttribute('aria-label')!)).toBe('Tomorrow, Saturday 9:00 AM, Command 3');
     fireEvent.click(cards[4]);
-    expect(core.store.getState()).toMatchObject({ dueDate: new Date('2026-09-21T07:00:00Z'), presetPick: { preset: 'nextWeek' }, schedule: 'none' });
+    expect(core.store.getState()).toMatchObject({ dueDate: new Date('2026-09-21T07:00:00Z'), presetPick: { preset: 'nextWeek' }, section: 'none' });
   });
   test('minimumScaleFactor 0.75', () => {
     expect(fitScale(121.667, 100)).toBe(1);
@@ -4050,7 +4351,7 @@ Values (Swift `dayTimeRow`, `timeField`, `timeChip`, `footer`):
     const chevron = day.querySelector('[data-sf="chevron.down@9"]')!.closest('[data-qr-glyph]') as HTMLElement;
     expect(chevron.dataset.rotation).toBe('0');
     fireEvent.click(day);
-    expect(core.store.getState().schedule).toBe('calendar');
+    expect(core.store.getState().section).toBe('calendar');
     rerender(<DayTimeRow draft={core.store.scheduleDraft!} showsCalendar />);
     expect(screen.getByRole('button', { name: 'Calendar' }).dataset.kind).toBe('selected');
     expect((screen.getByRole('button', { name: 'Calendar' }).querySelector('[data-qr-glyph][data-rotation]') as HTMLElement).dataset.rotation).toBe('180');
@@ -4093,7 +4394,7 @@ Values (Swift `dayTimeRow`, `timeField`, `timeChip`, `footer`):
     expect(set.disabled).toBe(true);
     act(() => core.controller.setScheduleText('', 'user'));
     fireEvent.click(set);
-    expect(core.store.getState()).toMatchObject({ schedule: 'none', dueDate: new Date('2026-09-19T07:00:00Z') });
+    expect(core.store.getState()).toMatchObject({ section: 'none', dueDate: new Date('2026-09-19T07:00:00Z') });
   });
   test('Clear shows once a date is set and removes it', async () => {
     const core = await opened();
@@ -4101,7 +4402,7 @@ Values (Swift `dayTimeRow`, `timeField`, `timeChip`, `footer`):
     act(() => { core.controller.setDueDate(new Date('2026-09-20T07:00:00Z'), null, 'api'); core.controller.openSchedule('api'); });
     renderWithCore(<ScheduleFooter draft={core.store.scheduleDraft!} />, core);
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
-    expect(core.store.getState()).toMatchObject({ dueDate: null, schedule: 'none' });
+    expect(core.store.getState()).toMatchObject({ dueDate: null, section: 'none' });
   });
   test('NumericText re-keys only the glyphs that changed', () => {
     const { container, rerender } = renderWithCore(<NumericText text="Sat 9:00" />);
@@ -4130,7 +4431,7 @@ Values (Swift `dayTimeRow`, `timeField`, `timeChip`, `footer`):
   `NotchLayout.openSize`, `panelSize`, `ScheduleMetrics` (gaps); `usePanel`, `useScheduleDraft` (B9); store `calendarMonth`, `pageMonth`; controller `pickDay`.
 - Produces:
   ```ts
-  export function ScheduleNotchSection(): JSX.Element;   // mounted by QuickReminderView while panel.flags.schedule !== 'none'
+  export function ScheduleNotchSection(): JSX.Element;   // mounted by QuickReminderView while isSchedule(panel.flags.section)
   export const ANNOUNCE_PAUSE_MS: 400;
   ```
 
@@ -4138,14 +4439,16 @@ Layout (Swift `ScheduleNotchSection.body`, `rows`, `QuickReminderView` `.padding
 root `role="group"`, `aria-label="Set Date"`, `data-qr-section`, flex column, `flex: 1 1 auto; min-height: 0; padding-bottom: 20`;
 a rows area (`data-qr-section-rows`, `flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain`) holding:
 type field (stagger 0), preview `margin-top: 6` (stagger 0), presets `margin-top: 10` (stagger 1), day / time row `margin-top: 12`
-(stagger 2), and while `schedule === 'calendar'` the month grid `margin-top: 10`; then the footer `margin-top: 14` (stagger 3) outside
+(stagger 2), and while `section === 'calendar'` the month grid `margin-top: 10`; then the footer `margin-top: 14` (stagger 3) outside
 the rows area (pinned). Stagger: each row starts at opacity 0, translateY −6 pt, blur 3 pt and animates to 0 with
 `staggerTransition(i)` (easeOut 0.24, delay 0.06 + i·0.035); under reduce only the opacity, `Motion.reduced`. The y and blur are motion
 values in points composed into `transform: translateY(calc(v * var(--pt) * 1px))` and `filter: blur(calc(b * var(--pt) * 1px))`.
 Section enter: opacity with `Motion.sectionIn` (easeOut 0.12); exit (`AnimatePresence` in B20): opacity `Motion.sectionOut` (easeOut 0.10)
 while the blob retracts over it. Calendar slot: `AnimatePresence`, enter / exit opacity + translateY −8 pt with `effective('schedule')`;
 reduce → opacity only. The section keeps the `ScheduleDraft` it mounted with (`useRef`), so it can render during its exit after the store
-dropped the draft. Clamp: `data-clamped` = `panelSize(sizes, schedule).height < NotchLayout.openSize(39, schedule).height`; when clamped and
+dropped the draft; during that exit it also keeps the depth it last had (a switch from `'calendar'` to `'location'` fades the whole section
+out, the calendar slot does not run its own exit). One section at a time (B20): a switch to Location plays this exit while Location's rows
+stagger in, inside the blob's one spring. Clamp: `data-clamped` = `panelSize(sizes, section).height < NotchLayout.openSize(39, section).height`; when clamped and
 the calendar opens, `grid.scrollIntoView({ block: 'end', behavior: reduce ? 'auto' : 'smooth' })` (Swift `proxy.scrollTo(calendarID, anchor: .bottom)`
 with easeOut 0.25). Announcements: a visually hidden `aria-live="polite"` region; 400 ms × time scale after the last change of a non-blank
 `draft.text` it receives `previewSpoken()`; a further change, a commit or the unmount cancels it (`ScheduleDraft.announceAfterPause`).
@@ -4223,7 +4526,7 @@ Grid wiring: `month = store.calendarMonth`, `onPick = pickDay(day, 'user')`, `on
   });
   ```
 - [ ] **Step 2: Run it** — `npx vitest run tests/ui/ScheduleNotchSection.test.tsx`. Expected: FAIL.
-- [ ] **Step 3: Implement** `ScheduleNotchSection` (renders `null` while `panel.flags.schedule === 'none'` and no draft was captured).
+- [ ] **Step 3: Implement** `ScheduleNotchSection` (renders `null` while `!isSchedule(panel.flags.section)` and no draft was captured).
   The day / time wrapper carries `data-qr-day-time`, the footer `data-qr-footer`, the grid wrapper `data-qr-calendar`; every row wrapper is
   `data-qr-row` with `data-stagger`.
 - [ ] **Step 4: Run it** — `npx vitest run tests/ui/ScheduleNotchSection.test.tsx tests/ui/ScheduleRows.test.tsx tests/ui/ScheduleControls.test.tsx`. Expected: PASS.
@@ -4238,7 +4541,7 @@ Grid wiring: `month = store.calendarMonth`, `onPick = pickDay(day, 'user')`, `on
 - Test: `tests/ui/QuickReminderView.test.tsx`
 
 **Interfaces:**
-- Consumes: `HeaderView` (B11), `InputView` (B10), `ChipSlot` (B12), `BottomBar` (B13), `ScheduleNotchSection` (B19); `panelSize`, `notchBandHeight`;
+- Consumes: `HeaderView` (B11), `InputView` (B10), `ChipSlot` (B12), `BottomBar` (B13), `LocationNotchSection` (B14), `ScheduleNotchSection` (B19); `isSchedule`; `panelSize`, `notchBandHeight`;
   `usePanel`, `useRecreationState`, `useCore` (B9); controller `pointerDownInPanel`.
 - Produces:
   ```ts
@@ -4250,8 +4553,11 @@ Layout: root `data-qr-panel-content`, `width: px(panel.width)`, `height: px(pane
 out at its final height at once, `NotchMachine.changeSection`), flex column, `padding: 0 px(39)`, `pointer-events: none` on the root and
 `auto` on its children while `flags.isOpen && !ignoresMouse` (Swift `allowsHitTesting(state.isOpen)`); a 39 pt band spacer (the notch band,
 dead zone, `notchBandHeight`); header wrapper `margin-top: 8`; input wrapper `margin-top: 10`; chip slot wrapper `margin-bottom: 8`; bottom bar
-wrapper `margin-bottom: 20`; then `AnimatePresence` with `ScheduleNotchSection` while `flags.schedule !== 'none'`. The plain panel never changes
-for the section. `onPointerDownCapture`: y in points = `(clientY − rect.top) · panelHeight / rect.height` → `pointerDownInPanel(y)` (the click still lands).
+wrapper `margin-bottom: 20`; then one `AnimatePresence` holding at most one section (Swift `if schedulingInNotch { ScheduleNotchSection } else if
+locationInNotch { LocationNotchSection }`): `ScheduleNotchSection` keyed `schedule` while `isSchedule(flags.section)` (the calendar toggle keeps the
+same key, so `'controls'` ↔ `'calendar'` never remounts it), `LocationNotchSection` keyed `location` while `flags.section === 'location'`. A switch
+between them is one `sectionChanged` (A20): the leaving section fades out (`Motion.sectionOut`) and the entering one fades in with its stagger while the
+blob springs once (`Motion.schedule`, Swift `sectionAnimation`) to the new height (519 / 751 / 347). The plain panel never changes for a section. `onPointerDownCapture`: y in points = `(clientY − rect.top) · panelHeight / rect.height` → `pointerDownInPanel(y)` (the click still lands).
 
 - [ ] **Step 1: Write the failing test**
   ```ts
@@ -4293,9 +4599,23 @@ for the section. `onPointerDownCapture`: y in points = `(clientY − rect.top) �
     const root = container.querySelector('[data-qr-panel-content]') as HTMLElement;
     root.getBoundingClientRect = () => ({ top: 0, left: 0, width: 600, height: 519, right: 600, bottom: 519, x: 0, y: 0, toJSON() {} });
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Toggle flag' }), { clientY: 197 });
-    expect(core.store.getState().schedule).toBe('controls');
+    expect(core.store.getState().section).toBe('controls');
     fireEvent.pointerDown(screen.getByRole('textbox', { name: 'New Reminder' }), { clientY: 105 });
-    expect(core.store.getState().schedule).toBe('none');
+    expect(core.store.getState().section).toBe('none');
+  });
+  test('Location is appended below the bar (347 pt); a switch to Set Date swaps the section in one step', async () => {
+    const core = createTestCore(); await openPanel(core);
+    const { container } = renderWithCore(<QuickReminderView />, core);
+    act(() => core.controller.openLocation('user'));
+    const root = container.querySelector('[data-qr-panel-content]') as HTMLElement;
+    expect(ptOf(root.style.height)).toBe(347);
+    const pill = root.querySelector('[data-qr-pill]')!, loc = root.querySelector('[data-qr-section="location"]')!;
+    expect(pill.compareDocumentPosition(loc) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole('group', { name: 'Set Date' })).toBeNull();
+    act(() => core.controller.openSchedule('user'));
+    expect(ptOf(root.style.height)).toBe(519);
+    expect(screen.getByRole('group', { name: 'Set Date' })).toBeTruthy();
+    expect(core.store.getState()).toMatchObject({ section: 'controls', locationField: null });
   });
   test('no pointer input while closed', () => {
     const { container } = renderWithCore(<QuickReminderView />);
@@ -4305,12 +4625,12 @@ for the section. `onPointerDownCapture`: y in points = `(clientY − rect.top) �
 - [ ] **Step 2: Run it** — `npx vitest run tests/ui/QuickReminderView.test.tsx`. Expected: FAIL.
 - [ ] **Step 3: Implement** `QuickReminderView.tsx` (each wrapper carries `data-qr-stack-item`; `HeaderView`'s root carries `data-qr-header`;
   `data-interactive` mirrors the pointer-events decision).
-- [ ] **Step 4: Run it** — Expected: PASS (4 tests).
+- [ ] **Step 4: Run it** — Expected: PASS (5 tests).
 - [ ] **Step 5: Commit** — `git add src/recreation/ui/QuickReminderView.tsx tests/ui/QuickReminderView.test.tsx && git commit -m "feat(recreation): open panel layout with the SPEC vertical rhythm"`
 
 ---
 
-### Task 41 (B21): NotchContainer — silhouette, masked content transition, saved badge, popovers, click outside (`NotchContainerView.swift`)
+### Task 41 (B21): NotchContainer — silhouette, masked content transition, saved badge, list picker, click outside (`NotchContainerView.swift`)
 
 **Files:**
 - Create: `src/recreation/ui/NotchContainer.tsx`
@@ -4318,11 +4638,11 @@ for the section. `onPointerDownCapture`: y in points = `(clientY − rect.top) �
 
 **Interfaces:**
 - Consumes: `NotchSilhouette`, `useNotchGeometry`, `translatedNotchPath`, `ShapeTarget` (B5); `QuickReminderView` (B20); `SavedCheckView` (B15);
-  `ListPickerMenu` (B11), `LocationPopover` (B14); `currentSize`, `radii`, `panelSize`, `savedSize`; `NotchLayout.{canvasSize, savedBadgeSize, savedBadgeTrailingPadding}`;
-  `effective`, `INSTANT`, `FlagAnimation` (B1); `usePanel`, `useRecreationState`, `useCore` (B9); controller `show('click', true)` (press on the closed notch), `hover`, `pointerDownOutside`, `closeListPicker`, `closeLocationPopover`.
+  `ListPickerMenu` (B11); `currentSize`, `radii`, `panelSize`, `tallestSectionSize`, `savedSize`; `NotchLayout.{canvasSize, openCanvasSize, savedBadgeSize, savedBadgeTrailingPadding}`;
+  `effective`, `INSTANT`, `FlagAnimation` (B1); `usePanel`, `useRecreationState`, `useCore` (B9); controller `show('click', true)` (press on the closed notch), `hover`, `pointerDownOutside`, `closeListPicker`.
 - Produces:
   ```ts
-  export function canvasFor(sizes: NotchSizes): Size;                           // canvasSize(panelSize(sizes, 'calendar')): 648 × 775
+  export function canvasFor(sizes: NotchSizes): Size;                           // openCanvasSize(sizes.openSize, tallestSectionSize(sizes)): 648 × 775 (the calendar; Location 347 never changes it)
   export function contentTransition(animation: FlagAnimation, reduceMotion: boolean, timeScale: number): Transition;
   export function badgeOrigin(sizes: NotchSizes, canvasWidth: number): { left: number; top: number };   // { 459.5, 7.5 }
   export function NotchContainer(): JSX.Element;
@@ -4333,7 +4653,7 @@ Rules (Swift `NotchContainerView`, `PanelController`):
   class `qr-root`.
 - Silhouette: target `{ ...currentSize(flags, sizes), ...radii(flags) }` (saving → saved pill 379 × 39; open → panelSize; hovering → 257 × 44;
   else 235 × 39; radii 19 / 32 open else 6 / 14), animation = `panel.animation`; hover → `controller.hover`; press while closed → `controller.show('click', true)`.
-- Content wrapper `data-qr-content`: absolutely placed at `left: px((canvas.width − panel.width) / 2)` (24), top 0, size = `panelSize(sizes, flags.schedule)`;
+- Content wrapper `data-qr-content`: absolutely placed at `left: px((canvas.width − panel.width) / 2)` (24), top 0, size = `panelSize(sizes, flags.section)`;
   opacity 1 / 0, blur 0 / 8 pt and scale 1 / 0.94 from the top (`transform-origin: top center`) for `contentVisible` true / false; under reduce blur 0
   and scale 1 always; transition `contentTransition(panel.animation)`: `open` → `effective('contentIn')`, `close` and `saving` → `effective('contentOut')`
   (saving always `Motion.contentOut`), `none` → `INSTANT`. `aria-hidden` and `inert` while `!flags.isOpen`.
@@ -4341,7 +4661,7 @@ Rules (Swift `NotchContainerView`, `PanelController`):
   motion values; settled → `clip-path: none` (Swift drops the mask once settled).
 - Saved badge: while `flags.savedBadgeShown`, a wrapper at `badgeOrigin` (right edge = canvas centre + savedWidth / 2 − 30, centre y = 39 / 2) holding
   `SavedCheckView visible={flags.isSaving}`; the ✓ and the badge share `layoutId="save"` inside one `LayoutGroup` (the whole container).
-- Popover layer: `ListPickerMenu` and `LocationPopover` rendered last (above the content).
+- Popover layer: `ListPickerMenu` rendered last (above the content); Location is a section inside the content (B14, B20), not a popover.
 - Click outside: while the phase is open or saving, a capture `pointerdown` listener on the document: target inside a popover → nothing;
   a popover is open and the target is elsewhere inside the shape → close the popover only; target inside the content or the silhouette path → nothing;
   else (scoped to the closest `[data-qr-screen]` ancestor when there is one) → `pointerDownOutside()`.
@@ -4463,7 +4783,7 @@ Also makes the closed notch reachable by keyboard (landing spec §9).
   ```ts
   export type RecreationKeyAction =
     | { type: 'escape' } | { type: 'swallow' } | { type: 'toggle' } | { type: 'submit' } | { type: 'textRowSubmit' }
-    | { type: 'commitSchedule' } | { type: 'applyTypedTime' } | { type: 'closeLocation' } | { type: 'applySuggestion' }
+    | { type: 'commitSchedule' } | { type: 'commitSection' } | { type: 'applyTypedTime' } | { type: 'commitLocation' } | { type: 'applySuggestion' }
     | { type: 'openSchedule' } | { type: 'toggleCalendar' } | { type: 'preset'; preset: DatePreset }
     | { type: 'stepTime'; steps: 1 | -1 } | { type: 'moveDay'; days: -7 | -1 | 1 | 7 };
   export interface KeyContext { readonly state: RecreationState; readonly field: FocusField | null; readonly cmdKey: 'meta' | 'ctrl' }   // field = data-qr-field of the closest ancestor of the event target
@@ -4472,7 +4792,7 @@ Also makes the closed notch reachable by keyboard (landing spec §9).
   export function useRecreationKeys(enabled: boolean): (e: ReactKeyboardEvent) => void;   // for the recreation root's onKeyDown
   ```
 
-Key map (Swift sources in brackets; ⌘ = `cmdKey` held with no other modifier unless stated; `open` = phase open, `section` = schedule ≠ none):
+Key map (Swift sources in brackets; ⌘ = `cmdKey` held with no other modifier unless stated; `open` = phase open, `Set Date` = `isSchedule(section)`, `a section` = section ≠ none, Set Date or Location):
 
 | Key | Condition | Action |
 |---|---|---|
@@ -4480,22 +4800,22 @@ Key map (Swift sources in brackets; ⌘ = `cmdKey` held with no other modifier u
 | Esc | open or saving | `escape` [Esc monitor + `.panelDismissPopovers`; during the hold it hides] |
 | any other key | phase saving | `swallow` [PanelController: "during the saved hold … swallow quietly"] |
 | ⇧⌘R | any | `toggle` [hotkey again collapses] |
-| ⌘↩ | open | `submit` [✓ `keyboardShortcut(.return, .command)`; `CommandReturnTwin` while a section is open] |
+| ⌘↩ | open | `submit` [✓ `keyboardShortcut(.return, .command)`; while a section is open the ✓ drops it and the section's `CommandReturnTwin` commits (Set / Done): `controller.save` → `commitSection`] |
 | ↩ | field `title` / `notes` | `textRowSubmit` [PlainTextView `insertNewline` → `submitFromTextRow`] |
 | ↩ | field `scheduleField` | `commitSchedule` [`.onSubmit(commit)`] |
 | ↩ | field `timeField` | `applyTypedTime` [consumes ↩, keeps the section open] |
-| ↩ | field `locationField` | `closeLocation` [`.onSubmit { showLocationField = false }`] |
-| ↩ | section open, focus on any other element inside | `commitSchedule` [Set is `.defaultAction`] |
+| ↩ | field `locationField` | `commitLocation` [`LocationNotchSection.field` `.onSubmit(done)`] |
+| ↩ | a section open, focus on any other element inside | `commitSection` [Set / Done is `.defaultAction`] |
 | Tab (no modifiers) | field `title`, `state.suggestion !== null` | `applySuggestion` [`onTab`]; otherwise null (native focus move) |
-| ⌘D | open, badge not shown | `openSchedule` [`setDateShortcut`] |
-| ⌘K | section open | `toggleCalendar` [`calendarShortcut`] |
-| ⌘1 … ⌘6 (`code` `Digit1`…`Digit6`) | section open | `preset` `DATE_PRESETS[n − 1]` [`presetCard` `.keyboardShortcut`] |
+| ⌘D | open, badge not shown | `openSchedule` [`setDateShortcut`; from Location it switches over, keeping what was typed] |
+| ⌘K | Set Date open | `toggleCalendar` [`calendarShortcut`, part of `ScheduleNotchSection`; nothing while Location is open] |
+| ⌘1 … ⌘6 (`code` `Digit1`…`Digit6`) | Set Date open | `preset` `DATE_PRESETS[n − 1]` [`presetCard` `.keyboardShortcut`] |
 | ↑ / ↓ | field `timeField` | `stepTime` +1 / −1 [`.onKeyPress(.upArrow / .downArrow)`] |
 | ← / → / ↑ / ↓ | field `calendar` | `moveDay` −1 / +1 / −7 / +7 [grid `.onKeyPress`] |
 | anything else | | null (native behaviour, no `preventDefault`) |
 
 Performing: `escape` → `controller.escape()`; `toggle` → `controller.toggle()`; `submit` → `controller.save('user')`; `textRowSubmit`;
-`commitSchedule('user')`; `applyTypedTime(true)`; `closeLocationPopover()`; `applySuggestion('user')`; `openSchedule('user')`;
+`commitSchedule('user')`; `commitSection('user')`; `applyTypedTime(true)`; `commitLocation('user')`; `applySuggestion('user')`; `openSchedule('user')`;
 `toggleCalendar('user')`; `applyPreset(p, 'user')`; `stepTime(n, 'user')`; `moveDay(d)`; `swallow` → nothing. Every non-null action →
 `e.preventDefault(); e.stopPropagation()`. Keyboard notch button: while the phase is closed, a transparent `<button>` over the closed
 silhouette (235 × 39 at the canvas top centre, `aria-label="New reminder"`, `pointer-events: none` so the path keeps the pointer) — Enter /
@@ -4504,7 +4824,7 @@ Space activate it natively → `controller.show('click', true)`.
 - [ ] **Step 1: Write the failing pure test** `tests/ui/keyboard.test.ts`
   ```ts
   import { recreationKeyFor, platformCmdKey, type KeyContext } from '../../src/recreation/ui/keyboard';
-  const base = { phase: { type: 'open' }, schedule: 'none', suggestion: null, badgeShown: false } as any;
+  const base = { phase: { type: 'open' }, section: 'none', suggestion: null, badgeShown: false } as any;
   const ctx = (field: KeyContext['field'], state: any = {}): KeyContext => ({ state: { ...base, ...state }, field, cmdKey: 'meta' });
   const k = (key: string, mods: Partial<{ meta: boolean; shift: boolean; ctrl: boolean; alt: boolean; code: string; isComposing: boolean }> = {}) =>
     ({ key, code: mods.code ?? '', metaKey: !!mods.meta, shiftKey: !!mods.shift, ctrlKey: !!mods.ctrl, altKey: !!mods.alt, isComposing: !!mods.isComposing });
@@ -4515,25 +4835,29 @@ Space activate it natively → `controller.show('click', true)`.
     [k('r', { meta: true, shift: true }), ctx('title'), { type: 'toggle' }],
     [k('Enter', { meta: true }), ctx('notes'), { type: 'submit' }],
     [k('Enter'), ctx('title'), { type: 'textRowSubmit' }],
-    [k('Enter'), ctx('scheduleField', { schedule: 'controls' }), { type: 'commitSchedule' }],
-    [k('Enter'), ctx('timeField', { schedule: 'controls' }), { type: 'applyTypedTime' }],
-    [k('Enter'), ctx('locationField'), { type: 'closeLocation' }],
-    [k('Enter'), ctx(null, { schedule: 'calendar' }), { type: 'commitSchedule' }],
+    [k('Enter'), ctx('scheduleField', { section: 'controls' }), { type: 'commitSchedule' }],
+    [k('Enter'), ctx('timeField', { section: 'controls' }), { type: 'applyTypedTime' }],
+    [k('Enter'), ctx('locationField', { section: 'location' }), { type: 'commitLocation' }],
+    [k('Enter'), ctx(null, { section: 'calendar' }), { type: 'commitSection' }],
+    [k('Enter'), ctx(null, { section: 'location' }), { type: 'commitSection' }],
+    [k('d', { meta: true }), ctx('locationField', { section: 'location' }), { type: 'openSchedule' }],
+    [k('k', { meta: true }), ctx('locationField', { section: 'location' }), null],
+    [k('3', { meta: true, code: 'Digit3' }), ctx('locationField', { section: 'location' }), null],
     [k('Enter'), ctx(null), null],
     [k('Tab'), ctx('title', { suggestion: { matchedText: 'tomorrow' } }), { type: 'applySuggestion' }],
     [k('Tab'), ctx('title'), null],
     [k('Tab', { shift: true }), ctx('title', { suggestion: { matchedText: 'tomorrow' } }), null],
     [k('d', { meta: true }), ctx('notes'), { type: 'openSchedule' }],
     [k('d', { meta: true }), ctx('notes', { badgeShown: true }), null],
-    [k('k', { meta: true }), ctx('scheduleField', { schedule: 'controls' }), { type: 'toggleCalendar' }],
+    [k('k', { meta: true }), ctx('scheduleField', { section: 'controls' }), { type: 'toggleCalendar' }],
     [k('k', { meta: true }), ctx('title'), null],
-    [k('3', { meta: true, code: 'Digit3' }), ctx(null, { schedule: 'controls' }), { type: 'preset', preset: 'tomorrow' }],
-    [k('6', { meta: true, code: 'Digit6' }), ctx(null, { schedule: 'calendar' }), { type: 'preset', preset: 'nextMonth' }],
+    [k('3', { meta: true, code: 'Digit3' }), ctx(null, { section: 'controls' }), { type: 'preset', preset: 'tomorrow' }],
+    [k('6', { meta: true, code: 'Digit6' }), ctx(null, { section: 'calendar' }), { type: 'preset', preset: 'nextMonth' }],
     [k('1', { meta: true, code: 'Digit1' }), ctx('title'), null],
-    [k('ArrowUp'), ctx('timeField', { schedule: 'controls' }), { type: 'stepTime', steps: 1 }],
-    [k('ArrowDown'), ctx('timeField', { schedule: 'controls' }), { type: 'stepTime', steps: -1 }],
-    [k('ArrowLeft'), ctx('calendar', { schedule: 'calendar' }), { type: 'moveDay', days: -1 }],
-    [k('ArrowDown'), ctx('calendar', { schedule: 'calendar' }), { type: 'moveDay', days: 7 }],
+    [k('ArrowUp'), ctx('timeField', { section: 'controls' }), { type: 'stepTime', steps: 1 }],
+    [k('ArrowDown'), ctx('timeField', { section: 'controls' }), { type: 'stepTime', steps: -1 }],
+    [k('ArrowLeft'), ctx('calendar', { section: 'calendar' }), { type: 'moveDay', days: -1 }],
+    [k('ArrowDown'), ctx('calendar', { section: 'calendar' }), { type: 'moveDay', days: 7 }],
     [k('ArrowUp'), ctx('title'), null],
     [k('Enter', { isComposing: true }), ctx('title'), null],
   ])('%j in %j → %j', (e, c, expected) => expect(recreationKeyFor(e as any, c)).toEqual(expected));
@@ -4568,11 +4892,11 @@ Space activate it natively → `controller.show('click', true)`.
     expect(core.store.getState().title).toBe('Call mum');
     expect(outer).not.toHaveBeenCalled();
     fireEvent.keyDown(title, { key: 'd', metaKey: true });
-    expect(core.store.getState().schedule).toBe('controls');
+    expect(core.store.getState().section).toBe('controls');
     fireEvent.keyDown(title, { key: 'k', metaKey: true });
-    expect(core.store.getState().schedule).toBe('calendar');
+    expect(core.store.getState().section).toBe('calendar');
     fireEvent.keyDown(title, { key: '5', code: 'Digit5', metaKey: true });
-    expect(core.store.getState()).toMatchObject({ schedule: 'none', presetPick: { preset: 'nextWeek' } });
+    expect(core.store.getState()).toMatchObject({ section: 'none', presetPick: { preset: 'nextWeek' } });
     fireEvent.keyDown(title, { key: 'Enter', metaKey: true });
     await act(async () => { vi.advanceTimersByTime(320); });
     expect(core.store.getState().savedItems[0].title).toBe('Call mum');
@@ -4591,7 +4915,28 @@ Space activate it natively → `controller.show('click', true)`.
     fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
     expect(core.store.scheduleDraft!.draft).toEqual(new Date('2026-09-20T07:15:00Z'));
     fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
-    expect(core.store.getState().schedule).toBe('controls');
+    expect(core.store.getState().section).toBe('controls');
+  });
+  test('Location: ↩ in the field is Done, Esc closes it without writing, ⌘↩ is Done and never saves', async () => {
+    const core = createTestCore();
+    renderWithCore(<Root enabled onOuter={() => {}} />, core);
+    await openPanel(core);
+    const field = () => screen.getAllByRole('textbox', { name: 'Location' }).at(-1)!;
+    const open = async () => { act(() => core.controller.openLocation('user')); await act(async () => { vi.advanceTimersByTime(0); }); };
+    const settle = () => act(async () => { vi.advanceTimersByTime(600); });
+    core.controller.setTitle('Call mum', 'user');
+    await open();
+    fireEvent.change(field(), { target: { value: 'Office' } });
+    expect(fireEvent.keyDown(field(), { key: 'Enter' })).toBe(false);                    // defaultPrevented
+    expect(core.store.getState()).toMatchObject({ section: 'none', location: 'Office' });
+    await settle(); await open();
+    fireEvent.change(field(), { target: { value: 'Home' } });
+    fireEvent.keyDown(field(), { key: 'Escape' });
+    expect(core.store.getState()).toMatchObject({ section: 'none', location: 'Office', phase: { type: 'open' } });
+    await settle(); await open();
+    fireEvent.change(field(), { target: { value: 'Home' } });
+    fireEvent.keyDown(field(), { key: 'Enter', metaKey: true });
+    expect(core.store.getState()).toMatchObject({ section: 'none', location: 'Home', savedItems: [], phase: { type: 'open' } });
   });
   test('disabled while focus is outside the desktop', async () => {
     const outer = vi.fn(); const core = createTestCore();
@@ -4627,15 +4972,30 @@ Space activate it natively → `controller.show('click', true)`.
 **Interfaces:**
 - Consumes: everything above; `AppClock.now`, `Clock` (`clock.ts`); `currentCalendar`; `motionTimeScale`, `useReducedMotion` (B1);
   `createRecreationCore` (B9); `NotchContainer` (B21); `useRecreationKeys` (B22); `RecreationProvider` (B9).
-- Produces: exactly contract §3.2 `RecreationHandle`, `ShowSource`, `PointerTarget`, `ScenePoint`, §3.3 `RecreationProps`, plus:
+- Produces: contract §3.2 `RecreationHandle`, `ShowSource`, `PointerTarget`, `ScenePoint`, §3.3 `RecreationProps` with A-D5 / B-D3 applied
+  (`RecreationState` as Task 26 (B6); `openSchedule` = `sectionChanged(controls)` through `switchSection`; `escape()` order of B-D2), with the
+  contract's Location members replaced by the section's (Swift `LocationNotchSection` / `QuickReminderView.toggleLocation`), plus:
   ```ts
+  // RecreationHandle, Flag / location (replaces openLocationPopover / closeLocationPopover)
+  toggleFlag(): void;
+  setFlag(flagged: boolean): void;
+  openLocation(): void;                      // the location button when Location is not shown: switchSection('location'), keeps Set Date's edit
+  toggleLocation(): void;                    // the location button: open, or close without writing
+  cancelLocation(): void;                    // Cancel / Esc / click above: closes, nothing written
+  commitLocation(): void;                    // Done / ↩ / ⌘↩: writes the field as typed ('' → null), closes
+  clearLocation(): void;                     // Clear: location null, closes
+  setLocationText(text: string): void;       // the open section's field (the location is untouched until Done / ✓ / a switch)
+  setLocation(text: string | null): void;    // instant, no section (reconciler); "" → null; the icon switches to the filled pin when non-null
+  typeLocation(text: string, cps?: number): Promise<void>;   // opens the Location section, types into the field, then Done
+  locationDraft(): LocationDraft | null;     // read-only access to the open section's draft (null otherwise)
+  // PointerTarget adds 'locationClear' | 'locationCancel' (the section's footer; 'locationField' / 'locationDone' as in the contract)
   export interface CursorLike { moveTo(point: ScenePoint, opts?: { durationMs?: number }): Promise<void>; click(): Promise<void>; cancel(): void }
   // RecreationProps.cursor is RefObject<CursorLike | null> (structural subset of desktop's FakeCursorHandle)
   export const Recreation: ForwardRefExoticComponent<RecreationProps & RefAttributes<RecreationHandle>>;
   export const DEFAULT_TYPING_CPS: 18;                          // landing spec §7 (02)
   export const TARGET_ACTIONS: (h: RecreationHandle, target: PointerTarget) => (() => void) | null;
   // index.ts re-exports: Recreation, RecreationHandle, RecreationProps, RecreationState, SavedReminder, ShowSource, PointerTarget,
-  // ScenePoint, CursorLike, DEFAULT_TYPING_CPS, ListId, FAKE_LISTS, DatePreset, DATE_PRESETS, ScheduleExpansion, NotchPhase, NotchMachineSnapshot,
+  // ScenePoint, CursorLike, DEFAULT_TYPING_CPS, ListId, FAKE_LISTS, DatePreset, DATE_PRESETS, NotchSection, isSchedule, LocationDraft, NotchPhase, NotchMachineSnapshot,
   // Clock, AppClock, Calendar, currentCalendar, SuggestionDateFormatter, resolve helpers the page needs: NaturalDateParser, ScheduleDefaults, DatePresets
   ```
 
@@ -4646,15 +5006,16 @@ Rules:
   `reduceMotion = useReducedMotion(props.reduceMotion)`, time scale `motionTimeScale()` read once. Props read through refs so the core is created once.
 - Every method calls the controller with origin `'api'`. `show({ source = 'api', focus })`: focus defaults to `source === 'click' || source === 'hotkey'`.
 - Typing (`typeTitle`, `typeScheduleText`, `typeLocation`): characters by code point (`Array.from`), one every `1000 / cps × timeScale` ms, the first after one
-  interval; `typeTitle` clears the title first unless `append`; `typeScheduleText` opens the section first when it is closed; `typeLocation` opens the popover,
-  types through `setLocation`, then closes it. Each run owns an `AbortController`; `cancel()` aborts all runs (their Promises reject with
+  interval; `typeTitle` clears the title first unless `append`; `typeScheduleText` opens the section first when it is closed; `typeLocation` opens the Location
+  section first when it is not shown (`openLocation`), types through `setLocationText` (the field; `location` is untouched meanwhile), then `commitLocation` (Done). Each run owns an `AbortController`; `cancel()` aborts all runs (their Promises reject with
   `new DOMException('Aborted', 'AbortError')`) and calls `cursor.current?.cancel()`.
 - `pointFor(target)`: `'notch'` → `{ x: notchOrigin.x, y: notchOrigin.y + 39 / 2 }`; else the element `[data-qr-target="<target>"]` inside the root (null when
   absent); scale = canvas client width / canvas width in points (fallback `sceneScale`); point = notchOrigin + (element centre − canvas top centre) / scale.
 - `pointerTo(target, { duration, click })`: no point → false; `cursor.moveTo(point, { durationMs: duration })`; with `click`: `cursor.click()` then
   `TARGET_ACTIONS(handle, target)?.()`; true. `TARGET_ACTIONS`: notch → `show({ source: 'api' })`; close → `hide`; header → `openListPicker`/`closeListPicker` toggle;
   suggestionChip → `applySuggestion`; suggestionDismiss → `dismissSuggestion`; dateChip → `openSchedule`; calendarIcon → `openSchedule` or `cancelSchedule`;
-  locationIcon → `openLocationPopover`; flagIcon → `toggleFlag`; save → `save`; `list:<id>` → `setList(id)`; locationDone → `closeLocationPopover`;
+  locationIcon → `toggleLocation`; flagIcon → `toggleFlag`; save → `save`; `list:<id>` → `setList(id)`; locationDone → `commitLocation`; locationCancel → `cancelLocation`;
+  locationClear → `clearLocation`;
   `preset:<p>` → `applyPreset(p)`; dayButton → `toggleCalendar`; `timeChip:<h>` → `setTime(h)`; calendarPrev / Next → `pageMonth(−1 / 1)`;
   `day:<n>` → `pickDay(day n of store.calendarMonth)`; clear → `clearDueDate`; cancel → `cancelSchedule`; set → `commitSchedule`;
   title, notes, scheduleField, timeField, locationField → null (pointing at a field never focuses it).
@@ -4696,7 +5057,7 @@ Rules:
     expect(h.applySuggestion()).toBe(true);
     h.setList('work'); h.setFlag(true);
     const loc = h.typeLocation('Office'); await adv(Math.ceil(6 * 1000 / 18) + 1); await loc;
-    expect(h.getState()).toMatchObject({ title: 'Call mum', listId: 'work', accent: '#BF5AF2', flagged: true, location: 'Office', locationPopoverOpen: false, dirty: false });
+    expect(h.getState()).toMatchObject({ title: 'Call mum', listId: 'work', accent: '#BF5AF2', flagged: true, location: 'Office', section: 'none', locationField: null, dirty: false });
     const saved = h.save();
     await adv(320);
     expect(onSaved).toHaveBeenCalledTimes(1);
@@ -4712,6 +5073,25 @@ Rules:
     await adv(300);
     expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'New Reminder' }));
   });
+  test('Location through the handle: typeLocation opens the section, types into the field, then Done', async () => {
+    const { ref, container } = mount();
+    const h = ref.current!;
+    h.show(); await adv(500);
+    const typing = h.typeLocation('Office');
+    expect(h.getState().section).toBe('location');
+    await adv(Math.ceil(3 * 1000 / 18));
+    expect(h.getState()).toMatchObject({ locationField: 'Off', location: null });
+    await adv(Math.ceil(3 * 1000 / 18) + 1); await typing;
+    expect(h.getState()).toMatchObject({ section: 'none', location: 'Office', locationField: null, dirty: false });
+    h.openLocation(); h.setLocationText('Home');
+    expect(h.locationDraft()!.saveDecision).toEqual({ type: 'applyThenSave', text: 'Home' });
+    expect(h.escape()).toBe('section');
+    expect(h.getState().location).toBe('Office');
+    h.toggleLocation();
+    expect(container.querySelector('[data-qr-target="locationDone"]')).not.toBeNull();
+    h.clearLocation();
+    expect(h.getState()).toMatchObject({ section: 'none', location: null });
+  });
   test('Set Date through the handle', async () => {
     const { ref } = mount();
     const h = ref.current!;
@@ -4719,10 +5099,10 @@ Rules:
     h.openSchedule();
     expect(h.scheduleDraft()!.draft).toEqual(new Date('2026-09-19T07:00:00Z'));
     h.openCalendar();
-    expect(h.getState().schedule).toBe('calendar');
+    expect(h.getState().section).toBe('calendar');
     h.pickDay(new Date('2026-09-24T22:00:00Z')); h.setTime(15);
     expect(h.commitSchedule()).toBe(true);
-    expect(h.getState()).toMatchObject({ schedule: 'none', dueDate: new Date('2026-09-25T13:00:00Z') });
+    expect(h.getState()).toMatchObject({ section: 'none', dueDate: new Date('2026-09-25T13:00:00Z') });
     expect(h.escape()).toBe('panel');
   });
   test('cancel aborts typing; reset closes and clears', async () => {
@@ -4931,7 +5311,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
 **Interfaces:**
 - Consumes: `Recreation`, `RecreationHandle` (B23); Playwright config from area A (Tasks 1–21) (dev server `baseURL`).
 - Produces: `recreation-harness.html?state=<plain|typed|suggestion|applied|flag|section|calendar|saving|hover|lists|location>&list=<ListId>&now=<ISO>`
-  renders one `Recreation` at `--pt: 1` on a 1512 × 982 mid-grey (`#808080`) scene, drives it to the state through the handle (`source: 'scroll'`),
+  renders one `Recreation` at `--pt: 1` on a 1512 × 982 mid-grey (`#808080`) scene, drives it to the state through the handle (`source: 'scroll'`; `location` = `openLocation()`, the in-notch section),
   and sets `document.body.dataset.ready = 'true'` when the settle timer has fired (`saving`: 0.8 s into the hold; `hover`: 0.6 s after `hoverNotch(true)`).
 
 - [ ] **Step 1: Write the metrics spec** `e2e/recreation-metrics.spec.ts` — Chromium and WebKit projects, viewport 1512 × 982,
@@ -4954,7 +5334,9 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   | calendar | path bbox / `[data-qr-calendar]` / footer | h 751 / y 459, h 222 / y 695 | D1 rows |
   | saving | path bbox / `[data-qr-badge-slot]` | 134.5, 0, 379, 39 / 459.5, 7.5, 24, 24 | `savedSize`, `badgeOrigin` |
   | hover | path bbox | 195.5, 0, 257, 44 | `hoverSize` |
-  | lists / location | `[data-qr-popover=lists]` / `[data-qr-popover=location]` | left 63, top 91 / centre x 148, top 224 | §11.4 anchors |
+  | lists | `[data-qr-popover=lists]` | left 63, top 91 | §11.4 anchor |
+  | location | path bbox / `[data-qr-location-field]` / `[data-qr-footer]` | h 347 / 63, 241, 522, 36 / y 291, h 36 | `LocationMetrics` (Task 16 (A16)): 241 + 36 + 14, + 36 + 20 = 347 |
+  | location | `[data-sf="location@12"]` ink | ≈ 11.92 × 11.50 | re-measure the SF `location` at 12 pt medium and correct Task 23 (B3) if it differs |
   | section | day / time row fits | right edge of the last time chip ≤ 585 in en-US | content width 522 |
 
   Each state also saves `test-results/recreation/<state>.png` (`page.locator('[data-qr-canvas]').screenshot()`).
@@ -5088,7 +5470,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
 - [ ] **Step 2: Write the failing test** `tests/desktop/desktopShortcuts.test.ts`. Helpers: `key(k, mods?)` builds
   the event pick (`code` defaults to `Key${k.toUpperCase()}` for letters, `Digit${n}` for digits, else `k`);
   `st(patch)` builds a `RecreationState` from the closed initial state of contracts §3.1 (`phase { type: 'closed', parked: false }`,
-  `schedule 'none'`, empty draft, `listId 'reminders'`, `suggestion null`, …) merged with `patch`; `OPEN = { phase: { type: 'open' } }`.
+  `section 'none'`, empty draft, `listId 'reminders'`, `suggestion null`, …) merged with `patch`; `OPEN = { phase: { type: 'open' } }`.
   ```ts
   import { DATE_PRESETS } from '../../src/recreation/core/datePresets';
   describe('shortcutFor', () => {
@@ -5105,34 +5487,36 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
     it('↩ in title, notes, scheduleField → submit', () => {
       for (const f of ['title', 'notes', 'scheduleField'] as const) expect(shortcutFor(key('Enter'), { state: st(OPEN), focus: f })).toEqual({ type: 'submit' });
     });
-    it('↩ in the time field → applyTypedTime', () => expect(shortcutFor(key('Enter'), { state: st({ ...OPEN, schedule: 'controls' }), focus: 'timeField' })).toEqual({ type: 'applyTypedTime' }));
-    it('↩ in the location field → null (Done belongs to the field)', () => expect(shortcutFor(key('Enter'), { state: st({ ...OPEN, locationPopoverOpen: true }), focus: 'locationField' })).toBeNull());
+    it('↩ in the time field → applyTypedTime', () => expect(shortcutFor(key('Enter'), { state: st({ ...OPEN, section: 'controls' }), focus: 'timeField' })).toEqual({ type: 'applyTypedTime' }));
+    it('↩ in the location field → null (Done belongs to the field)', () => expect(shortcutFor(key('Enter'), { state: st({ ...OPEN, section: 'location' }), focus: 'locationField' })).toBeNull());
     it('↩ without a focused field → null', () => expect(shortcutFor(key('Enter'), { state: st(OPEN), focus: 'none' })).toBeNull());
     it('Tab in the title with a live suggestion → tab', () => expect(shortcutFor(key('Tab'), { state: st({ ...OPEN, suggestion: SUGGESTION }), focus: 'title' })).toEqual({ type: 'tab' }));
     it('Tab without a suggestion → null', () => expect(shortcutFor(key('Tab'), { state: st(OPEN), focus: 'title' })).toBeNull());
     it('⇧Tab → null', () => expect(shortcutFor(key('Tab', { shiftKey: true }), { state: st({ ...OPEN, suggestion: SUGGESTION }), focus: 'title' })).toBeNull());
-    it('⌘D opens Set Date only while open with the section closed', () => {
+    it('⌘D opens Set Date only while open and Set Date is not shown (from Location it switches over)', () => {
       expect(shortcutFor(key('d', { metaKey: true }), { state: st(OPEN), focus: 'title' })).toEqual({ type: 'openSchedule' });
-      expect(shortcutFor(key('d', { metaKey: true }), { state: st({ ...OPEN, schedule: 'controls' }), focus: 'title' })).toBeNull();
+      expect(shortcutFor(key('d', { metaKey: true }), { state: st({ ...OPEN, section: 'location' }), focus: 'locationField' })).toEqual({ type: 'openSchedule' });
+      expect(shortcutFor(key('d', { metaKey: true }), { state: st({ ...OPEN, section: 'controls' }), focus: 'title' })).toBeNull();
       expect(shortcutFor(key('d', { metaKey: true }), { state: st({}), focus: 'none' })).toBeNull();
     });
-    it('⌘K toggles the calendar only with the section open', () => {
-      expect(shortcutFor(key('k', { metaKey: true }), { state: st({ ...OPEN, schedule: 'controls' }), focus: 'scheduleField' })).toEqual({ type: 'toggleCalendar' });
+    it('⌘K toggles the calendar only with Set Date open', () => {
+      expect(shortcutFor(key('k', { metaKey: true }), { state: st({ ...OPEN, section: 'location' }), focus: 'locationField' })).toBeNull();
+      expect(shortcutFor(key('k', { metaKey: true }), { state: st({ ...OPEN, section: 'controls' }), focus: 'scheduleField' })).toEqual({ type: 'toggleCalendar' });
       expect(shortcutFor(key('k', { metaKey: true }), { state: st(OPEN), focus: 'title' })).toBeNull();
     });
     it('⌘1…⌘6 by code map to DATE_PRESETS order, section open only', () => {
       DATE_PRESETS.forEach((preset, i) =>
         expect(shortcutFor({ key: '+ěščř'[i] ?? 'ž', code: `Digit${i + 1}`, metaKey: true, shiftKey: false, altKey: false, ctrlKey: false },
-          { state: st({ ...OPEN, schedule: 'controls' }), focus: 'scheduleField' })).toEqual({ type: 'preset', preset }));
+          { state: st({ ...OPEN, section: 'controls' }), focus: 'scheduleField' })).toEqual({ type: 'preset', preset }));
       expect(shortcutFor(key('1', { metaKey: true }), { state: st(OPEN), focus: 'title' })).toBeNull();
     });
     it('↑/↓ in the time field → stepTime ±1', () => {
-      const s = st({ ...OPEN, schedule: 'controls' });
+      const s = st({ ...OPEN, section: 'controls' });
       expect(shortcutFor(key('ArrowUp'), { state: s, focus: 'timeField' })).toEqual({ type: 'stepTime', steps: 1 });
       expect(shortcutFor(key('ArrowDown'), { state: s, focus: 'timeField' })).toEqual({ type: 'stepTime', steps: -1 });
     });
     it('arrows in the calendar → moveDay −1 / +1 / −7 / +7', () => {
-      const s = st({ ...OPEN, schedule: 'calendar' });
+      const s = st({ ...OPEN, section: 'calendar' });
       expect(shortcutFor(key('ArrowLeft'), { state: s, focus: 'calendar' })).toEqual({ type: 'moveDay', days: -1 });
       expect(shortcutFor(key('ArrowRight'), { state: s, focus: 'calendar' })).toEqual({ type: 'moveDay', days: 1 });
       expect(shortcutFor(key('ArrowUp'), { state: s, focus: 'calendar' })).toEqual({ type: 'moveDay', days: -7 });
@@ -5477,7 +5861,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   export function DesktopScene(props: DesktopSceneProps): JSX.Element;
   // root attributes other parts and e2e rely on:
   //   role="application" aria-label="QuickReminder demo desktop" tabIndex={-1} data-qr-screen   (B21 scopes "click outside" to this element)
-  //   data-phase={state.phase.type} data-schedule={state.schedule} data-scheme={scheme}
+  //   data-phase={state.phase.type} data-section={state.section} data-scheme={scheme}
   //   style --pt, width ptCss(1512), height ptCss(982)
   // tests/fakes/fakeRecreationHandle.ts
   export const INITIAL_STATE: RecreationState;
@@ -5494,24 +5878,27 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   ```
 
 - [ ] **Step 1: Write `tests/fakes/fakeRecreationHandle.ts`.** `INITIAL_STATE` is contracts §3.1 at rest:
-  `phase { type: 'closed', parked: false }`, `schedule 'none'`, `contentVisible false`, `settled false`, `hoverSwollen false`,
+  `phase { type: 'closed', parked: false }`, `section 'none'`, `contentVisible false`, `settled false`, `hoverSwollen false`,
   `badgeShown false`, `title ''`, `notes ''`, `listId 'reminders'`, `flagged false`, `location null`, `dueDate null`,
-  `presetPick null`, `suggestion null`, `dismissedSuggestionText null`, `listPickerOpen false`, `locationPopoverOpen false`,
-  `saveError null`, `savedItems []`, `dirty false`, `openedOnce false`, `canSave false`, `accent '#0A84FF'`, `schedulingInNotch false`.
+  `presetPick null`, `suggestion null`, `dismissedSuggestionText null`, `listPickerOpen false`, `locationField null`,
+  `saveError null`, `savedItems []`, `dirty false`, `openedOnce false`, `canSave false`, `accent '#0A84FF'`, `schedulingInNotch false`,
+  `locationInNotch false`, `sectionOpen false` (A-D5, B-D3).
   Every method records `{ method, args }` (not `getState`, `subscribe`, `machine`, `scheduleDraft`, `pointFor`), recomputes
-  `canSave` / `accent` (list colours of contracts §2.12) / `schedulingInNotch` and notifies subscribers. Behaviour:
-  `show` (from closed/closing: resets title, notes, flagged, location, dueDate, presetPick, suggestion, schedule, popovers; keeps listId;
+  `canSave` / `accent` (list colours of contracts §2.12) / `schedulingInNotch` / `locationInNotch` / `sectionOpen` and notifies subscribers. Behaviour:
+  `show` (from closed/closing: resets title, notes, flagged, location, dueDate, presetPick, suggestion, section, list picker, Location field; keeps listId;
   phase open; openedOnce true) resolves after 500 ms; `hide` → closed, 360 ms; `save` → null when `!canSave`; when
-  `schedule !== 'none'` → schedule 'none', resolves null; else phase saving, appends a `SavedReminder`
+  `section !== 'none'` → commits it (Location: `location` = `locationField || null`), section 'none', resolves null; else phase saving, appends a `SavedReminder`
   (`id 'saved-<n>'`, `notes` = location ? `📍 ${location}` (prefixed by notes + `\n` when notes non-empty) : notes || null,
   `listColor`, `dueLabel null`, `savedAt` = opts.now) at 320 ms, phase closed at 1680 ms (0.32 + 1.0 + 0.36), resolves the item;
   `typeTitle(text, cps = 18)` sets the title after `text.length / cps × 1000` ms; `applySuggestion()` strips a trailing
-  `' tomorrow at 2pm'` and sets `dueDate = phraseDate` → true, else false; `typeLocation(text, cps = 18)` opens the popover,
-  after `text.length / cps × 1000` ms sets `location`, closes it; `pointerTo` / `setPointer` resolve after 300 ms → true;
+  `' tomorrow at 2pm'` and sets `dueDate = phraseDate` → true, else false; `typeLocation(text, cps = 18)` opens the Location section
+  (`section 'location'`, `locationField ''`), after `text.length / cps × 1000` ms sets `location`, then section 'none', `locationField null` (Done);
+  `openLocation` / `toggleLocation` → 'location' (open only) or back to 'none', `setLocationText` → `locationField`, `commitLocation` → `location` = `locationField || null`
+  and 'none', `cancelLocation` → 'none', `clearLocation` → `location null` and 'none', `locationDraft()` → null (not recorded); `pointerTo` / `setPointer` resolve after 300 ms → true;
   `openSchedule` → 'controls' (open only), `openCalendar` → 'calendar', `closeCalendar` → 'controls', `toggleCalendar`,
-  `cancelSchedule` → 'none'; `escape()` layered popover → calendar → section → panel (→ hide), the code's order (Task 29 (B9) B-D2); `setList`, `setFlag`, `toggleFlag`,
+  `cancelSchedule` → 'none'; `escape()` layered list picker → calendar → section (Set Date controls or Location, nothing written) → panel (→ hide), the code's order (Task 29 (B9) B-D2); `setList`, `setFlag`, `toggleFlag`,
   `setLocation('' → null)`, `setTitle`, `setNotes`, `setDueDate`; `markClean` → dirty false; `cancel()` rejects every pending
-  delay with `new DOMException('Aborted', 'AbortError')`; `reset`; `machine()` returns `{ phase, schedule, … }` with zeros.
+  delay with `new DOMException('Aborted', 'AbortError')`; `reset`; `machine()` returns `{ phase, section, … }` with zeros.
   Delays use `setTimeout`, so Vitest fake timers drive them.
 - [ ] **Step 2: Write `tests/fakes/recreationMock.tsx`** per Produces (`useImperativeHandle` returns the fake; on every
   fake change it calls `props.onStateChange?.(state)`; when a saved item is appended it calls `props.onSaved?.(item)`;
@@ -5540,7 +5927,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   });
   it('ignores keys another handler already prevented', () => { /* input inside data-qr-root: addEventListener('keydown', e => e.preventDefault()); Escape on it → fake.methods() has no 'escape' */ });
   it('does nothing for keys without a shortcut (browser keeps them)', () => { /* keyDown ⌘C → returns true */ });
-  it('mirrors phase and schedule on the root', async () => { /* show → data-phase="open"; openSchedule → data-schedule="controls" */ });
+  it('mirrors phase and section on the root', async () => { /* show → data-phase="open"; openSchedule → data-section="controls" */ });
   it('the hint shows until the first open, then fades', async () => { /* hint button present; show; advance 400 → gone */ });
   it('the menu-bar menu opens the panel with the click source', () => { /* click 'QuickReminder menu', click 'Show Quick Reminder' → calls includes { method: 'show', args: [{ source: 'click' }] } */ });
   it('mounts the Reminders window on the first saved item', async () => { /* setTitle('Call mum'); save; advance 320 → region 'Your reminders' with 'Call mum' */ });
@@ -5556,7 +5943,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   Recreation props: `notch: SCENE.notch`, `screenHeight: SCENE.height`, `dockHeight: 0`, `clock` (default `AppClock.now`
   through the index), `calendar` (default `currentCalendar()`), `locale` default `'en-US'` (contracts §8.2), `reduceMotion`
   (default `useMediaQuery('(prefers-reduced-motion: reduce)')`), `cursor: cursorRef`, `shortcutsEnabled: focusInside`,
-  `sceneScale: pt`, `notchOrigin: SCENE.notchOrigin`, `onSaved`, `onStateChange` (stores only `phase.type`, `schedule`,
+  `sceneScale: pt`, `notchOrigin: SCENE.notchOrigin`, `onSaved`, `onStateChange` (stores only `phase.type`, `section`,
   `openedOnce`, `savedItems` in React state; sets them only when they change). Behaviour:
   - `onPointerDownCapture`: when the target is not inside a focusable element in the scene, `root.focus({ preventScroll: true })`.
     Click outside is **not** handled here: `NotchContainer` (Task 41 (B21)) owns it with the silhouette hit-test (a press on the transparent
@@ -5841,17 +6228,17 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
 
 **Interfaces:**
 - Consumes: `NaturalDateParser.parse` (contracts §2.2), `ScheduleDefaults.resolveDayOnly` (§2.3), `DatePresets.date` (§2.4),
-  `Calendar`, `PresetPick`, `DatePreset`, `ListId`, `ScheduleExpansion` (core/machine); `pragueCalendar`, `prague` (tests/support.ts).
-- Produces (contracts §4.4, exact): `SectionId`, `SectionAction`, `DueSpec`, `SectionSnapshot`, `resolveDue` in `snapshot.ts`;
+  `Calendar`, `PresetPick`, `DatePreset`, `ListId`, `NotchSection` (core/machine); `pragueCalendar`, `prague` (tests/support.ts).
+- Produces (contracts §4.4 with A-D5: `SectionSnapshot.section: NotchSection` for `schedule`): `SectionId`, `SectionAction`, `DueSpec`, `SectionSnapshot`, `resolveDue` in `snapshot.ts`;
   `DEMO_REMINDER`, `SECTION_SNAPSHOTS` in `demo.ts`; plus
   ```ts
   export const SECTION_ORDER: readonly SectionId[];          // ['hero', '01', '02', '03', '04', '05', '06', '07']
   export function previousSection(id: SectionId): SectionId; // '01' → 'hero'; 'hero' → 'hero'
   ```
-  `SECTION_SNAPSHOTS` (landing §7, §11.2; `PHRASE = { type: 'phrase', text: 'tomorrow at 2pm' }`; unlisted fields: `schedule 'none'`,
+  `SECTION_SNAPSHOTS` (landing §7, §11.2; `PHRASE = { type: 'phrase', text: 'tomorrow at 2pm' }`; unlisted fields: `section 'none'`,
   `notes ''`, `listId 'reminders'`, `flagged false`, `location null`, `due null`, `saved false`):
 
-  | id | panel | schedule | title | listId | flagged | location | due | saved | action | extras |
+  | id | panel | section | title | listId | flagged | location | due | saved | action | extras |
   |---|---|---|---|---|---|---|---|---|---|---|
   | hero | closed | none | '' | reminders | false | null | null | false | close | |
   | 01 | open | none | '' | reminders | false | null | null | false | open | |
@@ -5869,11 +6256,11 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   it('typed = title + " " + phrase', () => expect(`${DEMO_REMINDER.title} ${DEMO_REMINDER.phrase}`).toBe(DEMO_REMINDER.typed));
   it('every snapshot is keyed by its id, in SECTION_ORDER', () => { expect(Object.keys(SECTION_SNAPSHOTS)).toEqual([...SECTION_ORDER]); SECTION_ORDER.forEach(id => expect(SECTION_SNAPSHOTS[id].id).toBe(id)); });
   it('pins the table', () => {
-    expect(SECTION_SNAPSHOTS.hero).toEqual({ id: 'hero', panel: 'closed', schedule: 'none', title: '', notes: '', listId: 'reminders', flagged: false, location: null, due: null, saved: false, action: 'close' });
-    expect(SECTION_SNAPSHOTS['02']).toEqual({ id: '02', panel: 'open', schedule: 'none', title: 'Call mum', typedTitle: 'Call mum tomorrow at 2pm', notes: '', listId: 'reminders', flagged: false, location: null, due: { type: 'phrase', text: 'tomorrow at 2pm' }, saved: false, action: 'typeTitle', applyDelayMs: 900 });
-    expect(SECTION_SNAPSHOTS['03']).toMatchObject({ schedule: 'calendar', action: 'schedule', highlightPreset: 'tomorrow' });
+    expect(SECTION_SNAPSHOTS.hero).toEqual({ id: 'hero', panel: 'closed', section: 'none', title: '', notes: '', listId: 'reminders', flagged: false, location: null, due: null, saved: false, action: 'close' });
+    expect(SECTION_SNAPSHOTS['02']).toEqual({ id: '02', panel: 'open', section: 'none', title: 'Call mum', typedTitle: 'Call mum tomorrow at 2pm', notes: '', listId: 'reminders', flagged: false, location: null, due: { type: 'phrase', text: 'tomorrow at 2pm' }, saved: false, action: 'typeTitle', applyDelayMs: 900 });
+    expect(SECTION_SNAPSHOTS['03']).toMatchObject({ section: 'calendar', action: 'schedule', highlightPreset: 'tomorrow' });
     expect(SECTION_SNAPSHOTS['04']).toMatchObject({ listId: 'work', action: 'lists', listCycle: ['reminders', 'work', 'home', 'work'] });
-    expect(SECTION_SNAPSHOTS['05']).toMatchObject({ listId: 'work', flagged: true, location: 'Office', action: 'flagLocation' });
+    expect(SECTION_SNAPSHOTS['05']).toMatchObject({ section: 'none', listId: 'work', flagged: true, location: 'Office', action: 'flagLocation' });   // the Location section is opened, typed into and closed by Done inside the action
     expect(SECTION_SNAPSHOTS['06']).toMatchObject({ panel: 'closed', saved: true, action: 'save', title: 'Call mum', listId: 'work', flagged: true, location: 'Office' });
     expect(SECTION_SNAPSHOTS['07']).toMatchObject({ panel: 'closed', action: 'none' });
   });
@@ -5910,7 +6297,8 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
 - Produces (contracts §4.4, exact): `ReconcileOptions`, `ReconcileResult`, `reconcile`; plus
   ```ts
   export const RECONCILE_TIMING: { readonly scheduleRowsMs: 420 /* 0.06 + 3 · 0.035 + 0.24 s stagger, contracts §7 */;
-    readonly presetHoverMs: 450; readonly listOpenMs: 220; readonly listStepMs: 380; readonly flagToLocationMs: 300 };
+    readonly presetHoverMs: 450; readonly listOpenMs: 220; readonly listStepMs: 380; readonly flagToLocationMs: 300;
+    readonly locationFieldMs: 300 /* 0.06 + 0 · 0.035 + 0.24 s: the Location field row's stagger (NotchButtonStyles.swift View.staggered(0)) */ };
   ```
   Rules (landing §11.2; the tests pin them; `visible` = phase open or saving; `keep` = `getState().dirty` at start;
   `instant` = `opts.cps === Infinity`: no cursor, no sleeps, `setTitle` instead of `typeTitle`, `setLocation` instead of `typeLocation`;
@@ -5920,7 +6308,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   2. action `none` → performed `none`, no calls.
   3. Panel: snapshot `open` (or action `save`) and not visible → `await show({ source: 'scroll' })`, then `markClean()` and `keep = false`
      (show resets the draft). Action `close`: `visible && !keep` → `await hide()`, done. Snapshot `closed`, action ≠ save, visible → `void hide()`.
-  4. Close `listPicker` unless action `lists`; close `locationPopover` unless action `flagLocation`; `schedule !== 'none'` and action ≠ `schedule` → `cancelSchedule()`.
+  4. Close `listPicker` unless action `lists`; `section === 'location'` → `cancelLocation()` (nothing written; `flagLocation` opens it again itself); `isSchedule(section)` and action ≠ `schedule` → `cancelSchedule()`.
   5. Unless `keep`, write fields that differ, in this order: `setList(action === 'lists' ? listCycle[0] : listId)`;
      `setFlag(action === 'flagLocation' ? false : flagged)`; `setLocation(action === 'flagLocation' ? null : location)`; `setNotes(notes)`;
      title + due: action `typeTitle` → `setDueDate(null)`, `setTitle('')`; else `setTitle(title)` and `resolveDue(due)` →
@@ -5929,8 +6317,9 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
      `schedule` → `openSchedule()`, sleep 420, cursor: `await pointerTo('preset:' + highlightPreset)`, sleep 450, `openCalendar()`.
      `lists` → keep: none; else for each id of `listCycle.slice(1)`: cursor `await pointerTo('header', { click: true })`, `openListPicker()`, sleep 220,
      cursor `await pointerTo('list:' + id, { click: true })`, `setList(id)`, sleep 380; then `markClean()`.
-     `flagLocation` → keep: none; else cursor `pointerTo('flagIcon', { click: true })`, `setFlag(true)`, sleep 300, cursor `pointerTo('locationIcon', { click: true })`,
-     `await typeLocation(location, cps)`, `markClean()`. `save` → `!canSave` → none; else cursor `pointerTo('save', { click: true })`, `await save()`.
+     `flagLocation` → keep: none; else cursor `pointerTo('flagIcon', { click: true })`, `setFlag(true)`, sleep 300, cursor `pointerTo('locationIcon', { click: true })`
+     (its click is `toggleLocation`: the panel grows into the in-notch Location section, 347 pt), sleep `locationFieldMs` 300, `await typeLocation(location, cps)`
+     (opens the section when the cursor did not, types "Office" into the field at `cps`, then Done: the section closes and the pin fills), `markClean()`. `save` → `!canSave` → none; else cursor `pointerTo('save', { click: true })`, `await save()`.
   Cursor steps run only when `opts.cursor` is non-null and not instant; they use `handle.pointerTo` (the handle drives the cursor it was given).
 
 - [ ] **Step 1: Write the failing test** `tests/app/choreography/reconcile.test.ts` (fake timers; `NOW = prague(2026, 10, 23, 10, 0)`;
@@ -5983,20 +6372,26 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
     const r = await run(reconcile(h, SECTION_SNAPSHOTS['04'], opts())); expect(r.keptVisitorEdits).toBe(false); expect(h.getState().listId).toBe('work');
   });
   it('04 leaves Set Date instantly, then cycles reminders → work → home → work', async () => {
-    const h = new FakeRecreationHandle({ state: { phase: { type: 'open' }, schedule: 'calendar', title: 'Call mum', dueDate: PHRASE_DATE } });
+    const h = new FakeRecreationHandle({ state: { phase: { type: 'open' }, section: 'calendar', title: 'Call mum', dueDate: PHRASE_DATE } });
     await run(reconcile(h, SECTION_SNAPSHOTS['04'], opts()));
     expect(h.methods()).toEqual(['cancelSchedule', 'markClean', 'openListPicker', 'setList', 'openListPicker', 'setList', 'openListPicker', 'setList', 'markClean']);
     expect(h.calls.filter(c => c.method === 'setList').map(c => c.args[0])).toEqual(['work', 'home', 'work']);
   });
-  it('05 flags, then types Office in the location popover', async () => {
+  it('a Location section left open is closed without writing before 04 cycles the lists', async () => {
+    const h = new FakeRecreationHandle({ state: { phase: { type: 'open' }, section: 'location', locationField: 'Home', title: 'Call mum', dueDate: PHRASE_DATE } });
+    await run(reconcile(h, SECTION_SNAPSHOTS['04'], opts()));
+    expect(h.methods()[0]).toBe('cancelLocation');
+    expect(h.getState()).toMatchObject({ section: 'none', location: null, locationField: null });
+  });
+  it('05 flags, then opens the Location section, types Office and presses Done', async () => {
     const h = new FakeRecreationHandle({ state: { phase: { type: 'open' }, title: 'Call mum', listId: 'work', dueDate: PHRASE_DATE } });
     await run(reconcile(h, SECTION_SNAPSHOTS['05'], opts()));
     expect(h.methods()).toEqual(['markClean', 'setFlag', 'typeLocation', 'markClean']); expect(h.calls[2].args).toEqual(['Office', 18]);
-    expect(h.getState()).toMatchObject({ flagged: true, location: 'Office' });
+    expect(h.getState()).toMatchObject({ flagged: true, location: 'Office', section: 'none', locationField: null });
   });
   it('up into the hero closes a clean panel', async () => { const h = new FakeRecreationHandle({ state: { phase: { type: 'open' } } }); const r = await run(reconcile(h, SECTION_SNAPSHOTS.hero, opts({ direction: 'up' }))); expect(h.methods()).toEqual(['hide']); expect(r.performed).toBe('close'); });
   it('up into the hero keeps a dirty panel open', async () => { const h = new FakeRecreationHandle({ state: { phase: { type: 'open' }, dirty: true } }); expect((await run(reconcile(h, SECTION_SNAPSHOTS.hero, opts({ direction: 'up' })))).performed).toBe('none'); expect(h.methods()).toEqual([]); });
-  it('up into any other section leaves content alone', async () => { const h = new FakeRecreationHandle({ state: { phase: { type: 'open' }, schedule: 'calendar' } }); await run(reconcile(h, SECTION_SNAPSHOTS['03'], opts({ direction: 'up' }))); expect(h.methods()).toEqual([]); });
+  it('up into any other section leaves content alone', async () => { const h = new FakeRecreationHandle({ state: { phase: { type: 'open' }, section: 'calendar' } }); await run(reconcile(h, SECTION_SNAPSHOTS['03'], opts({ direction: 'up' }))); expect(h.methods()).toEqual([]); });
   it('hero down with a closed panel and 07 are no-ops', async () => { const h = new FakeRecreationHandle(); await run(reconcile(h, SECTION_SNAPSHOTS.hero, opts())); await run(reconcile(h, SECTION_SNAPSHOTS['07'], opts())); expect(h.methods()).toEqual([]); });
   it('abort mid-typing resolves aborted and cancels the handle', async () => {
     const h = new FakeRecreationHandle({ state: { phase: { type: 'open' } } }); const ac = new AbortController();
@@ -6131,7 +6526,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   | 02 | Dates | Say when. | Write the date the way you would say it. The panel spots the phrase and shows when you will be reminded. Tab applies it and takes the phrase out of the title. (secondary: `Czech works too: “zavolat mámě zítra ve 14:00”.` built from `DEMO_REMINDER.czechExample`) | CalendarCheck · “tomorrow at 2pm”, “in 2 hours”, “v pátek” / Lightning · Skip the Tab and the date is applied when you save / Translate · English and Czech. With two dates, the last one counts |
   | 03 | Set Date | Set the date in the notch. | Press ⌘D or the calendar button and the panel grows downward into Set Date. Type a date, pick a preset, or set the day and time. Nothing above it moves. | SquaresFour · Six presets on ⌘1 to ⌘6, from “In 1 Hour” to “Next Month” / CalendarBlank · ⌘K opens a month calendar, and the arrow keys move the day / Clock · Type “fri 2pm”, “+90m” or “1430” and check the preview before you set it |
   | 04 | Lists | Your lists, your colour. | Click “Reminders ▾” to pick a list. The panel takes on the list’s colour: the header, the save button, the date chip and the text cursor all follow. | ListBullets · All your lists from Apple Reminders, each in its own colour / Palette · On light colours the labels turn dark, so they stay readable / ClockCounterClockwise · The list you pick is the one you get next time |
-  | 05 | Flag & location | Flag it, pin it. | The flag marks what matters. The pin adds a place, saved in the notes as “📍 Office”, so you see it wherever the reminder shows up. | Flag · A flagged reminder is saved with high priority / MapPin · The place is a line of text in the notes. Nothing tracks your location |
+  | 05 | Flag & location | Flag it, pin it. | The flag marks what matters. The pin grows the panel into a Location field, right below the bar, like Set Date. Type a place and press Return: it is saved in the notes as “📍 Office”, so you see it wherever the reminder shows up. | Flag · A flagged reminder is saved with high priority / MapPin · The place is a line of text in the notes. Nothing tracks your location / ArrowsLeftRight · Switch between Location and Set Date and what you typed stays |
   | 06 | Save | Save, and it flies home. | Press ⌘↩, Return or the check button. The panel folds back into the notch, a check mark lands next to it, and the reminder is already in your list. | CheckCircle · Saved to Apple Reminders through EventKit, so it syncs like any other reminder / Browser · Here it lands in the window on the desktop and never leaves your browser |
   | 07 | Integrations | Everywhere you already are. | Open the panel from Raycast, from Shortcuts or from a script. Launching the app from Spotlight or the Dock opens it too. | cards below |
 
@@ -6471,7 +6866,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
 - Create: `e2e/choreography.spec.ts`, `e2e/responsive.spec.ts`
 
 **Interfaces:**
-- Consumes: C11 DOM contract (`[data-stage]`, `[data-features-column]`), C16 section ids `#feature-0n`, C8 `data-phase` / `data-schedule`,
+- Consumes: C11 DOM contract (`[data-stage]`, `[data-features-column]`), C16 section ids `#feature-0n`, C8 `data-phase` / `data-section`,
   C7 window region, C13 snapshots (expected end states).
 - Produces: e2e coverage of landing §7 (states per section, visitor edits, back to the hero, clickable while pinned) and §7 Mobile (< 810 px).
 
@@ -6480,7 +6875,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   ```ts
   test('(01) opens the panel without taking focus', async ({ page }) => { await toSection(page, '01'); await expect(desktop(page)).toHaveAttribute('data-phase', 'open'); await expect(title).not.toBeFocused(); });
   test('(02) types the demo title and applies the chip', async ({ page }) => { await toSection(page, '02'); await expect(title).toHaveValue('Call mum', { timeout: 6000 }); await expect(page.getByRole('button', { name: 'Change date' })).toContainText(/Tomorrow, 2:00\sPM/); });
-  test('(03) grows Set Date and opens the calendar', async ({ page }) => { await toSection(page, '03'); await expect(desktop(page)).toHaveAttribute('data-schedule', 'calendar', { timeout: 6000 }); });
+  test('(03) grows Set Date and opens the calendar', async ({ page }) => { await toSection(page, '03'); await expect(desktop(page)).toHaveAttribute('data-section', 'calendar', { timeout: 6000 }); });
   test('(04) ends on the Work list', async ({ page }) => { await toSection(page, '04'); await expect(page.getByRole('button', { name: 'Choose list' })).toContainText('Work', { timeout: 6000 }); });
   test('jumping straight to (06) fills the reminder and saves it', async ({ page }) => {
     await page.goto('/?now=2026-10-23T10:00'); await toSection(page, '06');
@@ -6489,7 +6884,7 @@ saved choreography is a plain collapse (no badge); the media query is honoured w
   });
   test('visitor edits win: (03) opens Set Date on the visitor title', async ({ page }) => {
     await toSection(page, '01'); await title.click(); await page.keyboard.type('Buy milk');
-    await toSection(page, '03'); await expect(desktop(page)).toHaveAttribute('data-schedule', 'calendar', { timeout: 6000 }); await expect(title).toHaveValue('Buy milk');
+    await toSection(page, '03'); await expect(desktop(page)).toHaveAttribute('data-section', 'calendar', { timeout: 6000 }); await expect(title).toHaveValue('Buy milk');
   });
   test('scrolling back to the top closes the panel', async ({ page }) => { await toSection(page, '01'); await expect(desktop(page)).toHaveAttribute('data-phase', 'open'); await page.evaluate(() => window.scrollTo(0, 0)); await page.mouse.wheel(0, -1); await expect(desktop(page)).toHaveAttribute('data-phase', 'closed', { timeout: 3000 }); });
   test('the recreation stays clickable while pinned', async ({ page }) => { await toSection(page, '04'); await title.click(); await expect(title).toBeFocused(); });
