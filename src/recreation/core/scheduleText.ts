@@ -3,7 +3,7 @@
 
 /** The invalid hint's example follows the UI language a Czech user would type in. */
 function invalidExample(locale: string): string {
-  return locale.split(/[-_]/)[0].toLowerCase() === 'cs' ? 'zítra 14:00' : 'tomorrow 2pm';
+  return locale.split(/[-_]/)[0]?.toLowerCase() === 'cs' ? 'zítra 14:00' : 'tomorrow 2pm';
 }
 
 export const ScheduleText = {
