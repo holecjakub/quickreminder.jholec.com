@@ -1,0 +1,9 @@
+.qr-root { font-family: var(--qr-font); -webkit-font-smoothing: antialiased; font-synthesis: none; color: var(--qr-white); }
+.qr-root * { box-sizing: border-box; }
+.qr-root button { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.qr-root button:disabled { cursor: default; }
+.qr-root input { all: unset; box-sizing: border-box; min-width: 0; }
+.qr-root input::placeholder { opacity: 1; color: var(--qr-ph); }   /* each field sets --qr-ph (Theme.placeholder / white 50 %) */
+.qr-tabular { font-variant-numeric: tabular-nums; }
+.qr-root :focus-visible { outline: calc(2 * var(--pt) * 1px) solid var(--qr-accent-70); outline-offset: calc(1 * var(--pt) * 1px); }
+.qr-root input:focus-visible, .qr-root [data-qr-own-ring]:focus-visible { outline: none; }
