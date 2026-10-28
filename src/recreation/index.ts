@@ -1,10 +1,11 @@
 // Public surface of the recreation (the only module desktop/ may import).
 //
 // Lane stand-in (ruling R-06): Task 43 (B23) owns this file and replaces it at the merge with the
-// full surface (`Recreation`, `AppClock`, …). Until then it carries type re-exports, the one
-// runtime value the desktop needs (`DATE_PRESETS`), and the contract §3 types of the imperative
+// full surface (`Recreation`, `AppClock`, …). Until then it carries type re-exports, the runtime
+// values the desktop needs (`DATE_PRESETS`, `AppClock`, `currentCalendar`), a type-only declaration
+// of `Recreation`, and the contract §3 types of the imperative
 // API (with deviations A-D5 / B-D2 / B-D3 applied) that `store.ts` / `Recreation.tsx` will declare.
-import type { RefObject } from 'react';
+import type { ForwardRefExoticComponent, RefAttributes, RefObject } from 'react';
 import type { Clock } from './clock';
 import type { Calendar } from './core/calendar';
 import type { DatePreset, PresetPick } from './core/datePresets';
@@ -17,6 +18,8 @@ import type { NotchMachineSnapshot, NotchPhase, NotchSection } from './machine/n
 import type { Size } from './machine/notchShape';
 
 export { DATE_PRESETS } from './core/datePresets';
+export { AppClock } from './clock';
+export { currentCalendar } from './core/calendar';
 export type {
   Calendar,
   Clock,
@@ -183,3 +186,7 @@ export interface RecreationProps {
   sceneScale: number;
   notchOrigin: ScenePoint;
 }
+
+/** Declared, not defined, on this lane: `Recreation.tsx` (Task 43 (B23)) lands at the merge and the full
+ *  index replaces this file. Tests reach it only through `vi.mock` (tests/fakes/recreationMock.tsx). */
+export declare const Recreation: ForwardRefExoticComponent<RecreationProps & RefAttributes<RecreationHandle>>;
