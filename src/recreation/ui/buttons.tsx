@@ -1,10 +1,10 @@
 // Port of HoverButtonStyle.swift + NotchButtonStyles.swift: the hover / press button styles of the notch.
 import {
-  forwardRef, useCallback, useRef, useState,
+  forwardRef, useState,
   type ButtonHTMLAttributes, type CSSProperties, type DOMAttributes, type ReactNode,
 } from 'react';
-import { motion, type HTMLMotionProps } from 'motion/react';
-import { Motion } from '../machine/springs';
+import { motion, type HTMLMotionProps, type Transition } from 'motion/react';
+import { Motion, type Easing, type PhysicalSpring } from '../machine/springs';
 import { INSTANT, toTransition } from './transitions';
 import { useMotionPrefs } from './motionPrefs';
 import { px } from './units';
@@ -28,6 +28,22 @@ export function usePressState(disabled = false): { state: PressState; handlers: 
     onPointerCancel: () => setRaw('rest'),
   };
   return { state: disabled ? 'rest' : raw, handlers };
+}
+
+/**
+ * The transition for the latest press-state change: `Motion.press` when pressed was entered or left,
+ * `hoverMotion` when only hover changed, `INSTANT` under Reduce Motion. The previous state is kept in
+ * state and updated during render (React's "adjust state on prop change" pattern), so render stays pure.
+ */
+export function usePressTransition(state: PressState, hoverMotion: PhysicalSpring | Easing): Transition {
+  const { reduceMotion, timeScale } = useMotionPrefs();
+  const [last, setLast] = useState({ state, pressChanged: false });
+  let pressChanged = last.pressChanged;
+  if (last.state !== state) {
+    pressChanged = (last.state === 'pressed') !== (state === 'pressed');
+    setLast({ state, pressChanged });
+  }
+  return reduceMotion ? INSTANT : toTransition(pressChanged ? Motion.press : hoverMotion, timeScale);
 }
 
 /** Swift `HoverMotion`: hoverScale 1.06, pressedScale 0.94, none under Reduce Motion. */
@@ -85,12 +101,9 @@ function cursorFor(disabled: boolean): 'pointer' | 'default' {
 /** Scales its label on hover / press while the button frame (the hit area) stays put. */
 export const HoverButton = forwardRef<HTMLButtonElement, BaseProps>(function HoverButton(props, ref) {
   const { target, style, disabled, children, rest } = split(props);
-  const { reduceMotion, timeScale } = useMotionPrefs();
+  const { reduceMotion } = useMotionPrefs();
   const { state, handlers } = usePressState(disabled);
-  const previous = useRef<PressState>(state);
-  const pressChanged = (previous.current === 'pressed') !== (state === 'pressed');
-  previous.current = state;
-  const transition = reduceMotion ? INSTANT : toTransition(pressChanged ? Motion.press : Motion.hoverScale, timeScale);
+  const transition = usePressTransition(state, Motion.hoverScale);
   return (
     <button
       type="button" ref={ref} {...rest} {...handlers} disabled={disabled}
@@ -113,12 +126,8 @@ export const HoverButton = forwardRef<HTMLButtonElement, BaseProps>(function Hov
 export const HoverHighlightButton = forwardRef<HTMLButtonElement, BaseProps & { size: number }>(
   function HoverHighlightButton({ size, ...props }, ref) {
     const { target, style, disabled, children, rest } = split(props);
-    const { reduceMotion, timeScale } = useMotionPrefs();
     const { state, handlers } = usePressState(disabled);
-    const previous = useRef<PressState>(state);
-    const pressChanged = (previous.current === 'pressed') !== (state === 'pressed');
-    previous.current = state;
-    const transition = reduceMotion ? INSTANT : toTransition(pressChanged ? Motion.press : Motion.highlight, timeScale);
+    const transition = usePressTransition(state, Motion.highlight);
     return (
       <button
         type="button" ref={ref} {...rest} {...handlers} disabled={disabled}
@@ -142,12 +151,9 @@ export const HoverHighlightButton = forwardRef<HTMLButtonElement, BaseProps & { 
 export const NotchFillButton = forwardRef<HTMLButtonElement, BaseProps & { kind: FillKind; radius: number | null }>(
   function NotchFillButton({ kind, radius, ...props }, ref) {
     const { target, style, disabled, children, rest } = split(props);
-    const { reduceMotion, timeScale } = useMotionPrefs();
+    const { reduceMotion } = useMotionPrefs();
     const { state, handlers } = usePressState(disabled);
-    const previous = useRef<PressState>(state);
-    const pressChanged = (previous.current === 'pressed') !== (state === 'pressed');
-    previous.current = state;
-    const transition = reduceMotion ? INSTANT : toTransition(pressChanged ? Motion.press : Motion.highlight, timeScale);
+    const transition = usePressTransition(state, Motion.highlight);
     // React's drag / animation handler types clash with motion's; the shared DOM props are plain button props.
     return (
       <motion.button

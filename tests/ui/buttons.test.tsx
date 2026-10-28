@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import './setup';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { hoverScaleFor, highlightAlpha, notchFill, notchTextAlpha, dayCellAlpha, HoverButton, NotchFillButton, HoverHighlightButton, KeyHint } from '../../src/recreation/ui/buttons';
+import { render, renderHook, screen, fireEvent, waitFor } from '@testing-library/react';
+import { StrictMode, type ReactNode } from 'react';
+import { Motion } from '../../src/recreation/machine/springs';
+import { INSTANT, toTransition } from '../../src/recreation/ui/transitions';
+import { hoverScaleFor, highlightAlpha, notchFill, notchTextAlpha, dayCellAlpha, HoverButton, NotchFillButton, HoverHighlightButton, KeyHint, usePressTransition, type PressState } from '../../src/recreation/ui/buttons';
 import { MotionPrefsProvider } from '../../src/recreation/ui/motionPrefs';
 import { ptOf } from './support';
 test('HoverMotion values', () => {
@@ -68,4 +71,29 @@ test('KeyHint', () => {
   expect(k.style.backgroundColor).toBe('rgba(255, 255, 255, 0.1)');
   expect(ptOf(k.style.borderRadius)).toBe(4);
   expect(k.getAttribute('aria-hidden')).toBe('true');
+});
+
+test('usePressTransition: press spring when pressed is entered or left, hover motion otherwise (StrictMode)', () => {
+  const wrapper = ({ children }: { children: ReactNode }) => <StrictMode>{children}</StrictMode>;
+  const press = toTransition(Motion.press, 1);
+  const hover = toTransition(Motion.highlight, 1);
+  const { result, rerender } = renderHook(({ s }: { s: PressState }) => usePressTransition(s, Motion.highlight),
+    { wrapper, initialProps: { s: 'rest' as PressState } });
+  expect(result.current).toEqual(hover);
+  rerender({ s: 'hover' });
+  expect(result.current).toEqual(hover);
+  rerender({ s: 'pressed' });
+  expect(result.current).toEqual(press);
+  rerender({ s: 'pressed' }); // unrelated re-render keeps the last change's transition
+  expect(result.current).toEqual(press);
+  rerender({ s: 'hover' });
+  expect(result.current).toEqual(press);
+  rerender({ s: 'rest' });
+  expect(result.current).toEqual(hover);
+});
+test('usePressTransition: instant under reduce motion', () => {
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    <MotionPrefsProvider value={{ reduceMotion: true, timeScale: 1 }}>{children}</MotionPrefsProvider>;
+  const { result } = renderHook(() => usePressTransition('pressed', Motion.hoverScale), { wrapper });
+  expect(result.current).toEqual(INSTANT);
 });
