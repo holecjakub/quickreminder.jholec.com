@@ -8,13 +8,17 @@ import type { Calendar } from './core/calendar';
 import type { PresetPick } from './core/datePresets';
 import { DEFAULT_LIST_ID, accentFor, type ListId } from './core/lists';
 import { LocationDraft } from './core/locationDraft';
+import { MonthGrid } from './core/monthGrid';
 import { NaturalDateParser, type DateSuggestion } from './core/naturalDateParser';
 import type { ReminderDraft, SavedReminder } from './core/reminder';
 import { ScheduleDefaults } from './core/scheduleDefaults';
+import { ScheduleDraft, type SaveDecision, type ScheduleOutcome } from './core/scheduleDraft';
 import type { SuggestionDateFormatter } from './core/suggestionDateFormatter';
 import { isSchedule, phaseEquals, type NotchMachineSnapshot, type NotchPhase, type NotchSection } from './machine/notchMachine';
 import { INITIAL_FLAGS, type NotchFlags, type NotchSizes } from './machine/notchState';
 import type { FlagAnimation } from './ui/transitions';
+
+export type { SaveDecision } from './core/scheduleDraft';
 
 export interface RecreationState {
   // Panel (NotchMachine + NotchFlags)
@@ -134,6 +138,14 @@ export class RecreationStore {
   private machine: MachineMirror = { phase: { type: 'closed', parked: false }, section: 'none', hoverSwollen: false, badgeShown: false };
   private beeps = 0;
 
+  // Set Date (`ScheduleNotchSection` @State: `model`, `timeText`, `calendarMonth`)
+  private scheduleDraftValue: ScheduleDraft | null = null;
+  private unsubscribeScheduleDraft: (() => void) | null = null;
+  private calendarMonthValue: Date;
+  private timeTextValue = '';
+  private timeFieldEditing = false;
+  private scheduleVersionValue = 0;
+
   private panel: PanelView;
   private state: RecreationState;
 
@@ -142,6 +154,7 @@ export class RecreationStore {
     this.calendar = opts.calendar;
     this.formatter = opts.formatter;
     this.panel = { flags: INITIAL_FLAGS, animation: 'none', sizes: opts.sizes, ignoresMouse: false };
+    this.calendarMonthValue = MonthGrid.startOfMonth(this.clock(), this.calendar);
     this.state = this.buildState();
   }
 
@@ -322,6 +335,144 @@ export class RecreationStore {
     this.changed();
   }
 
+  // MARK: Set Date
+
+  /** `ScheduleNotchSection.init` + `.onAppear`: the draft opens on the reminder's date, or on the
+   *  live phrase when there is none; the grid shows the draft's month; the time field syncs. */
+  openScheduleDraft(): ScheduleDraft {
+    this.unsubscribeScheduleDraft?.();
+    const d = this.draft;
+    const draft = new ScheduleDraft({
+      selected: d.dueDate,
+      initialText: d.dueDate === null ? d.suggestion?.matchedText ?? null : null,
+      calendar: this.calendar,
+      clock: this.clock,
+    });
+    this.scheduleDraftValue = draft;
+    this.unsubscribeScheduleDraft = draft.subscribe(() => this.scheduleDraftChanged());
+    this.calendarMonthValue = MonthGrid.startOfMonth(draft.draft, this.calendar);
+    this.timeFieldEditing = false;
+    this.timeTextValue = this.formatter.time(draft.draft);
+    this.scheduleVersionValue += 1;
+    this.changed();
+    return draft;
+  }
+
+  get scheduleDraft(): ScheduleDraft | null {
+    return this.scheduleDraftValue;
+  }
+
+  /** The store lets go of the draft; the section keeps rendering its own reference while it fades out. */
+  closeScheduleDraft(): void {
+    this.unsubscribeScheduleDraft?.();
+    this.unsubscribeScheduleDraft = null;
+    this.scheduleDraftValue = null;
+    this.timeFieldEditing = false;
+    this.scheduleVersionValue += 1;
+    this.changed();
+  }
+
+  /** +1 on every draft, `timeText` or `calendarMonth` change. */
+  get scheduleVersion(): number {
+    return this.scheduleVersionValue;
+  }
+
+  /** The month the grid shows: the draft's at open, then it follows the draft or the ‹ › paging. */
+  get calendarMonth(): Date {
+    return this.calendarMonthValue;
+  }
+
+  /** The time field's text: `formatter.time(draft)` unless the field is being edited. */
+  get timeText(): string {
+    return this.timeTextValue;
+  }
+
+  /** The type field. Draft edits never set `dirty` (`origin` is unused): only `finishSchedule`
+   *  writes the reminder. */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the handle passes every edit's origin
+  setScheduleText(text: string, _origin: Origin): void {
+    const draft = this.scheduleDraftValue;
+    if (draft) draft.text = text;
+  }
+
+  /** pick / setTime / stepTime / moveDay / moveInto on the open draft (never sets `dirty`). */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the handle passes every edit's origin
+  editSchedule(edit: (d: ScheduleDraft) => void, _origin: Origin): void {
+    const draft = this.scheduleDraftValue;
+    if (draft) edit(draft);
+  }
+
+  setTimeText(text: string): void {
+    if (this.timeTextValue === text) return;
+    this.timeTextValue = text;
+    this.scheduleVersionValue += 1;
+    this.changed();
+  }
+
+  /** Focus entering / leaving the time field: while editing, draft changes do not overwrite the text. */
+  setTimeFieldEditing(editing: boolean): void {
+    this.timeFieldEditing = editing;
+  }
+
+  /** Swift `applyTypedTime`: the trimmed text, unless it already shows the draft's time, goes
+   *  through `ScheduleDraft.applyTypedTime`; the field then re-syncs (an invalid text reverts).
+   *  false = not a time (draft unchanged; the caller beeps when it should). */
+  applyTimeText(): boolean {
+    const draft = this.scheduleDraftValue;
+    if (!draft) return false;
+    const typed = trimmingWhitespaces(this.timeTextValue);
+    const valid = typed === this.formatter.time(draft.draft) || draft.applyTypedTime(typed);
+    this.syncTimeText(draft);
+    return valid;
+  }
+
+  /** ‹ › in the month grid (`ScheduleMonthGrid.page`): back stops at the current month. */
+  pageMonth(delta: -1 | 1): boolean {
+    if (delta < 0 && !MonthGrid.canGoBack(this.calendarMonthValue, this.clock(), this.calendar)) return false;
+    this.calendarMonthValue = MonthGrid.shiftMonth(this.calendarMonthValue, delta, this.calendar);
+    this.scheduleVersionValue += 1;
+    this.changed();
+    return true;
+  }
+
+  /** Arrow keys in the grid (`ScheduleNotchSection.moveDay`): after paging away, the first arrow
+   *  lands in the visible month; otherwise ±1 / ±7 days, never into the past (false + beep). */
+  moveDayInGrid(days: -7 | -1 | 1 | 7): boolean {
+    const draft = this.scheduleDraftValue;
+    if (!draft) return false;
+    if (MonthGrid.startOfMonth(draft.draft, this.calendar).getTime() !== this.calendarMonthValue.getTime()) {
+      draft.moveInto(this.calendarMonthValue);
+      return true;
+    }
+    if (draft.moveDay(days)) return true;
+    this.beep();
+    return false;
+  }
+
+  /** Swift `finish(_:)`: writes the outcome's date and preset, then strips the title's phrase when
+   *  the outcome consumes it. false for no outcome (nothing written). */
+  finishSchedule(outcome: ScheduleOutcome | null, origin: Origin): boolean {
+    if (!outcome) return false;
+    // `writeDueDate` drops the suggestion once a date is set; Swift still holds it when it strips.
+    const suggestion = this.draft.suggestion;
+    this.writeDueDate(outcome.date);
+    this.draft.presetPick = outcome.presetPick;
+    if (outcome.consumesSuggestion && suggestion) this.stripPhrase(suggestion);
+    this.touch(origin);
+    this.changed();
+    return true;
+  }
+
+  /** ✓ while Set Date is open: `ScheduleDraft.prepareSave`. No draft open = save as is. */
+  saveDecision(): SaveDecision {
+    return this.scheduleDraftValue?.prepareSave() ?? { type: 'saveAsIs' };
+  }
+
+  /** The panel is switching to Location: `ScheduleDraft.prepareSwitch`. */
+  switchDecision(): SaveDecision {
+    return this.scheduleDraftValue?.prepareSwitch() ?? { type: 'saveAsIs' };
+  }
+
   // MARK: Save
 
   setSaveError(text: string | null): void {
@@ -408,6 +559,23 @@ export class RecreationStore {
   private resetDraftFields(): void {
     this.draft = emptyDraft();
     this.openedOnce = true;
+  }
+
+  /** `.onChange(of: model.draft)`: the time field re-syncs unless it is being edited, and the
+   *  grid follows the draft into another month. */
+  private scheduleDraftChanged(): void {
+    const draft = this.scheduleDraftValue;
+    if (!draft) return;
+    if (!this.timeFieldEditing) this.timeTextValue = this.formatter.time(draft.draft);
+    const first = MonthGrid.startOfMonth(draft.draft, this.calendar);
+    if (first.getTime() !== this.calendarMonthValue.getTime()) this.calendarMonthValue = first;
+    this.scheduleVersionValue += 1;
+    this.changed();
+  }
+
+  /** Swift `syncTimeText()`. */
+  private syncTimeText(draft: ScheduleDraft): void {
+    this.setTimeText(this.formatter.time(draft.draft));
   }
 
   private touch(origin: Origin): void {
