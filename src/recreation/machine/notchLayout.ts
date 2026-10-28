@@ -230,3 +230,61 @@ export const NotchLayout = {
   openCanvasSize,
   passesMouseThrough,
 } as const;
+
+/** Metrics of every recreation control (Views/Theme.swift and the views that extend it). */
+export const Theme = {
+  horizontalPadding: 20,
+  header: { titleSize: 22, titleWeight: 700, chevronSize: 13, chevronWeight: 700, chevronGap: 7, chevronOffsetY: 0.5, spacerMin: 12 },
+  close: { circle: 24, hit: 36, glyphSize: 11, glyphWeight: 700 },
+  dashedCircle: { size: 21, stroke: 1.5, dash: [0.1, 3.2], paddingTop: 2 },
+  input: { circleGap: 10, rowSpacing: 1 },
+  title: { size: 19, weight: 400, maxLength: 2000 },
+  notes: { size: 15, weight: 400, maxLength: 10000 },
+  chipSlot: { height: 26, leading: 31 },
+  suggestionChip: {
+    iconSize: 12, iconWeight: 500, textSize: 13, textWeight: 500, padX: 10, padY: 5, fillAlpha: 0.14, gap: 6,
+    keycap: { size: 11, weight: 600, textAlpha: 0.45, fillAlpha: 0.10, radius: 4, padX: 5, padY: 1 },
+    dismiss: { size: 13, alpha: 0.40, gap: 8 },
+  },
+  dateChip: { iconSize: 12, iconWeight: 500, textSize: 13, textWeight: 500, gap: 6, dismissSize: 13, dismissAlpha: 0.50 },
+  error: { size: 12, weight: 500, color: '#FF453A' },
+  pill: {
+    height: 44, padX: 11, iconGap: 17, iconSize: 18, hitSize: 38, fillAlpha: 0.03, stroke: '#3D3D3F', strokeWidth: 1,
+    activeFillAlpha: 0.22, activeInset: 3,
+  },
+  bottomBar: { spacerMin: 16 },
+  save: { size: 48, glyphSize: 22, glyphWeight: 600, disabled: '#474749' },
+  hover: { scale: 1.06, pressScale: 0.94, highlight: 0.10, pressHighlight: 0.18 },
+  notchFill: { neutral: [0.06, 0.11, 0.15], selected: [0.20, 0.27, 0.32], selectedStrokeAlpha: 0.80, pressScale: 0.97, prominentDisabledOpacity: 0.55 },
+  notchText: { size: 13, weight: 500, alpha: [0.60, 0.85, 0.95], padX: 8 },
+  keyHint: { size: 11, weight: 600, textAlpha: 0.50, fillAlpha: 0.10, radius: 4, padX: 5, padY: 1 },
+  typeField: {
+    padX: 12, iconSize: 12, iconWeight: 500, iconAlpha: 0.45, textSize: 14, placeholderAlpha: 0.50, fillAlpha: 0.07,
+    strokeAlpha: 0.08, focusStrokeAlpha: 0.70, radius: 12,
+  },
+  preview: { size: 12, weight: 500, padL: 12, secondaryAlpha: 0.60, pastColor: '#FF9E0A' },
+  presetCard: {
+    columns: 3, gap: 8, padX: 10, iconSize: 13, iconWeight: 500, iconWidth: 18, titleSize: 13, titleWeight: 500,
+    hintSize: 10, hintWeight: 500, hintAlpha: 0.50, detailSize: 11, detailAlpha: 0.60, innerGap: 9, minScale: 0.75,
+  },
+  dayButton: { padX: 11, iconSize: 12, iconWeight: 500, textSize: 13, textWeight: 500, chevronSize: 9, chevronWeight: 700, chevronAlpha: 0.50 },
+  timeField: { width: 96, padX: 10, iconSize: 11, iconWeight: 500, iconAlpha: 0.45, textSize: 13, textWeight: 500, fillAlpha: 0.07, focusStrokeAlpha: 0.70 },
+  timeChip: { size: 12, weight: 500, padX: 10, alpha: 0.75, gap: 4 },
+  dayTimeRow: { gap: 6, spacerMin: 6 },
+  footer: { gap: 8, cancelSize: 13, cancelWeight: 500, cancelAlpha: 0.85, cancelPadX: 16, setSize: 13, setWeight: 600, setPadX: 18 },
+  monthGrid: {
+    headerSize: 13, headerWeight: 600, headerPadL: 4, navSize: 11, navWeight: 600, navAlpha: 0.75, navDisabledAlpha: 0.20, navCircle: 26, navGap: 2,
+    weekdaySize: 10, weekdayWeight: 600, weekdayAlpha: 0.55, daySize: 13, dayAlpha: 0.85, pastAlpha: 0.25, hoverFill: [0.09, 0.16],
+    focusRing: { alpha: 0.85, width: 1.5, inset: -3 }, gridRing: { radius: 12, alpha: 0.60, width: 1.5, inset: -4 },
+  },
+  listPicker: {
+    radius: 12, stroke: '#3D3D3F', minWidth: 200, headerSize: 13, headerWeight: 600, headerAlpha: 0.50, headerPad: [16, 12, 6],
+    rowPadX: 16, rowPadY: 8, dot: 10, titleSize: 15, checkSize: 13, checkWeight: 600, rowFill: [0.06, 0.11, 0.15], selectedFillAlpha: 0.20,
+  },
+  locationField: {
+    padX: 12, gap: 8, iconSize: 12, iconWeight: 500, textSize: 14, placeholderAlpha: 0.50, fillAlpha: 0.07,
+    strokeAlpha: 0.08, focusStrokeAlpha: 0.70, radius: 12,
+  },
+  savedBadge: { size: 24, strokeRatio: 0.11, paddingRatio: 0.27, tick: [[0, 0.55], [0.38, 0.92], [1, 0.12]] },
+  font: { recreation: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Inter, sans-serif' },
+} as const;
