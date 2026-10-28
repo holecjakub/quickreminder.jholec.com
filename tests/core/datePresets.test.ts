@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DATE_PRESETS, DatePresets, type DatePreset, type PresetPick } from '../../src/recreation/core/datePresets';
+import { NaturalDateParser } from '../../src/recreation/core/naturalDateParser';
 import { ScheduleDefaults } from '../../src/recreation/core/scheduleDefaults';
 import { prague, pragueCalendar as cal, pragueString } from '../support';
 
@@ -82,4 +83,23 @@ describe('datePresets (TS)', () => {
   it('systemImages', () =>
     expect(DATE_PRESETS.map(DatePresets.systemImage)).toEqual(['clock', 'moon', 'sunrise', 'sofa', 'calendar.badge.plus', 'calendar']));
   it('eveningCutoff', () => expect(DatePresets.eveningCutoffMinutes).toBe(30));
+});
+
+describe('DatePresetsTests (parser parity)', () => {
+  const nows = [prague(2026, 10, 19, 10, 0), prague(2026, 10, 23, 17, 0), prague(2026, 10, 25, 11, 0)];
+  it.each([
+    ['next week', 'nextWeek'], ['weekend', 'weekend'], ['this weekend', 'weekend'], ['tomorrow', 'tomorrow'],
+    ['zítra', 'tomorrow'], ['příští týden', 'nextWeek'], ['next month', 'nextMonth'],
+  ] as const)('parity "%s" ≡ %s', (phrase, preset) => {
+    for (const now of nows) {
+      const parsed = NaturalDateParser.parse(phrase, now, cal)!;
+      expect(parsed.hasTime).toBe(false);
+      expect(pragueString(ScheduleDefaults.resolveDayOnly(parsed.date, now, cal))).toBe(date(preset, now));
+    }
+  });
+  it('tonightVersusEvening', () => {
+    const now = prague(2026, 10, 19, 10, 0);
+    expect(pragueString(NaturalDateParser.parse('tonight', now, cal)!.date)).toBe('2026-10-19 20:00');
+    expect(date('evening', now)).toBe('2026-10-19 19:00');
+  });
 });

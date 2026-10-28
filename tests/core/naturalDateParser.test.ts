@@ -66,6 +66,73 @@ describe('NaturalDateParserTests', () => {
     expect(['for friday', 'friday']).toContain(s.matchedText);
     expect(s.date).toEqual(ndp(2026, 9, 25));
   });
+
+  it.each([
+    dc('Buy milk tomorrow at 2pm', 2026, 9, 19, 14, 0, true, 'Buy milk'), dc('koupit mléko zítra ve 14:00', 2026, 9, 19, 14, 0, true, 'koupit mléko'),
+    dc('zitra v 8 rano', 2026, 9, 19, 8, 0, true, ''), dc('zítra v 8 ráno', 2026, 9, 19, 8, 0, true),
+    dc('Call mom tomorrow 2pm', 2026, 9, 19, 14, 0, true, 'Call mom'), dc('at 2pm tomorrow', 2026, 9, 19, 14, 0, true, ''),
+    dc('schůzka v úterý ráno', 2026, 9, 22, 9, 0, true, 'schůzka'), dc('call mom tonight', 2026, 9, 18, 20, 0, true, 'call mom'),
+  ])('dayAndTime "$text"', verify);
+
+  it.each([
+    dc('meeting at 14:00', 2026, 9, 18, 14, 0, true, 'meeting'), dc('at 9', 2026, 9, 19, 9, 0, true), dc('noon', 2026, 9, 18, 12, 0, true),
+    dc('midnight', 2026, 9, 19, 0, 0, true), dc('o půlnoci', 2026, 9, 19, 0, 0, true), dc('v poledne', 2026, 9, 18, 12, 0, true),
+    dc('in the morning', 2026, 9, 19, 9, 0, true), dc('večer', 2026, 9, 18, 19, 0, true), dc('odpoledne', 2026, 9, 18, 15, 0, true),
+    dc('ve 2 odpoledne', 2026, 9, 18, 14, 0, true), dc('v půl třetí', 2026, 9, 18, 14, 30, true), dc('ve 14.30', 2026, 9, 18, 14, 30, true),
+    dc('call at 2:30pm', 2026, 9, 18, 14, 30, true, 'call'),
+  ])('times "$text"', verify);
+
+  it.each([
+    dc('in 2 hours', 2026, 9, 18, 12, 0, true), dc('in an hour', 2026, 9, 18, 11, 0, true), dc('in 30 minutes', 2026, 9, 18, 10, 30, true),
+    dc('in 3 days', 2026, 9, 21, 0, 0, false), dc('in a week', 2026, 9, 25, 0, 0, false), dc('za hodinu', 2026, 9, 18, 11, 0, true),
+    dc('za 2 hodiny', 2026, 9, 18, 12, 0, true), dc('za 5 hodin', 2026, 9, 18, 15, 0, true), dc('za 30 minut', 2026, 9, 18, 10, 30, true),
+    dc('za 3 dny', 2026, 9, 21, 0, 0, false), dc('za týden', 2026, 9, 25, 0, 0, false), dc('za 2 týdny', 2026, 10, 2, 0, 0, false),
+  ])('relativeOffsets "$text"', verify);
+
+  it.each([
+    dc('ve 14.30.', 2026, 9, 18, 14, 30, true, ''), dc('meeting at 14.30.', 2026, 9, 18, 14, 30, true, 'meeting'),
+  ])('sentenceFinalPeriodAfterTime "$text"', verify);
+
+  it.each([
+    dc('tomorrow evening', 2026, 9, 19, 19, 0, true, ''), dc('tomorrow morning', 2026, 9, 19, 9, 0, true, ''),
+    dc('tomorrow night', 2026, 9, 19, 20, 0, true, ''), dc('call mom tomorrow evening', 2026, 9, 19, 19, 0, true, 'call mom'),
+    dc('friday afternoon', 2026, 9, 25, 15, 0, true, ''),
+  ])('englishDayParts "$text"', verify);
+
+  it.each([
+    dc('tonight at 8', 2026, 9, 18, 20, 0, true, ''), dc('12am', 2026, 9, 19, 0, 0, true), dc('12pm', 2026, 9, 18, 12, 0, true),
+    dc('v 12 večer', 2026, 9, 18, 12, 0, true, ''), dc('půl třetí odpoledne', 2026, 9, 18, 14, 30, true, ''),
+  ])('hourDisambiguationWithEveningContext "$text"', verify);
+
+  it.each([
+    dc('in 2 days at 3pm', 2026, 9, 20, 15, 0, true, ''), dc('za 3 dny v 9 ráno', 2026, 9, 21, 9, 0, true, ''),
+  ])('offsetMergedWithTime "$text"', verify);
+
+  it.each([
+    dc('Fix this tomorrow', 2026, 9, 19, 0, 0, false, 'Fix this'), dc('check in tomorrow', 2026, 9, 19, 0, 0, false, 'check in'),
+    dc('Log in at 3pm', 2026, 9, 18, 15, 0, true, 'Log in'), dc('Buy milk, tomorrow', 2026, 9, 19, 0, 0, false, 'Buy milk'),
+    dc('Review this by friday', 2026, 9, 25, 0, 0, false, 'Review this'), dc('The report tomorrow', 2026, 9, 19, 0, 0, false, 'The report'),
+    dc('odevzdat do 5. prosince', 2026, 12, 5, 0, 0, false, 'odevzdat'),
+  ])('removingMatchKeepsRealTitleWords "$text"', verify);
+
+  it('dstSpringForwardEuropePrague', () => {
+    const prague: Calendar = { timeZone: 'Europe/Prague', locale: 'en-US', firstWeekday: 1 };
+    const now = dateFrom(prague, { year: 2026, month: 9, day: 18, hour: 10 })!;
+    const text = 'schůzka 28.3.2027 v 2:30 ráno';
+    const s = NaturalDateParser.parse(text, now, prague)!;
+    expect(s.date).toEqual(dateFrom(prague, { year: 2027, month: 3, day: 28, hour: 3 }));
+    expect(s.hasTime).toBe(true);
+    expect(NaturalDateParser.removingMatch(text, s)).toBe('schůzka');
+  });
+
+  it.each(['', '   ', 'buy 2 apples', 'iPhone 17', 'call 5 people', 'zavolat 3 lidem', 'write the summary'])('negatives "%s"', verifyNil);
+
+  it('dayAndTimeMergeIntoOneRange', () => {
+    const text = 'Buy milk tomorrow at 2pm';
+    const s = NaturalDateParser.parse(text, NOW, ndpCalendar)!;
+    expect(s.matchedText).toBe('tomorrow at 2pm');
+    expect(text.slice(s.matchedRange.start, s.matchedRange.end)).toBe(s.matchedText);
+  });
 });
 
 describe('naturalDateParser (TS)', () => {
@@ -79,4 +146,5 @@ describe('naturalDateParser (TS)', () => {
     expect(s.matchedRange).toEqual({ start: 13, end: 18 });
     expect(text.slice(s.matchedRange.start, s.matchedRange.end)).toBe(s.matchedText);
   });
+  it.each([[0, 0], [1, 13], [6, 18], [7, 7], [12, 12], [23, 23]])('disambiguate(%i) = %i', (h, e) => expect(NaturalDateParser.disambiguate(h)).toBe(e));
 });

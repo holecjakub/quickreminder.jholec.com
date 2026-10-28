@@ -1,6 +1,7 @@
 // Port of Services/NaturalDateParser.swift (app commit 144d620): the Reminders-style natural
-// language date parser for English and Czech. This file covers normalisation, the day
-// candidates (relative days, weekdays, explicit dates), right-most selection and phrase removal.
+// language date parser for English and Czech. Normalisation, the three candidate classes
+// (relative offsets, days, times), their precedence, the adjacent day + time merge, right-most
+// selection and phrase removal.
 //
 // Design notes carried over from the Swift source:
 // * Matching is case-insensitive and diacritics-insensitive ("zitra" == "zítra"). The text is
@@ -8,15 +9,29 @@
 //   and ranges map back onto the original by UTF-16 offset.
 // * "next X" == "X": `friday` and `next friday` both resolve to the next occurrence strictly
 //   after today, through `DatePresets.nextWeekday` so a typed phrase and the preset agree.
+// * Bare numbers are never times. `at 2` needs `at` / `v` / `ve`, or am/pm, or a `:`/`.` minute
+//   separator, or a day-part suffix ("v 8 ráno"), so "buy 2 apples" and "iPhone 17" never match.
+// * Ambiguous hours: without am/pm or a day-part word, hours 1…6 are read as PM ("at 3" →
+//   15:00, "v půl třetí" → 14:30) while 7…12 are taken literally ("at 9" → 09:00). An adjacent
+//   evening/afternoon day part overrides that for a bare hour below 12 ("tonight at 8" → 20:00).
+//   Hour 12 is left alone even next to an evening word: "v 12 večer" stays 12:00.
 // * Slash dates (`3/12`) are month/day for English text and day/month when the text carries
 //   Czech signals; dotted dates (`3.12.`) are always day/month.
 // * Invalid calendar dates never roll over: "31. února" produces no match, "29.2." without a
 //   year walks forward to the next leap year, a written-out year must be `20xx` within ±10
 //   years of `now`, and a missing year means the first valid occurrence that is not in the past.
-// * Only the RIGHT-MOST phrase is returned.
+// * A time without a day that already lies in the past today rolls over to tomorrow.
+// * Day-sized relative offsets ("in 3 days", "za týden") return the start of that day with
+//   `hasTime` false; hour/minute offsets keep the exact time. A day-sized offset merges with an
+//   adjacent time ("in 2 days at 3pm").
+// * Only the RIGHT-MOST phrase is returned. A time merges only with a day DIRECTLY adjacent to
+//   it, so in "tomorrow buy milk at 2pm" the 2pm resolves on its own and "tomorrow" stays in the
+//   title; the strict adjacency is what keeps the stripped title predictable.
 
 import {
   addDays,
+  addHours,
+  addMinutes,
   addMonths,
   components,
   dateFrom,
@@ -46,7 +61,9 @@ export interface DateSuggestion {
 interface TimeInfo {
   hour: number;
   minute: number;
-  /** false only for a bare hour ("at 8") that nothing in the phrase pinned down. */
+  /** false only for a bare hour ("at 8") that nothing in the phrase pinned down — no am/pm, no
+   *  minutes, no day-part suffix. Such an hour may still be pushed into the evening by an
+   *  adjacent day part ("tonight at 8" → 20:00). */
   explicit: boolean;
 }
 
@@ -60,7 +77,10 @@ interface TextRange {
   end: number;
 }
 
-type Payload = { kind: 'day'; day: DayInfo };
+type Payload =
+  | { kind: 'day'; day: DayInfo }
+  | { kind: 'time'; time: TimeInfo }
+  | { kind: 'offset'; date: Date; hasTime: boolean };
 
 interface Candidate {
   range: TextRange;
@@ -142,6 +162,21 @@ function intersects(a: TextRange, b: TextRange): boolean {
   return a.start < b.end && b.start < a.end;
 }
 
+function overlaps(range: TextRange, others: readonly Candidate[]): boolean {
+  return others.some((other) => intersects(other.range, range));
+}
+
+function union(lhs: TextRange, rhs: TextRange): TextRange {
+  return { start: Math.min(lhs.start, rhs.start), end: Math.max(lhs.end, rhs.end) };
+}
+
+/** True when only whitespace / a comma (at most 3 UTF-16 units) separates the two ranges. */
+function adjacent(lhs: TextRange, rhs: TextRange, normalized: string): boolean {
+  const length = rhs.start - lhs.end;
+  if (length < 0 || length > 3) return false;
+  return [...normalized.slice(lhs.end, rhs.start)].every((unit) => isWhitespace(unit) || unit === ',');
+}
+
 /** Sorted by start, longest first at the same start; any candidate intersecting a kept one is dropped. */
 function dedupe(items: readonly Candidate[]): Candidate[] {
   const sorted = [...items].sort((lhs, rhs) =>
@@ -205,6 +240,28 @@ const weekdayFullAlternation = alternation(Object.keys(weekdayNumbers).filter((k
 const weekdayAbbrevAlternation = alternation(Object.keys(weekdayNumbers).filter((key) => key.length <= 4));
 const monthAlternation = alternation(Object.keys(monthNumbers));
 
+const czechHalfOrdinals: Readonly<Record<string, number>> = {
+  jedne: 1, druhe: 2, treti: 3, ctvrte: 4, pate: 5, seste: 6,
+  sedme: 7, osme: 8, devate: 9, desate: 10, jedenacte: 11, dvanacte: 12,
+};
+
+const dayPartTimes: Readonly<Record<string, TimeInfo>> = {
+  rano: { hour: DayPart.morningHour, minute: 0, explicit: true },
+  dopoledne: { hour: 10, minute: 0, explicit: true },
+  poledne: { hour: 12, minute: 0, explicit: true },
+  odpoledne: { hour: DayPart.afternoonHour, minute: 0, explicit: true },
+  vecer: { hour: DayPart.eveningHour, minute: 0, explicit: true },
+  vecera: { hour: DayPart.eveningHour, minute: 0, explicit: true },
+  pulnoc: { hour: 0, minute: 0, explicit: true },
+  pulnoci: { hour: 0, minute: 0, explicit: true },
+  noon: { hour: 12, minute: 0, explicit: true },
+  midnight: { hour: 0, minute: 0, explicit: true },
+  morning: { hour: DayPart.morningHour, minute: 0, explicit: true },
+  afternoon: { hour: DayPart.afternoonHour, minute: 0, explicit: true },
+  evening: { hour: DayPart.eveningHour, minute: 0, explicit: true },
+  night: { hour: DayPart.nightHour, minute: 0, explicit: true },
+};
+
 // MARK: - Compiled patterns
 
 const relativeDayRegex = new RegExp(
@@ -257,6 +314,54 @@ const dayMonthRegex = new RegExp(
 const monthDayRegex = new RegExp(
   boundaryBefore + '(' + monthAlternation + ')\\s+(\\d{1,2})(?:st|nd|rd|th)?(?![\\p{L}\\d])'
     + '(?:,?\\s+(' + yearPattern + ')(?!\\d))?',
+  'gu',
+);
+
+const timeWordRegex = new RegExp(
+  boundaryBefore
+    + '(?:in\\s+the\\s+(morning|afternoon|evening)'
+    + '|(?:at\\s+)?(noon|midnight)'
+    + '|(?:v\\s+)?(poledne)'
+    + '|(?:o\\s+)?(pulnoci|pulnoc)'
+    + '|(rano|dopoledne|odpoledne|vecera|vecer)'
+    + '|(morning|afternoon|evening|night))'
+    + boundaryAfter,
+  'gu',
+);
+
+/** The day-part suffix shared by the numeric and half-hour time patterns ("ve 2 odpoledne",
+ *  "půl třetí odpoledne", "at 3 in the afternoon"). */
+const dayPartSuffixPattern =
+  '(rano|dopoledne|odpoledne|vecera|vecer|morning|afternoon|evening|night'
+  + '|in\\s+the\\s+morning|in\\s+the\\s+afternoon|in\\s+the\\s+evening)' + boundaryAfter;
+
+/** "v půl třetí", "půl třetí odpoledne" → 14:30. 1: ordinal  2: day-part suffix */
+const halfHourRegex = new RegExp(
+  boundaryBefore + '(?:v\\s+)?pul\\s+(' + alternation(Object.keys(czechHalfOrdinals)) + ')' + boundaryAfter
+    + '(?:\\s+' + dayPartSuffixPattern + ')?',
+  'gu',
+);
+
+/** 1: at/v/ve  2: hour  3: minutes after ':'  4: minutes after '.'  5: am/pm  6: day-part suffix
+ *
+ *  The minute lookahead `(?!\d|\.\d)` tolerates a sentence-final period ("ve 14.30.") while
+ *  still refusing the middle of a dotted date ("12.30.2026"). */
+const numericTimeRegex = new RegExp(
+  '(?<![\\p{L}\\d])(?:(at|v|ve)\\s+)?(\\d{1,2})(?::(\\d{2})|\\.(\\d{2})(?!\\d|\\.\\d))?(?!\\d)'
+    + '(?:\\s*(am|pm)(?![\\p{L}]))?'
+    + '(?:\\s+' + dayPartSuffixPattern + ')?',
+  'gu',
+);
+
+/** "in 2 hours", "in an hour", "in a week". 1: amount  2: unit */
+const englishOffsetRegex = new RegExp(
+  boundaryBefore + 'in\\s+(?:(\\d{1,3})|an|a)\\s+(hours|hour|hrs|hr|minutes|minute|mins|min|days|day|weeks|week|months|month)' + boundaryAfter,
+  'gu',
+);
+
+/** "za 2 hodiny", "za hodinu", "za týden". 1: amount  2: unit */
+const czechOffsetRegex = new RegExp(
+  boundaryBefore + 'za\\s+(?:(\\d{1,3})\\s+)?(hodinu|hodiny|hodin|minutu|minuty|minut|dny|dni|dnu|den|tydny|tydnu|tyden|mesice|mesicu|mesic)' + boundaryAfter,
   'gu',
 );
 
@@ -383,6 +488,148 @@ function resolveDate(day: number, month: number, year: number | null, now: Date,
   return null;
 }
 
+// MARK: - Time candidates
+
+function timeCandidate(range: TextRange, time: TimeInfo): Candidate {
+  return { range, payload: { kind: 'time', time } };
+}
+
+function timeCandidates(text: string): Candidate[] {
+  const found: Candidate[] = [];
+
+  for (const match of text.matchAll(numericTimeRegex)) {
+    const prefix = match[1];
+    let hour = parseInteger(match[2]);
+    if (hour === null) continue;
+    const minuteText = match[3] ?? match[4];
+    const meridiem = match[5];
+    const suffix = match[6];
+
+    // A bare number is never a time.
+    if (prefix === undefined && meridiem === undefined && minuteText === undefined && suffix === undefined) continue;
+    const minute = parseInteger(minuteText) ?? 0;
+    if (minute >= 60 || hour > 23) continue;
+
+    if (meridiem !== undefined) {
+      if (hour < 1 || hour > 12) continue;
+      if (meridiem === 'pm') hour = hour === 12 ? 12 : hour + 12;
+      if (meridiem === 'am') hour = hour === 12 ? 0 : hour;
+    } else if (suffix !== undefined) {
+      hour = shifted(hour, suffix);
+    } else {
+      hour = disambiguate(hour);
+    }
+    if (hour > 23) continue;
+    const explicit = meridiem !== undefined || minuteText !== undefined || suffix !== undefined;
+    found.push(timeCandidate(rangeOf(match), { hour, minute, explicit }));
+  }
+
+  for (const match of text.matchAll(halfHourRegex)) {
+    const ordinal = match[1] === undefined ? undefined : czechHalfOrdinals[match[1]];
+    if (ordinal === undefined) continue;
+    // "půl jedné" is half past twelve, otherwise "půl N" is half past N-1.
+    let hour = ordinal === 1 ? 12 : disambiguate(ordinal - 1);
+    const suffix = match[2];
+    if (suffix !== undefined) hour = shifted(hour, suffix);
+    found.push(timeCandidate(rangeOf(match), { hour, minute: 30, explicit: true }));
+  }
+
+  for (const match of text.matchAll(timeWordRegex)) {
+    const key = match.slice(1).find((group) => group !== undefined);
+    const time = key === undefined ? undefined : dayPartTimes[key];
+    if (time === undefined) continue;
+    found.push(timeCandidate(rangeOf(match), time));
+  }
+
+  return dedupe(found);
+}
+
+/** Maps a day-part suffix ("odpoledne", "in the evening", "night") onto its table key. */
+function dayPartKey(suffix: string): string | null {
+  for (const key of ['afternoon', 'evening', 'morning', 'night']) {
+    if (!suffix.includes(key)) continue;
+    if (key === 'afternoon') return 'odpoledne';
+    if (key === 'evening' || key === 'night') return 'vecer';
+    return 'rano';
+  }
+  return suffix in dayPartTimes ? suffix : null;
+}
+
+/** "ve 2 odpoledne" → 14. Hour 12 is left alone: see the file header. */
+function shifted(hour: number, suffix: string): number {
+  const key = dayPartKey(suffix);
+  const part = key === null ? undefined : dayPartTimes[key];
+  if (part === undefined) return hour;
+  return part.hour >= 12 && hour < 12 ? hour + 12 : hour;
+}
+
+/** The day a time candidate can attach itself to, if the neighbouring candidate offers one. */
+function dayBase(payload: Payload, calendar: Calendar): DayInfo | null {
+  switch (payload.kind) {
+    case 'day':
+      return payload.day;
+    case 'offset':
+      // "in 2 days at 3pm": a day-sized offset is just a day, so it merges like one.
+      return payload.hasTime ? null : { startOfDay: startOfDay(calendar, payload.date), impliedTime: null };
+    case 'time':
+      return null;
+  }
+}
+
+/** Applies a time to a day, letting an evening/afternoon day part disambiguate a bare hour. */
+function merge(time: TimeInfo, day: DayInfo, calendar: Calendar): Date {
+  let { hour } = time;
+  if (!time.explicit && hour < 12 && day.impliedTime !== null && day.impliedTime.hour >= 12) hour += 12;
+  return apply({ ...time, hour }, day.startOfDay, calendar);
+}
+
+/** `settingTime` is `.nextTime`: a time that does not exist on a DST spring-forward day moves to
+ *  the next valid instant (02:30 → 03:00) instead of collapsing back to midnight. */
+function apply(time: TimeInfo, day: Date, calendar: Calendar): Date {
+  return settingTime(calendar, day, time.hour, time.minute);
+}
+
+function timeOnly(time: TimeInfo, now: Date, calendar: Calendar): Date {
+  const today = startOfDay(calendar, now);
+  const candidate = apply(time, today, calendar);
+  if (candidate > now) return candidate;
+  return apply(time, addDays(calendar, today, 1), calendar);
+}
+
+// MARK: - Relative offsets
+
+function offsetCandidates(text: string, now: Date, calendar: Calendar): Candidate[] {
+  const found: Candidate[] = [];
+
+  const append = (match: RegExpMatchArray) => {
+    const amount = parseInteger(match[1]) ?? 1;
+    const unit = match[2];
+    if (unit === undefined) return;
+    const resolved = offsetDate(amount, unit, now, calendar);
+    if (resolved) found.push({ range: rangeOf(match), payload: { kind: 'offset', ...resolved } });
+  };
+
+  for (const match of text.matchAll(englishOffsetRegex)) append(match);
+  for (const match of text.matchAll(czechOffsetRegex)) append(match);
+
+  return dedupe(found);
+}
+
+/** Hour and minute offsets keep the exact time; day, week and month offsets are day-sized and
+ *  resolve to the start of that day. */
+function offsetDate(amount: number, unit: string, now: Date, calendar: Calendar): { date: Date; hasTime: boolean } | null {
+  const startsWith = (...prefixes: string[]) => prefixes.some((prefix) => unit.startsWith(prefix));
+  if (startsWith('hod', 'hour', 'hr')) return { date: addHours(now, amount), hasTime: true };
+  if (startsWith('min')) return { date: addMinutes(now, amount), hasTime: true };
+
+  let moved: Date;
+  if (startsWith('day', 'den', 'dn')) moved = addDays(calendar, now, amount);
+  else if (startsWith('week', 'tyd')) moved = addDays(calendar, now, amount * 7);
+  else if (startsWith('month', 'mesic')) moved = addMonths(calendar, now, amount);
+  else return null;
+  return { date: startOfDay(calendar, moved), hasTime: false };
+}
+
 // MARK: - Public API
 
 /** Texts longer than this return null: only the right-most phrase matters and the parser runs on
@@ -396,22 +643,57 @@ function parse(text: string, now: Date, calendar: Calendar): DateSuggestion | nu
   const normalized = normalize(text);
   const czech = looksCzech(text, normalized);
 
-  const days = dayCandidates(normalized, now, calendar, czech);
+  // Precedence: offsets > days > times; a lower class never claims text a higher one matched.
+  const offsets = offsetCandidates(normalized, now, calendar);
+  const days = dayCandidates(normalized, now, calendar, czech)
+    .filter((candidate) => !overlaps(candidate.range, offsets));
+  const times = timeCandidates(normalized)
+    .filter((candidate) => !overlaps(candidate.range, offsets) && !overlaps(candidate.range, days));
 
-  const all = [...days].sort((lhs, rhs) => lhs.range.start - rhs.range.start);
+  const all = [...offsets, ...days, ...times].sort((lhs, rhs) => lhs.range.start - rhs.range.start);
   const last = all.at(-1);
   if (!last) return null;
+  const previous = all.at(-2) ?? null;
 
-  const { range } = last;
-  const { day } = last.payload;
+  let range = last.range;
   let date: Date;
   let hasTime: boolean;
-  if (day.impliedTime) {
-    date = settingTime(calendar, day.startOfDay, day.impliedTime.hour, day.impliedTime.minute);
-    hasTime = true;
-  } else {
-    date = day.startOfDay;
-    hasTime = false;
+
+  switch (last.payload.kind) {
+    case 'offset':
+      date = last.payload.date;
+      hasTime = last.payload.hasTime;
+      break;
+
+    case 'time': {
+      const day = previous !== null && adjacent(previous.range, range, normalized)
+        ? dayBase(previous.payload, calendar)
+        : null;
+      if (previous !== null && day !== null) {
+        range = union(previous.range, range);
+        date = merge(last.payload.time, day, calendar);
+      } else {
+        date = timeOnly(last.payload.time, now, calendar);
+      }
+      hasTime = true;
+      break;
+    }
+
+    case 'day': {
+      const { day } = last.payload;
+      if (previous !== null && previous.payload.kind === 'time' && adjacent(previous.range, range, normalized)) {
+        range = union(previous.range, range);
+        date = merge(previous.payload.time, day, calendar);
+        hasTime = true;
+      } else if (day.impliedTime !== null) {
+        date = apply(day.impliedTime, day.startOfDay, calendar);
+        hasTime = true;
+      } else {
+        date = day.startOfDay;
+        hasTime = false;
+      }
+      break;
+    }
   }
 
   return {
