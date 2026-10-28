@@ -9,7 +9,7 @@
     "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "isolatedModules": true,
-    "types": ["vite/client", "node"]
+    "types": ["vite/client", "node", "vitest/globals"]
   },
   "include": ["src", "tests", "e2e", "vite.config.ts", "vitest.config.ts", "playwright.config.ts"]
 }

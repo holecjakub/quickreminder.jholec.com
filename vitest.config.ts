@@ -5,6 +5,7 @@ import { defineConfig } from 'vitest/config';
 // jsdom with `// @vitest-environment jsdom`.
 export default defineConfig({
   test: {
+    globals: true,
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
     environment: 'node',
     env: { TZ: 'Pacific/Auckland' },
