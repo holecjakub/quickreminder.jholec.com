@@ -2,8 +2,8 @@
 // The machine owns every decision about *what* happens (guards, phase changes, which timers to
 // start or cancel); the runtime owns *how*. `handle` mutates the machine and returns the effects
 // to perform, in order. No clocks: everything time-based arrives as an event, so the whole
-// choreography runs in tests without a window. The `sectionChanged` event and the show-while-open
-// section case are stubs here (contract A-D4 / A-D5); Task 20 fills them in.
+// choreography runs in tests without a window. Sections (Set Date controls / calendar, Location)
+// never touch the window: every change is one spring under the content mask (contract A-D4 / A-D5).
 
 import type { NotchSection } from './notchLayout';
 
@@ -187,7 +187,8 @@ export class NotchMachine implements NotchMachineSnapshot {
         return [{ type: 'setSettled', settled: true }];
 
       case 'sectionChanged':
-        return []; // Task 20 ports `changeSection`
+        if (this._phase.type !== 'open' || event.section === this._section) return [];
+        return this.changeSection(event.section);
 
       case 'hoverEntered':
         if (!this.isParked || !this._hoverArmed || this._hoverSwollen || this._hoverDwellPending) return [];
@@ -282,9 +283,26 @@ export class NotchMachine implements NotchMachineSnapshot {
 
   // MARK: - Transitions shared by several events
 
+  /**
+   * Swift `changeSection(to:)`: one section at a time, so opening one while another is shown
+   * switches over in one spring (no close first). What the section being left keeps is the
+   * controller's job, not the machine's.
+   */
+  private changeSection(section: NotchSection): NotchEffect[] {
+    this._section = section;
+    this._generation = bumped(this._generation);
+    // The content mask goes back on while the blob springs: the section is laid out at its
+    // final height at once and must never show outside the black.
+    return [{ type: 'setSettled', settled: false }, { type: 'animateSection', section }, { type: 'scheduleSettle', generation: this._generation }];
+  }
+
   private show(): NotchEffect[] {
-    // Already open: nothing to do (Task 20 adds the return to the plain panel while a section is open).
-    if (this._phase.type === 'open') return [];
+    // Already open: nothing to do — except that a show (hotkey menu item, URL scheme, a
+    // Raycast / Spotlight reopen) while a section is open in the notch returns to the plain
+    // panel, through the same transition as Cancel, so NotchState and the view follow.
+    if (this._phase.type === 'open') {
+      return this._section === 'none' ? [] : this.changeSection('none');
+    }
     const effects: NotchEffect[] = [];
     if (this._hoverDwellPending) {
       this._hoverDwellPending = false;
