@@ -78,3 +78,8 @@ it('the Raycast card links the Script Command folder', () => {
   mount();
   expect(screen.getByRole('link', { name: 'Script Command' }).getAttribute('href')).toBe(LINKS.raycastScript);
 });
+
+it('the Script Command link is underlined, not told apart by colour alone (axe link-in-text-block)', () => {
+  mount();
+  expect(screen.getByRole('link', { name: 'Script Command' }).style.textDecoration).toBe('underline');
+});

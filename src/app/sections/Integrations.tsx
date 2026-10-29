@@ -137,7 +137,7 @@ function richBody(body: string): ReactNode {
   return body.split(/(Script Command|quickreminder:\/\/\w+)/).map((part, i) => {
     if (part === 'Script Command') {
       return (
-        <a key={i} href={LINKS.raycastScript} style={{ color: '#FFFFFF' }}>
+        <a key={i} href={LINKS.raycastScript} style={{ color: '#FFFFFF', textDecoration: 'underline' }}>
           {part}
         </a>
       );
