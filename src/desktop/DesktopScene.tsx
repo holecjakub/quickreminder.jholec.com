@@ -142,11 +142,12 @@ export function DesktopScene({
     if (next === null && slotRef.current?.contains(e.target as Node)) {
       // A close blurs the panel's field (resignFirstResponder → host.blurAll) with no relatedTarget.
       // The runtime has already moved the machine on by the next microtask: when the panel is going
-      // away, keep the latch so the focus-return effect hands focus back to the desktop; otherwise
-      // (the window or tab lost focus, the visitor tabbed out) focus really left the desktop.
+      // away (closing, closed, or saving — a save resigns the field from the saving transition and
+      // closes ~1.3 s later), keep the latch so the focus-return effect hands focus back to the
+      // desktop; otherwise (the window or tab lost focus, the visitor tabbed out) focus really left.
       queueMicrotask(() => {
         const phase = recreationRef.current?.getState().phase.type;
-        if (phase === 'closing' || phase === 'closed') return;
+        if (phase === 'closing' || phase === 'closed' || phase === 'saving') return;
         const active = document.activeElement;
         if (active !== null && rootRef.current?.contains(active)) return;
         setFocusInside(false);

@@ -161,6 +161,24 @@ it('keeps the shortcuts enabled after a keyboard close that blurred the field', 
   expect(lastRecreation.props?.shortcutsEnabled).toBe(true);
 });
 
+it('keeps the shortcuts enabled after a keyboard save that blurred the field', async () => {
+  const { root, fake } = setup();
+  await openPanel(fake);
+  act(() => fake.setTitle('Call mum'));
+  const input = root.querySelector<HTMLInputElement>('[data-qr-root] input')!;
+  input.focus();
+  await act(async () => {
+    void fake.save();
+    input.blur();
+  });
+  expect(fake.getState().phase.type).toBe('saving');
+  expect(lastRecreation.props?.shortcutsEnabled).toBe(true);
+  await act(() => vi.advanceTimersByTimeAsync(2000));
+  expect(fake.getState().phase.type).toBe('closed');
+  expect(document.activeElement).toBe(root);
+  expect(lastRecreation.props?.shortcutsEnabled).toBe(true);
+});
+
 it('drops the focus latch when the field blurs while the panel stays open', async () => {
   const { root, fake } = setup();
   await openPanel(fake);
