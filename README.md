@@ -50,6 +50,10 @@ Vercel static build (`vercel.json`). `main` deploys to production (`main deploys
 pull requests get preview URLs. The domain `quickreminder.jholec.com` is a GoDaddy CNAME `quickreminder` ->
 `cname.vercel-dns.com`; the runbook is `~/Developer/jholec.com/GODADDY-DNS.md`.
 
+## Licence
+
+MIT, see [`LICENSE`](LICENSE). Copyright (c) 2026 Jakub Holec.
+
 ## Trademarks
 
 Not affiliated with, endorsed by or sponsored by Apple Inc. Apple, macOS, iOS, Xcode, SF Symbols and Reminders are trademarks of Apple Inc. QuickReminder is an independent, from-scratch implementation using only public Apple frameworks; it contains no Apple source code or assets and uses no private APIs. It reads and writes your reminders through the public EventKit framework.
