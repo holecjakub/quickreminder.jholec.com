@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "lighthouse": "mkdir -p .lighthouse && npx lighthouse http://localhost:4173/?now=2026-10-23T10:00 --preset=desktop --only-categories=performance,accessibility --output=json --output-path=.lighthouse/desktop.json --chrome-flags=\"--headless=new\" --quiet && node scripts/assert-lighthouse.mjs .lighthouse/desktop.json"
   },
   "dependencies": {
     "@fontsource/fragment-mono": "5.3.0",
