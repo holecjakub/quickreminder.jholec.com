@@ -1,13 +1,7 @@
-/** `?debug=motion` (alone or in a comma list such as `debug=layout,motion`) slows every animation and timer 4x. */
-export function motionTimeScale(search: string): 1 | 4 {
-  const flags = new URLSearchParams(search).get('debug')?.split(',') ?? [];
-  return flags.includes('motion') ? 4 : 1;
-}
+import { motionTimeScale } from '../recreation/motionScale';
 
-/** Read once at module load. */
-export const MOTION_TIME_SCALE: 1 | 4 = motionTimeScale(
-  typeof window === 'undefined' ? '' : window.location.search,
-);
+/** Read once at module load; the `?debug=` grammar is the recreation's own (R-07). */
+export const MOTION_TIME_SCALE: 1 | 4 = motionTimeScale();
 
 export function scaleMs(ms: number, timeScale: number = MOTION_TIME_SCALE): number {
   return ms * timeScale;
