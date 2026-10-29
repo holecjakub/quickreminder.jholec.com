@@ -207,7 +207,11 @@ export async function reconcile(handle: RecreationHandle, snapshot: SectionSnaps
       case 'save': {
         if (!handle.getState().canSave) break;
         performed = 'save';
-        await point('save', { click: true });
+        // Point, press, then save through the handle: a pointerTo click would run ✓'s own action
+        // (`void h.save()`), and the explicit save() would then resolve null at once, settling
+        // `performed: 'save'` ~1.3 s before the saved pill ends.
+        await point('save');
+        if (cursor) await cursor.click();
         await handle.save();
         break;
       }

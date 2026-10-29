@@ -76,8 +76,11 @@ it('dirty: 06 saves the visitor reminder', async () => {
 });
 it('06 with the cursor clicks ✓ before saving', async () => {
   const h = new FakeRecreationHandle({ phraseDate: PHRASE_DATE, now: NOW, state: { phase: { type: 'open' }, title: 'Call mum', listId: 'work', flagged: true, location: 'Office', dueDate: PHRASE_DATE } });
-  await run(reconcile(h, SECTION_SNAPSHOTS['06'], opts({ cursor: {} as FakeCursorHandle })));
-  expect(h.methods()).toEqual(['markClean', 'pointerTo', 'save']); expect(h.calls[1]!.args).toEqual(['save', { click: true }]);
+  const order: string[] = [];
+  const click = vi.fn(async () => { order.push(`click after ${h.methods().at(-1)}`); });
+  await run(reconcile(h, SECTION_SNAPSHOTS['06'], opts({ cursor: { click } as unknown as FakeCursorHandle })));
+  expect(h.methods()).toEqual(['markClean', 'pointerTo', 'save']); expect(h.calls[1]!.args).toEqual(['save']);
+  expect(order).toEqual(['click after pointerTo']);
 });
 it('06 with an empty visitor title performs nothing', async () => {
   const h = new FakeRecreationHandle({ state: { phase: { type: 'open' }, dirty: true } });
