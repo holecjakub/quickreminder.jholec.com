@@ -4,7 +4,7 @@
 // saved badge in the right-hand extension of the collapsed pill, the list picker popover on top,
 // and the click outside the black shape that collapses the panel.
 import { LayoutGroup, animate, motion, useMotionValue, useTransform, type MotionValue, type Transition } from 'motion/react';
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties, type RefObject } from 'react';
 import { NotchLayout, type Size } from '../machine/notchLayout';
 import { currentSize, panelSize, radii, savedSize, tallestSectionSize, type NotchSizes } from '../machine/notchState';
 import { Motion } from '../machine/springs';
@@ -87,7 +87,7 @@ const SHAPE_SELECTOR = '[data-qr-content], path[data-qr-target="notch"]';
  *  outside the black shape collapses the panel; one inside the shape while the list picker is up
  *  closes just the picker (a popover's own presses are its own). With a `[data-qr-screen]`
  *  ancestor only presses on that screen count, like the app's monitors see only its display. */
-function useClickOutside(rootRef: React.RefObject<HTMLDivElement>, active: boolean): void {
+function useClickOutside(rootRef: RefObject<HTMLDivElement>, active: boolean): void {
   const { controller, store } = useCore();
   useEffect(() => {
     if (!active) return;
