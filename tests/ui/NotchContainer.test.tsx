@@ -1,0 +1,71 @@
+// @vitest-environment jsdom
+import './setup';
+import { screen, act, fireEvent, waitFor } from '@testing-library/react';
+import { NotchContainer, canvasFor, contentTransition, badgeOrigin } from '../../src/recreation/ui/NotchContainer';
+import { translatedNotchPath } from '../../src/recreation/ui/NotchSilhouette';
+import { renderWithCore, ptOf, useTestTime, openPanel, createTestCore } from './support';
+beforeEach(() => useTestTime());
+const adv = (ms: number) => act(async () => { vi.advanceTimersByTime(ms); });
+test('pure parts', () => {
+  const core = createTestCore();
+  expect(canvasFor(core.sizes)).toEqual({ width: 648, height: 775 });
+  expect(badgeOrigin(core.sizes, 648)).toEqual({ left: 459.5, top: 7.5 });
+  expect(contentTransition('open', false, 1)).toEqual({ type: 'tween', ease: [0, 0, 0.58, 1], duration: 0.2, delay: 0.16 });
+  expect(contentTransition('close', false, 1)).toEqual({ type: 'tween', ease: [0, 0, 0.58, 1], duration: 0.12 });
+  expect(contentTransition('saving', false, 1)).toEqual({ type: 'tween', ease: [0, 0, 0.58, 1], duration: 0.12 });
+  expect(contentTransition('open', true, 1)).toEqual({ type: 'tween', ease: [0, 0, 0.58, 1], duration: 0.15 });
+});
+test('closed: the notch silhouette only; content hidden and inert', () => {
+  const { container } = renderWithCore(<NotchContainer />);
+  const canvas = container.querySelector('[data-qr-canvas]') as HTMLElement;
+  expect([ptOf(canvas.style.width), ptOf(canvas.style.height)]).toEqual([648, 775]);
+  expect(container.querySelector('path[data-qr-target="notch"]')!.getAttribute('d')).toBe(translatedNotchPath({ width: 235, height: 39, top: 6, bottom: 14 }, 648));
+  const content = container.querySelector('[data-qr-content]') as HTMLElement;
+  expect(content.getAttribute('aria-hidden')).toBe('true');
+  expect(content.hasAttribute('inert')).toBe(true);
+  expect([ptOf(content.style.left), ptOf(content.style.width), ptOf(content.style.height)]).toEqual([24, 600, 241]);
+});
+test('open: 600 × 241 with open radii, content in, mask until settled', async () => {
+  const core = createTestCore();
+  const { container } = renderWithCore(<NotchContainer />, core);
+  act(() => { core.controller.show('api', false); });
+  await adv(100);
+  const content = container.querySelector('[data-qr-content]') as HTMLElement;
+  await waitFor(() => expect(container.querySelector('path')!.getAttribute('d')).toBe(translatedNotchPath({ width: 600, height: 241, top: 19, bottom: 32 }, 648)));
+  expect(content.style.clipPath.startsWith('path("M0 0 Q19 0 19 19 ')).toBe(true);
+  await waitFor(() => expect(content.style.opacity).toBe('1'));
+  expect(content.getAttribute('aria-hidden')).toBeNull();
+  await adv(400);
+  expect(content.style.clipPath).toBe('none');
+});
+test('saving: the badge sits in the right extension of the 379 pt pill', async () => {
+  const core = createTestCore();
+  const { container } = renderWithCore(<NotchContainer />, core);
+  await openPanel(core);
+  act(() => core.controller.setTitle('Buy milk', 'user'));
+  act(() => { core.controller.save('user'); });
+  await waitFor(() => expect(container.querySelector('path')!.getAttribute('d')).toBe(translatedNotchPath({ width: 379, height: 39, top: 6, bottom: 14 }, 648)));
+  const slot = container.querySelector('[data-qr-badge-slot]') as HTMLElement;
+  expect([ptOf(slot.style.left), ptOf(slot.style.top)]).toEqual([459.5, 7.5]);
+  expect(screen.getByRole('img', { name: 'Saved' })).toBeTruthy();
+  await adv(1360);
+  expect(container.querySelector('[data-qr-badge-slot]')).toBeNull();
+});
+test('click outside closes; a press on the black does not; outside a popover closes just the popover', async () => {
+  const core = createTestCore();
+  renderWithCore(<div data-qr-screen><NotchContainer /><button>Desktop</button></div>, core);
+  await openPanel(core);
+  fireEvent.pointerDown(document.querySelector('path[data-qr-target="notch"]')!);
+  expect(core.store.getState().phase).toEqual({ type: 'open' });
+  act(() => core.controller.openListPicker());
+  fireEvent.pointerDown(screen.getByRole('textbox', { name: 'New Reminder' }));
+  expect(core.store.getState()).toMatchObject({ listPickerOpen: false, phase: { type: 'open' } });
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Desktop' }));
+  expect(core.store.getState().phase).toEqual({ type: 'closing' });
+});
+test('reduce motion: no blur and no scale on the content', () => {
+  const { container } = renderWithCore(<NotchContainer />, undefined, { reduceMotion: true });
+  const content = container.querySelector('[data-qr-content]') as HTMLElement;
+  expect(content.style.filter).toBe('blur(calc(0 * var(--pt) * 1px))');
+  expect(['', 'none'].includes(content.style.transform)).toBe(true);
+});

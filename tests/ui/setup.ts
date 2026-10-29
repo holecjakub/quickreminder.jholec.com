@@ -27,6 +27,11 @@ window.matchMedia = (query: string): MediaQueryList => ({
 
 Element.prototype.scrollIntoView = vi.fn();
 
+// Testing Library drives `waitFor` / `findBy*` with `jest.advanceTimersByTime` while fake timers are
+// installed (it checks `setTimeout.clock`, which `vi.useFakeTimers()` sets); otherwise it waits on the
+// faked `setTimeout` itself and never returns. Vitest has no `jest`, so point it at `vi`.
+vi.stubGlobal('jest', { advanceTimersByTime: (ms: number) => vi.advanceTimersByTime(ms) });
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
