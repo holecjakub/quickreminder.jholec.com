@@ -54,16 +54,21 @@ it('Copy writes the command to the clipboard and says Copied for 1.6 s', async (
   mount();
   expect(COPIED_MS).toBe(1600);
   const status = screen.getByRole('status');
-  expect(status.textContent).toBe('Copy');
+  const button = screen.getByRole('button', { name: 'Copy command' });
+  expect(status.textContent).toBe('');
+  expect(button.contains(status)).toBe(false);
+  expect(button.textContent).toBe('Copy');
   await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Copy command' }));
+    fireEvent.click(button);
   });
   expect(writeText).toHaveBeenCalledWith('open quickreminder://show');
-  expect(status.textContent).toBe('Copied');
+  expect(status.textContent).toBe('Command copied');
+  expect(button.textContent).toBe('Copied');
   await act(async () => {
     vi.advanceTimersByTime(COPIED_MS);
   });
-  expect(status.textContent).toBe('Copy');
+  expect(status.textContent).toBe('');
+  expect(button.textContent).toBe('Copy');
 });
 
 it('the caret blinks unless reduced motion', () => {

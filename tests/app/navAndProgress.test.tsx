@@ -70,6 +70,7 @@ it('Nav hides once the page is scrolled past 0.6 viewport heights', () => {
   render(<Nav />);
   const nav = screen.getByRole('navigation', { name: 'Primary' });
   expect(nav.getAttribute('data-hidden')).toBe('false');
+  expect(nav.getAttribute('aria-hidden')).toBeNull();
   setViewport(1440, 900, 541);
   act(() => {
     window.dispatchEvent(new Event('scroll'));
@@ -77,5 +78,8 @@ it('Nav hides once the page is scrolled past 0.6 viewport heights', () => {
   expect(nav.getAttribute('data-hidden')).toBe('true');
   expect(nav.style.pointerEvents).toBe('none');
   expect(nav.style.opacity).toBe('0');
+  expect(nav.getAttribute('aria-hidden')).toBe('true');
+  expect(nav.style.visibility).toBe('hidden');
+  expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
   for (const link of screen.getAllByRole('link', { hidden: true })) expect(link.tabIndex).toBe(-1);
 });

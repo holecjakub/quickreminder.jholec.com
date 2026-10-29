@@ -72,7 +72,9 @@ export function Nav(): JSX.Element {
     opacity: hidden ? 0 : 1,
     transform: hidden && !reducedMotion ? 'translateY(-8px)' : 'none',
     pointerEvents: hidden ? 'none' : 'auto',
-    transition: 'opacity 200ms ease-out, transform 200ms ease-out',
+    // Out of the accessibility tree once the fade has finished; back in at once when it shows.
+    visibility: hidden ? 'hidden' : 'visible',
+    transition: `opacity 200ms ease-out, transform 200ms ease-out, visibility 0s linear ${hidden ? '200ms' : '0s'}`,
   };
   const link: CSSProperties = {
     padding: '0 14px',
@@ -84,7 +86,7 @@ export function Nav(): JSX.Element {
   const tabIndex = hidden ? -1 : undefined;
 
   return (
-    <nav aria-label="Primary" data-hidden={hidden ? 'true' : 'false'} style={pill}>
+    <nav aria-label="Primary" aria-hidden={hidden || undefined} data-hidden={hidden ? 'true' : 'false'} style={pill}>
       <a href={LINKS.appRepo} style={link} tabIndex={tabIndex}>
         GitHub
       </a>

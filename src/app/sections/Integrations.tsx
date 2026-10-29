@@ -9,6 +9,18 @@ import { useIsDesktop } from '../stageCamera';
 export const COPIED_MS = 1600 as const;
 
 const WIDE_QUERY = '(min-width: 1200px)';
+
+const VISUALLY_HIDDEN: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const CARET_KEYFRAMES = '@keyframes qr-caret-blink { 50% { opacity: 0 } }';
 const GRAY = 'var(--jh-gray)';
@@ -122,10 +134,12 @@ export function TerminalCard({ command }: { command: string }): JSX.Element {
         />
         <button type="button" aria-label="Copy command" onClick={() => void copy()} style={copyButtonStyle}>
           <Glyph size={16} weight="regular" aria-hidden="true" />
-          <span role="status" aria-live="polite">
-            {copied ? 'Copied' : 'Copy'}
-          </span>
+          <span aria-hidden="true">{copied ? 'Copied' : 'Copy'}</span>
         </button>
+        {/* Outside the button: its aria-label would override a live region nested in it. */}
+        <span role="status" aria-live="polite" style={VISUALLY_HIDDEN}>
+          {copied ? 'Command copied' : ''}
+        </span>
       </div>
     </div>
   );
