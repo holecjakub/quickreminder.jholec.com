@@ -1257,15 +1257,14 @@ export const Motion: {
   highlight:   Easing;          // easeOut 0.12 (hover highlight / fills)
   focusRing:   Easing;          // easeOut 0.15
   canSave:     Easing;          // easeInOut 0.18 (✓ colour)
-  suggestion:  Easing;          // easeOut 0.18 (chip text change); dismiss easeOut 0.15
+  suggestion:  Easing;          // easeOut 0.18 (chip text change)
+  dismiss:     Easing;          // easeOut 0.15 (the ⓧ on the suggestion; ChipSlot)
   regularBottomIn:  Easing;     // easeOut 0.18, delay 0.12 (chip slot + bar return after the section)
   regularBottomOut: Easing;     // easeOut 0.08
   sectionIn:   Easing;          // easeOut 0.12 (section opacity); rows stagger separately
   sectionOut:  Easing;          // easeOut 0.10
   stagger: (index: 0 | 1 | 2 | 3) => Easing;  // easeOut 0.24, delay 0.06 + index·0.035; from y −6, blur 3
-  calendarIn:  Easing;          // easeOut (section transition) from y −8
   monthPage:   Easing;          // easeOut 0.15
-  calendarScroll: Easing;       // easeOut 0.25 (clamped case only; never on the fake screen)
   badgeFade:   Easing;          // easeOut 0.16 (badge out, ahead of the notch shrinking)
   tickTrim:    Easing;          // easeOut 0.28, delay 0.32 (CheckmarkShape trim 0 → 1)
   error:       Easing;          // easeOut 0.20

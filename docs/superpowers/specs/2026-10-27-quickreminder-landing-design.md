@@ -174,12 +174,15 @@ ScrollTrigger with `scrub` drives transforms only. The recreation stays interact
 state; a manual interaction pauses scroll-driven state changes for that section until the
 visitor scrolls on to the next section (no fighting).
 
-1. **Hero (0 vh)**: full-screen desktop. Recreation closed, hint visible. Page nav is a minimal
-   top-right overlay (GitHub · Download) that sits *on* the desktop like a floating pill.
-2. **Shrink (0 → 100 vh)**: scene scales to ~62 % and translates to the centre; the MacBook
-   frame (bezel, keyboard deck, drawn in CSS/SVG, no photo) fades and draws in around it; the
-   page background (jholec.com white) reveals; the title "A reminder, straight out of the notch."
-   (24 semibold → Heading 2 M scale) and a one-line subtitle appear below the MacBook.
+1. **Hero (0 vh)**: the whole MacBook (lid, bezel and keyboard deck, drawn in CSS/SVG, no
+   photo) on the page background (jholec.com white), fitted into the viewport with 24 px side
+   gutters and 48 px of air above and below, the full desktop on its screen. Recreation closed,
+   hint visible. Page nav is a minimal top-right overlay (GitHub · Download) that sits *on* the
+   desktop like a floating pill. (Changed 2026-10-29 from a full-screen desktop crop with the
+   frame drawing in on scroll: Jakub asked for the desktop across the page, smaller, framed.)
+2. **Shrink (0 → 100 vh)**: the MacBook scales to 72 % of the hero and settles centred at 42 %
+   of the viewport height; the title "A reminder, straight out of the notch." (24 semibold →
+   Heading 2 M scale) and a one-line subtitle appear below it.
 3. **Features**: the MacBook stays pinned (sticky) on the left ~58 % at desktop, **cropped to the
    top of the lid** (see §11.1: the notch region is shown at 1 CSS px per point, the lower part of
    the MacBook runs out of the pinned area); copy sections scroll on the right, each with the jholec.com `(0n) Label /` section title, a 24-semibold
@@ -254,8 +257,9 @@ keeps the app's own colours (Theme.swift), not the page's.
 ### 11.1 Scale and legibility (author's call, from Jakub's brief "a MacBook with a preview of the top part of the screen")
 - The fake screen is a 14" MacBook Pro logical screen: **1512 × 982 pt**. All recreation and
   desktop geometry is in these points; one CSS variable `--pt` scales the whole scene.
-- Hero: the screen is scaled to fit the viewport (letterboxed). At 1440 px wide the panel is
-  ~570 px wide, legible and typeable.
+- Hero: the whole MacBook (1700 × 1070 pt with the deck) is scaled to fit the viewport minus
+  the gutters and the air. At 1440 × 900 the scale is 0.75, so the panel is ~450 px wide,
+  legible and typeable.
 - Features: the pinned MacBook is **zoomed and cropped to the top of the lid**. Target scale
   is 1 CSS px per point (the open panel 600 px wide), clamped to fit the pinned column (never
   below 0.75). The transform origin is the notch (top centre); the lower lid and the keyboard
@@ -302,6 +306,13 @@ bottom bar (519 / 751 / 347 pt), the window never resizes for a section, the sta
 has `NotchSection` = none / schedule(controls | calendar) / location. The recreation follows
 this code; §5.1 and §5.3 above are updated, and the plan's "contract deviations" table lists
 every value that changed against the contracts.
+
+One deliberate departure from the code (R-T46-1, plan deviation B-D7): in en-US the Set Date
+hour chips ("9:00 AM" … "7:00 PM") are about 15 pt wider than the 522 pt row, and SwiftUI at
+`144d620` squeezes them until two labels wrap mid-word. The recreation shrinks the chips' 10 pt
+side pads instead (to about 8.2 pt in en-US) so every label stays on one line inside the row;
+the Czech labels fit and keep the full pads. This keeps SPEC §1's "7:00 PM" legible and is a
+decision, not a fidelity gap.
 
 ### 11.5 Visual references
 See §9: code is the reference; existing 2× shots are a bonus; fresh captures optional.

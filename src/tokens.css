@@ -1,0 +1,79 @@
+:root {
+  /* colour */
+  --jh-white: #FFFFFF;
+  --jh-black: #0A0A0A;
+  --jh-black-light: #121212;
+  --jh-gray-light: #EBEBEB;
+  --jh-gray-light-90: rgba(235, 235, 235, 0.9);   /* #EBEBEBE6, card variant */
+  --jh-gray-medium: #757575;
+  --jh-gray: #A8A8A8;
+  --jh-gray-dark: #4D4D4D;
+  --jh-accent: #0099FF;
+  /* semantic (light sections) */
+  --jh-bg: var(--jh-white);
+  --jh-fg: var(--jh-black);
+  --jh-muted: var(--jh-gray-medium);
+  --jh-border: var(--jh-gray-light);
+  --jh-link: var(--jh-accent);
+  /* type (Inter 400/500/600; jholec.com/Framer style names in comments) */
+  --jh-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --jh-font-mono: "Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;   /* faux terminal only */
+  --jh-text-label: 14px;     /* Label */
+  --jh-text-body: 16px;      /* Body M */
+  --jh-text-body-l: 18px;    /* Body L */
+  --jh-text-h3: 24px;        /* Heading 3 / section headline */
+  --jh-text-h2: 32px;        /* Heading 2 M */
+  --jh-text-h1: 54px;        /* Heading 1 */
+  --jh-leading-body: 1.6;
+  --jh-leading-heading: 1.15;
+  --jh-weight-regular: 400; --jh-weight-medium: 500; --jh-weight-semibold: 600;
+  /* spacing */
+  --jh-space-8: 8px; --jh-space-16: 16px; --jh-space-24: 24px; --jh-space-40: 40px;
+  --jh-space-48: 48px; --jh-space-80: 80px; --jh-space-140: 140px; --jh-space-160: 160px;
+  --jh-section-gap: 160px;
+  --jh-page-margin-y: 140px;
+  --jh-page-margin-x: clamp(20px, 3vw, 40px);
+  --jh-radius: 16px;
+  --jh-progress-height: 2px;
+  /* breakpoints (for JS; CSS uses the literal values) */
+  --jh-bp-tablet: 810px;
+  --jh-bp-desktop: 1200px;
+}
+[data-section="dark"] { --jh-bg: var(--jh-black); --jh-fg: var(--jh-white); --jh-muted: var(--jh-gray); --jh-border: var(--jh-gray-dark); }
+:root {
+  --pt: 1;                                   /* CSS px per point; set by the Stage on the scene root */
+  --qr-black: #000000;                       /* panel body (pure black, merges with the notch) */
+  --qr-white: #FFFFFF;
+  --qr-accent: #0A84FF;                      /* Theme.accent; overridden per list by --qr-list-accent */
+  --qr-list-accent: var(--qr-accent);        /* set on the panel root from accentFor(listId) */
+  --qr-placeholder: #59595D;                 /* Theme.placeholder / placeholderSecondary */
+  --qr-dashed-ring: #59595D;                 /* Theme.dashedRing */
+  --qr-gray-circle: #59595D;                 /* Theme.grayCircle (ⓧ) */
+  --qr-gray-circle-disabled: #474749;        /* Theme.grayCircleDisabled (✓ disabled, prominent disabled) */
+  --qr-pill-fill: rgba(255, 255, 255, 0.03); /* Theme.pillFill */
+  --qr-pill-stroke: #3D3D3F;                 /* Theme.pillStroke; also the §11.4 popover stroke */
+  --qr-flag-orange: #FF9E0A;                 /* Theme.flagOrange (1.0, 0.62, 0.04) */
+  --qr-error-red: #FF453A;                   /* (1.0, 0.27, 0.23) */
+  /* white-alpha text hierarchy */
+  --qr-text-25: rgba(255,255,255,0.25); --qr-text-40: rgba(255,255,255,0.40); --qr-text-45: rgba(255,255,255,0.45);
+  --qr-text-50: rgba(255,255,255,0.50); --qr-text-55: rgba(255,255,255,0.55); --qr-text-60: rgba(255,255,255,0.60);
+  --qr-text-75: rgba(255,255,255,0.75); --qr-text-85: rgba(255,255,255,0.85); --qr-text-95: rgba(255,255,255,0.95);
+  /* white-alpha fills */
+  --qr-fill-3: rgba(255,255,255,0.03);  --qr-fill-6: rgba(255,255,255,0.06);  --qr-fill-7: rgba(255,255,255,0.07);
+  --qr-fill-8: rgba(255,255,255,0.08);  --qr-fill-9: rgba(255,255,255,0.09);  --qr-fill-10: rgba(255,255,255,0.10);
+  --qr-fill-11: rgba(255,255,255,0.11); --qr-fill-15: rgba(255,255,255,0.15); --qr-fill-16: rgba(255,255,255,0.16);
+  --qr-fill-18: rgba(255,255,255,0.18);
+  /* accent alphas (computed with color-mix from --qr-list-accent) */
+  --qr-accent-14: color-mix(in srgb, var(--qr-list-accent) 14%, transparent);   /* suggestion chip */
+  --qr-accent-20: color-mix(in srgb, var(--qr-list-accent) 20%, transparent);   /* selected fill */
+  --qr-accent-27: color-mix(in srgb, var(--qr-list-accent) 27%, transparent);
+  --qr-accent-32: color-mix(in srgb, var(--qr-list-accent) 32%, transparent);
+  --qr-accent-70: color-mix(in srgb, var(--qr-list-accent) 70%, transparent);   /* focus stroke */
+  --qr-accent-80: color-mix(in srgb, var(--qr-list-accent) 80%, transparent);   /* selected stroke */
+  /* list colours (core/lists.ts) */
+  --qr-list-reminders: #0A84FF; --qr-list-work: #BF5AF2; --qr-list-home: #FF9F0A; --qr-list-groceries: #30D158; --qr-list-ideas: #FF375F;
+  /* geometry */
+  --qr-padding: 20;            /* pt, Theme.horizontalPadding */
+  --qr-control-radius: 12;     /* pt, ScheduleMetrics.controlRadius */
+  --qr-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Inter, sans-serif;
+}
