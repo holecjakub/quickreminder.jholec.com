@@ -1,6 +1,7 @@
 // The section driver (contracts §4.4, landing spec §11.2): one ScrollTrigger per section at `start`
-// ("top center" by default; phones pass "top 78%", landing §7 Mobile); onEnter reconciles the section downward, onLeaveBack the previous one upward. One
-// action at a time: a running action may finish up to MAX_ACTION_MS before the next one starts.
+// ("top center" by default; phones pass "top 78%", landing §7 Mobile); onEnter reconciles the section
+// downward, onLeaveBack the previous one upward. One action at a time: a running action may finish up to
+// MAX_ACTION_MS before the next one starts.
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import type { FakeCursorHandle } from '../../desktop/fakeCursor';
 import { useMediaQuery } from '../../desktop/useMediaQuery';

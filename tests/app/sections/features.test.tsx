@@ -139,7 +139,9 @@ it('< 810 px: sections flow below the stage and the column ends with the section
 
 /** The section triggers (the Stage's own camera trigger on the runway is created too). */
 const sectionTriggerCalls = () =>
-  vi.mocked(ScrollTrigger.create).mock.calls.filter(([vars]) => (vars.trigger as Element).tagName === 'SECTION');
+  vi.mocked(ScrollTrigger.create).mock.calls.filter(
+    ([vars]) => vars.trigger instanceof HTMLElement && vars.trigger.tagName === 'SECTION',
+  );
 
 it('registers 01…06 with the driver (one ScrollTrigger each)', async () => {
   const { container } = await mount();

@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 const NOW = '2026-10-23T10:00'; // Friday, Europe/Prague (playwright.config timezoneId)
 
 // Reference values at 390 × 844 (plan Global Constraints, landing spec §7 Mobile / §11.1).
-const BAND_HEIGHT = 0.56 * 844; // 472.64
+const BAND_HEIGHT = 472.64; // 0.56 × 844
 const HERO_PT = 0.210588;
 const HERO_Y = 111.46;
 const NOTCH_PT = 0.570759;
@@ -46,24 +46,22 @@ test('the hero shows the whole MacBook under the nav with the title in the band'
   await expect(title).toBeVisible();
 });
 
-test('the hero title block sits below the MacBook deck', async ({ page }) => {
-  // Phones show the title only (2-line h3, ~55 px), which fits the 96 px reserve with the 16 px bottom offset.
-  await page.goto(`/?now=${NOW}`);
-  const deckBox = (await page.locator('[data-deck]').boundingBox())!;
-  const titleBlockBox = (await page.locator('[data-hero-title]').locator('..').boundingBox())!;
-  expect(titleBlockBox.y).toBeGreaterThanOrEqual(deckBox.y + deckBox.height - 1);
-});
+// Phones show the title only (2-line h3, ~55 px), which fits the 96 px reserve with the 16 px bottom offset.
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 390, height: 667 },
+]) {
+  test.describe(`${viewport.width} × ${viewport.height}`, () => {
+    test.use({ viewport });
 
-test.describe('short phone (390 × 667)', () => {
-  test.use({ viewport: { width: 390, height: 667 } });
-
-  test('the hero title block sits below the MacBook deck', async ({ page }) => {
-    await page.goto(`/?now=${NOW}`);
-    const deckBox = (await page.locator('[data-deck]').boundingBox())!;
-    const titleBlockBox = (await page.locator('[data-hero-title]').locator('..').boundingBox())!;
-    expect(titleBlockBox.y).toBeGreaterThanOrEqual(deckBox.y + deckBox.height - 1);
+    test('the hero title block sits below the MacBook deck', async ({ page }) => {
+      await page.goto(`/?now=${NOW}`);
+      const deckBox = (await page.locator('[data-deck]').boundingBox())!;
+      const titleBlockBox = (await page.locator('[data-hero-title-block]').boundingBox())!;
+      expect(titleBlockBox.y).toBeGreaterThanOrEqual(deckBox.y + deckBox.height - 1);
+    });
   });
-});
+}
 
 test('tapping the notch opens the panel; ⓧ closes it', async ({ page }) => {
   await page.goto(`/?now=${NOW}`);
