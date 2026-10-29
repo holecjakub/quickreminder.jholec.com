@@ -1,6 +1,7 @@
-// The section driver (contracts §4.4, landing spec §11.2): one ScrollTrigger per section at
-// "top center"; onEnter reconciles the section downward, onLeaveBack the previous one upward. One
-// action at a time: a running action may finish up to MAX_ACTION_MS before the next one starts.
+// The section driver (contracts §4.4, landing spec §11.2): one ScrollTrigger per section at `start`
+// ("top center" by default; phones pass "top 78%", landing §7 Mobile); onEnter reconciles the section
+// downward, onLeaveBack the previous one upward. One action at a time: a running action may finish up to
+// MAX_ACTION_MS before the next one starts.
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import type { FakeCursorHandle } from '../../desktop/fakeCursor';
 import { useMediaQuery } from '../../desktop/useMediaQuery';
@@ -21,6 +22,13 @@ export const MAX_ACTION_MS = 2500 as const;
 
 const DEMO_CPS = 18;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+const DEFAULT_START = 'top center';
+
+/** The viewport fraction a section's top must pass to count as reached: "top N%" → N / 100, else 0.5. */
+function startFraction(start: string): number {
+  const percent = /^top (\d+(?:\.\d+)?)%$/.exec(start);
+  return percent ? Number(percent[1]) / 100 : 0.5;
+}
 
 interface SectionQueueOptions<R> {
   run(job: SectionJob, signal: AbortSignal): Promise<R>;
@@ -165,8 +173,10 @@ export function useSectionDriver(args: {
   clock: Clock;
   calendar: Calendar;
   enabled: boolean;
+  /** ScrollTrigger start of every section trigger, default "top center". */
+  start?: string;
 }): { register(id: SectionId, el: HTMLElement | null): void; current: SectionId } {
-  const { handle, cursor, enabled } = args;
+  const { handle, cursor, enabled, start = DEFAULT_START } = args;
   const reduce = useMediaQuery(REDUCED_MOTION_QUERY);
   const [current, setCurrent] = useState<SectionId>('hero');
 
@@ -180,6 +190,8 @@ export function useSectionDriver(args: {
   const triggers = useRef(new Map<SectionId, ScrollTrigger>());
   const queueRef = useRef<SectionQueue<ReconcileResult | null> | null>(null);
   const currentRef = useRef<SectionId>('hero');
+  /** Read by `createTrigger` so a new `start` recreates the triggers without tearing down the queue. */
+  const startRef = useRef(start);
   /** Contracts §4.4: a visitor edit pauses the current section until the next one enters. */
   const visitorInterrupted = useRef(false);
 
@@ -194,7 +206,7 @@ export function useSectionDriver(args: {
     (id: SectionId, el: HTMLElement) => {
       triggers.current.set(id, ScrollTrigger.create({
         trigger: el,
-        start: 'top center',
+        start: startRef.current,
         onEnter: () => go({ id, direction: 'down' }),
         onLeaveBack: () => go({ id: previousSection(id), direction: 'up' }),
       }));
@@ -215,6 +227,17 @@ export function useSectionDriver(args: {
     },
     [createTrigger],
   );
+
+  // A new start (the layout crossed 810 px) kills and recreates every trigger; the queue keeps running.
+  useEffect(() => {
+    if (startRef.current === start) return;
+    startRef.current = start;
+    if (!queueRef.current) return;
+    for (const [id, el] of elements.current) {
+      triggers.current.get(id)?.kill();
+      createTrigger(id, el);
+    }
+  }, [start, createTrigger]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -279,9 +302,10 @@ export function useSectionDriver(args: {
     void (document.fonts?.ready ?? Promise.resolve()).then(() => {
       if (!alive) return;
       ScrollTrigger.refresh();
+      const line = window.innerHeight * startFraction(startRef.current);
       const reached = SECTION_ORDER.filter((id) => {
         const el = elements.current.get(id);
-        return el !== undefined && el.getBoundingClientRect().top < window.innerHeight / 2;
+        return el !== undefined && el.getBoundingClientRect().top < line;
       });
       const last = reached[reached.length - 1];
       if (last) go({ id: last, direction: 'down' });

@@ -947,11 +947,12 @@ export interface ReconcileResult {
  *  handle.markClean() after its own writes; never focuses (show source 'scroll'). */
 export function reconcile(handle: RecreationHandle, snapshot: SectionSnapshot, opts: ReconcileOptions): Promise<ReconcileResult>;
 
-/** Hook for Features.tsx: registers one ScrollTrigger per section (start "top center", onEnter →
+/** Hook for Features.tsx: registers one ScrollTrigger per section (start `start`, default "top center";
+ *  Features passes CAMERA.phoneSectionStart "top 78%" on phones, landing spec §7 Mobile; onEnter →
  *  reconcile(down), onLeaveBack → reconcile(up) for the previous snapshot), one action at a time,
  *  the running one allowed to finish up to maxDurationMs before the next starts. Pauses scroll-driven
  *  changes for the current section once the visitor interacts (dirty) until the next section enters. */
-export function useSectionDriver(args: { handle: RefObject<RecreationHandle | null>; cursor: RefObject<FakeCursorHandle | null>; clock: Clock; calendar: Calendar; enabled: boolean }): {
+export function useSectionDriver(args: { handle: RefObject<RecreationHandle | null>; cursor: RefObject<FakeCursorHandle | null>; clock: Clock; calendar: Calendar; enabled: boolean; start?: string }): {
   register(id: SectionId, el: HTMLElement | null): void;
   current: SectionId;
 };

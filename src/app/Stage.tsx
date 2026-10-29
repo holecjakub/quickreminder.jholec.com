@@ -1,7 +1,9 @@
-// The stage (landing §7.2, §11.1): the fake desktop inside the MacBook frame under a scroll-scrubbed camera.
-// On ≥ 810 px the stage is sticky for a 160svh runway and GSAP ScrollTrigger scrubs the camera from the
-// letterboxed hero to the notch crop; below 810 px it is a static block at the phone scale with the title
-// in normal flow. Per-frame writes go straight to the DOM (no React render); React owns the layout only.
+// The stage (landing §7 Mobile, §7.2, §11.1): the fake desktop inside the MacBook frame under a scroll-scrubbed
+// camera. The stage is sticky on both layouts and one GSAP ScrollTrigger scrubs the camera along the runway:
+// ≥ 810 px a full-height stage over a 160svh runway, hero → overview → notch crop; below 810 px a 56svh band
+// pinned above the copy over a 100svh runway, hero → notch. The hero title sits inside the stage on both
+// (the subtitle on desktop only: on phones it would not fit the title reserve).
+// Per-frame writes go straight to the DOM (no React render); React owns the layout only.
 import {
   createContext,
   useCallback,
@@ -29,7 +31,7 @@ import {
   cameraFor,
   cameraTransform,
   clipFor,
-  phoneStageHeight,
+  phoneTitleOpacityFor,
   pinnedColumnWidth,
   renderPtFor,
   titleOpacityFor,
@@ -60,7 +62,7 @@ export function useStage(): StageContextValue {
 }
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
-const RUNWAY_HEIGHT = `${CAMERA.runwayVh}svh`;
+const PHONE_STAGE_HEIGHT = `${CAMERA.phoneStageSvh}svh`;
 const PINNED_COLUMN_PERCENT = Math.round(CAMERA.pinnedColumnRatio * 100);
 const PINNED_COLUMN = `${PINNED_COLUMN_PERCENT}%`;
 const FEATURES_COLUMN = `${100 - PINNED_COLUMN_PERCENT}%`;
@@ -69,13 +71,27 @@ const STAGE_BACKGROUND = 'var(--jh-white)';
 
 const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
 
+/**
+ * The small viewport height (100 svh) in px, the unit the stage and runway are painted in. iOS Safari's
+ * innerHeight follows the dynamic viewport and grows when the toolbars retract; a fixed 100 svh probe does
+ * not. Falls back to innerHeight where layout is unavailable (jsdom) or svh is unsupported.
+ */
+function smallViewportHeight(): number {
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none';
+  document.body.appendChild(probe);
+  const height = probe.getBoundingClientRect().height;
+  probe.remove();
+  return height > 0 ? height : window.innerHeight;
+}
+
 function readViewport(): Viewport {
-  return { width: window.innerWidth, height: window.innerHeight };
+  return { width: window.innerWidth, height: smallViewportHeight() };
 }
 
 /** Scroll progress along the runway, used before the ScrollTrigger exists (first paint). */
-function progressFromScroll(viewportHeight: number): number {
-  return clamp01(window.scrollY / ((CAMERA.runwayVh / 100) * viewportHeight));
+function progressFromScroll(runwayVh: number, viewport: Viewport): number {
+  return clamp01(window.scrollY / ((runwayVh / 100) * viewport.height));
 }
 
 /** Reduced motion: no zoom motion, the camera snaps at half progress. */
@@ -93,6 +109,9 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
   }));
   const [viewport, setViewport] = useState<Viewport>(readViewport);
   const isDesktop = useIsDesktop();
+  // One source decides the layout: the runway follows the same media query as the stage and the trigger,
+  // so a breakpoint flip never renders a desktop runway under a phone band (or the reverse) for a frame.
+  const runwayVh = isDesktop ? CAMERA.runwayVh : CAMERA.phoneRunwayVh;
   const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   const scheme = useColorScheme('auto');
 
@@ -114,8 +133,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
       const camera = cameraFor(cameraProgress, viewport, column);
       if (cameraRef.current) cameraRef.current.style.transform = cameraTransform(camera, renderPt);
       if (clipRef.current) clipRef.current.style.clipPath = `inset(0px ${clipFor(cameraProgress, viewport, column).right}px 0px 0px)`;
-      if (!isDesktop) return; // the phone title sits in normal flow below the stage
-      const titleOpacity = String(titleOpacityFor(p));
+      const titleOpacity = String(isDesktop ? titleOpacityFor(p) : phoneTitleOpacityFor(p));
       if (titleRef.current) titleRef.current.style.opacity = titleOpacity;
       if (subtitleRef.current) subtitleRef.current.style.opacity = titleOpacity;
     },
@@ -128,8 +146,8 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
   // Before paint: the camera for the current scroll position (no layout shift on load or resize).
   useLayoutEffect(() => {
     writeFrameRef.current = writeFrame;
-    writeFrame(isDesktop ? progressFromScroll(viewport.height) : 0);
-  }, [writeFrame, isDesktop, viewport.height]);
+    writeFrame(progressFromScroll(runwayVh, viewport));
+  }, [writeFrame, viewport, runwayVh]);
 
   // Viewport updates, one per animation frame.
   useEffect(() => {
@@ -138,7 +156,9 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
-        setViewport(readViewport());
+        const next = readViewport();
+        // iOS fires resize as the toolbars move; the small viewport, and so the layout, stays the same.
+        setViewport((prev) => (prev.width === next.width && prev.height === next.height ? prev : next));
       });
     };
     window.addEventListener('resize', onResize);
@@ -148,10 +168,10 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
     };
   }, []);
 
-  // ≥ 810 px: one scrubbed trigger on the runway, killed when the layout flips or the stage unmounts.
+  // One scrubbed trigger on the runway, re-created when the layout flips and killed when the stage unmounts.
   useEffect(() => {
     const runway = runwayRef.current;
-    if (!isDesktop || !runway) return;
+    if (!runway) return;
     const trigger = ScrollTrigger.create({
       trigger: runway,
       start: 'top top',
@@ -163,7 +183,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
     return () => trigger.kill();
   }, [isDesktop]);
 
-  // Crossing the breakpoint drops or adds the sticky pin: re-measure every trigger on the page (review focus R3).
+  // Crossing the breakpoint changes the stage and runway heights: re-measure every trigger on the page (review focus R3).
   const layoutRef = useRef(isDesktop);
   useEffect(() => {
     if (layoutRef.current === isDesktop) return;
@@ -173,7 +193,10 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
 
   const stageStyle: CSSProperties = isDesktop
     ? { position: 'sticky', top: 0, height: '100svh' }
-    : { position: 'relative', height: `${phoneStageHeight(viewport.width)}px` };
+    : { position: 'sticky', top: 0, height: PHONE_STAGE_HEIGHT, zIndex: 20 };
+  const titleBlockStyle: CSSProperties = isDesktop
+    ? { position: 'absolute', insetInline: 0, bottom: '7svh', textAlign: 'center', pointerEvents: 'none' }
+    : { position: 'absolute', insetInline: 0, bottom: '16px', padding: '0 var(--jh-page-margin-x)', textAlign: 'center', pointerEvents: 'none' };
 
   const heroTitle = (
     <>
@@ -186,24 +209,28 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
           fontWeight: 600,
           lineHeight: 'var(--jh-leading-heading)',
           color: 'var(--jh-fg)',
-          opacity: isDesktop ? 0 : undefined,
+          opacity: isDesktop ? 0 : 1,
         }}
       >
         {title}
       </h1>
-      <p
-        ref={subtitleRef}
-        style={{
-          margin: 'var(--jh-space-8) 0 0',
-          fontSize: 'var(--jh-text-body-l)',
-          fontWeight: 500,
-          lineHeight: 'var(--jh-leading-body)',
-          color: 'var(--jh-muted)',
-          opacity: isDesktop ? 0 : undefined,
-        }}
-      >
-        {subtitle}
-      </p>
+      {/* Phones show the title only: with the subtitle the block outgrows the 96 px reserve and
+          paints over the keyboard deck; the band's tap hint carries the subtitle's call to action. */}
+      {isDesktop && (
+        <p
+          ref={subtitleRef}
+          style={{
+            margin: 'var(--jh-space-8) 0 0',
+            fontSize: 'var(--jh-text-body-l)',
+            fontWeight: 500,
+            lineHeight: 'var(--jh-leading-body)',
+            color: 'var(--jh-muted)',
+            opacity: 0,
+          }}
+        >
+          {subtitle}
+        </p>
+      )}
     </>
   );
 
@@ -233,18 +260,17 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
               />
             </div>
           </div>
-          {isDesktop && (
-            <div style={{ position: 'absolute', insetInline: 0, bottom: '7svh', textAlign: 'center', pointerEvents: 'none' }}>
-              {heroTitle}
-            </div>
-          )}
+          <div data-hero-title-block="" style={titleBlockStyle}>{heroTitle}</div>
         </div>
-        {isDesktop && (
-          <div ref={runwayRef} data-runway="" style={{ height: RUNWAY_HEIGHT, marginTop: '-100svh', pointerEvents: 'none' }} />
-        )}
-        {!isDesktop && (
-          <div style={{ padding: 'var(--jh-space-24) var(--jh-page-margin-x) 0', textAlign: 'center' }}>{heroTitle}</div>
-        )}
+        <div
+          ref={runwayRef}
+          data-runway=""
+          style={{
+            height: `${runwayVh}svh`,
+            marginTop: isDesktop ? '-100svh' : `-${PHONE_STAGE_HEIGHT}`,
+            pointerEvents: 'none',
+          }}
+        />
         <div
           data-features-column=""
           style={isDesktop ? { marginLeft: PINNED_COLUMN, width: FEATURES_COLUMN, position: 'relative', zIndex: 10 } : { position: 'relative', zIndex: 10 }}

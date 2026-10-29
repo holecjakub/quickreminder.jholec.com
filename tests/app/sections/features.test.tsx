@@ -137,11 +137,30 @@ it('< 810 px: sections flow below the stage and the column ends with the section
   expect(column.style.paddingBottom).toBe('var(--jh-section-gap)');
 });
 
+/** The section triggers (the Stage's own camera trigger on the runway is created too). */
+const sectionTriggerCalls = () =>
+  vi.mocked(ScrollTrigger.create).mock.calls.filter(
+    ([vars]) => vars.trigger instanceof HTMLElement && vars.trigger.tagName === 'SECTION',
+  );
+
 it('registers 01…06 with the driver (one ScrollTrigger each)', async () => {
   const { container } = await mount();
-  const create = vi.mocked(ScrollTrigger.create);
-  expect(create).toHaveBeenCalledTimes(6);
+  const calls = sectionTriggerCalls();
+  expect(calls).toHaveLength(6);
   const sections = [...container.querySelectorAll('section[aria-labelledby]')];
-  expect(create.mock.calls.map(([vars]) => vars.trigger)).toEqual(sections);
-  expect(create.mock.calls.every(([vars]) => vars.start === 'top center')).toBe(true);
+  expect(calls.map(([vars]) => vars.trigger)).toEqual(sections);
+});
+
+it('< 810 px: sections start at 78 % of the viewport (the centre lies under the band)', async () => {
+  await mount();
+  const calls = sectionTriggerCalls();
+  expect(calls).toHaveLength(6);
+  expect(calls.every(([vars]) => vars.start === 'top 78%')).toBe(true);
+});
+
+it('≥ 810 px: sections start at the viewport centre', async () => {
+  await mount({ [DESKTOP]: true });
+  const calls = sectionTriggerCalls();
+  expect(calls).toHaveLength(6);
+  expect(calls.every(([vars]) => vars.start === 'top center')).toBe(true);
 });

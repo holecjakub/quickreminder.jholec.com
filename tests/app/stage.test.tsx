@@ -2,7 +2,7 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { ScrollTrigger } from '../../src/app/gsap';
 import { Stage, useStage, type StageContextValue } from '../../src/app/Stage';
-import { cameraFor, cameraTransform, phoneStageHeight, renderPtFor } from '../../src/app/stageCamera';
+import { cameraFor, cameraTransform, renderPtFor } from '../../src/app/stageCamera';
 import { installMatchMedia } from '../fakes/matchMedia';
 import { lastRecreation } from '../fakes/recreationMock';
 
@@ -12,6 +12,7 @@ vi.mock('../../src/recreation', () => import('../fakes/recreationMock'));
 const DESKTOP = '(min-width: 810px)';
 const REDUCED = '(prefers-reduced-motion: reduce)';
 const V1440 = { width: 1440, height: 900 };
+const V390 = { width: 390, height: 844 };
 
 let rafQueue: FrameRequestCallback[] = [];
 function runRaf() {
@@ -51,6 +52,17 @@ const el = <T extends HTMLElement = HTMLElement>(selector: string) => document.q
 function mountDesktop(matches: Record<string, boolean> = {}) {
   const mm = installMatchMedia({ [DESKTOP]: true, ...matches });
   innerSize(V1440.width, V1440.height);
+  render(
+    <Stage title="T" subtitle="S">
+      <p>copy</p>
+    </Stage>,
+  );
+  return mm;
+}
+
+function mountPhone(matches: Record<string, boolean> = {}) {
+  const mm = installMatchMedia({ [DESKTOP]: false, ...matches });
+  innerSize(V390.width, V390.height);
   render(
     <Stage title="T" subtitle="S">
       <p>copy</p>
@@ -136,24 +148,50 @@ it('reduced motion snaps the camera at half progress but fades the title by raw 
   expect(el('[data-hero-title]').style.opacity).toBe('1');
 });
 
-it('< 810 px: static block of phoneStageHeight, title below, no ScrollTrigger', () => {
-  installMatchMedia({ [DESKTOP]: false });
-  innerSize(390, 844);
-  render(
-    <Stage title="T" subtitle="S">
-      <p>copy</p>
-    </Stage>,
-  );
+it('phones pin a 56svh band above the copy', () => {
+  mountPhone();
   const stage = el('[data-stage]');
-  expect(stage.style.position).toBe('relative');
-  expect(stage.style.height).toBe(`${phoneStageHeight(390)}px`);
-  expect(ScrollTrigger.create).not.toHaveBeenCalled();
+  expect(stage.style.position).toBe('sticky');
+  expect(stage.style.top).toBe('0px');
+  expect(stage.style.height).toBe('56svh');
+  expect(stage.style.zIndex).toBe('20');
+  expect(stage.style.overflow).toBe('hidden');
+  expect(el('[data-runway]').style.height).toBe('100svh');
+  expect(el('[data-runway]').style.marginTop).toBe('-56svh');
   expect(el('[data-features-column]').style.marginLeft).toBe('');
-  const h1 = screen.getByRole('heading', { level: 1, name: 'T' });
-  expect(stage.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(stage.contains(h1)).toBe(false);
-  expect(h1.style.opacity).toBe('');
-  expect(el('[data-camera]').style.transform).toBe(cameraTransform(cameraFor(0, { width: 390, height: 844 }, 390), renderPtFor({ width: 390, height: 844 }, 390)));
+  expect(el('[data-features-column]').style.zIndex).toBe('10');
+});
+
+it('phones apply the hero camera before paint and keep the title inside the band', () => {
+  mountPhone();
+  expect(el('[data-camera]').style.transform).toBe(cameraTransform(cameraFor(0, V390, 390), renderPtFor(V390, 390)));
+  expect(el('[data-stage]').contains(el('[data-hero-title]'))).toBe(true);
+  expect(el('[data-hero-title]').style.opacity).toBe('1');
+});
+
+it('phones show only the title in the band: the subtitle would paint over the deck', () => {
+  mountPhone();
+  expect(screen.getByRole('heading', { level: 1, name: 'T' })).toBeTruthy();
+  expect(screen.queryByText('S')).toBeNull();
+});
+
+it('phones scrub the camera to the notch and fade the title', () => {
+  mountPhone();
+  expect(ScrollTrigger.create).toHaveBeenCalledTimes(1);
+  expect(ScrollTrigger.create).toHaveBeenCalledWith(
+    expect.objectContaining({ trigger: el('[data-runway]'), start: 'top top', end: 'bottom top', scrub: true }),
+  );
+  onUpdate(1);
+  expect(el('[data-camera]').style.transform).toBe(cameraTransform(cameraFor(1, V390, 390), renderPtFor(V390, 390)));
+  expect(el('[data-hero-title]').style.opacity).toBe('0');
+  expect(el('[data-clip]').style.clipPath).toBe('inset(0px 0px 0px 0px)');
+});
+
+it('reduced motion on phones snaps the camera at half progress but fades the title by raw progress', () => {
+  mountPhone({ [REDUCED]: true });
+  onUpdate(0.4);
+  expect(el('[data-camera]').style.transform).toBe(cameraTransform(cameraFor(0, V390, 390), renderPtFor(V390, 390)));
+  expect(el('[data-hero-title]').style.opacity).toBe('0.19999999999999996'); // 1 − 0.4 / 0.5, as String(number)
 });
 
 it('the hero title is an h1 with the given copy', () => {
@@ -196,24 +234,58 @@ it('useStage throws outside <Stage>', () => {
   window.removeEventListener('error', swallow);
 });
 
-it('review focus: resizing across 810 px swaps layouts, recomputes --pt and refreshes the triggers', () => {
+it('review focus: crossing 810 px re-creates the trigger, recomputes --pt and refreshes ScrollTrigger', () => {
   const mm = mountDesktop();
   expect(ScrollTrigger.create).toHaveBeenCalledTimes(1);
   const { trigger } = createdTrigger();
 
   act(() => mm.set(DESKTOP, false));
-  resize(800, 900);
+  resize(390, 844);
   expect(trigger.kill).toHaveBeenCalledTimes(1);
+  expect(ScrollTrigger.create).toHaveBeenCalledTimes(2);
   expect(ScrollTrigger.refresh).toHaveBeenCalled();
   const stage = el('[data-stage]');
-  expect(stage.style.position).not.toBe('sticky');
-  expect(stage.style.height).toBe(`${phoneStageHeight(800)}px`);
-  expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe(String(renderPtFor({ width: 800, height: 900 }, 800)));
+  expect(stage.style.position).toBe('sticky');
+  expect(stage.style.height).toBe('56svh');
+  expect(el('[data-runway]').style.height).toBe('100svh');
+  expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe(String(renderPtFor(V390, 390)));
+  expect(el('[data-camera]').style.transform).toBe(cameraTransform(cameraFor(0, V390, 390), renderPtFor(V390, 390)));
 
   act(() => mm.set(DESKTOP, true));
   resize(1440, 900);
-  expect(ScrollTrigger.create).toHaveBeenCalledTimes(2);
-  expect(trigger.kill).toHaveBeenCalledTimes(1);
-  expect(el('[data-stage]').style.position).toBe('sticky');
+  expect(ScrollTrigger.create).toHaveBeenCalledTimes(3);
+  expect(createdTrigger(1).trigger.kill).toHaveBeenCalledTimes(1);
+  expect(el('[data-stage]').style.height).toBe('100svh');
+  expect(el('[data-runway]').style.height).toBe('160svh');
   expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe('1');
+});
+
+it('the runway follows the layout query at once, before the viewport catches up one frame later', () => {
+  const mm = mountDesktop();
+  act(() => mm.set(DESKTOP, false));
+  // No resize frame yet: the band and the runway already agree on the phone layout.
+  expect(el('[data-stage]').style.height).toBe('56svh');
+  expect(el('[data-runway]').style.height).toBe('100svh');
+  expect(el('[data-runway]').style.marginTop).toBe('-56svh');
+});
+
+it('the camera reads the small viewport (100 svh), not the dynamic innerHeight', () => {
+  const SVH = 844;
+  const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    const height = this.style.position === 'fixed' && this.style.height === '100svh' ? SVH : 0;
+    return { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: height, width: 0, height, toJSON: () => ({}) } as DOMRect;
+  });
+  const expected = cameraTransform(cameraFor(0, V390, 390), renderPtFor(V390, 390));
+  installMatchMedia({ [DESKTOP]: false });
+  innerSize(390, 934); // iOS Safari with the toolbars retracted
+  render(
+    <Stage title="T" subtitle="S">
+      <p>copy</p>
+    </Stage>,
+  );
+  expect(el('[data-camera]').style.transform).toBe(expected);
+  resize(390, 754); // toolbars back: innerHeight shrinks, the small viewport does not
+  expect(el('[data-camera]').style.transform).toBe(expected);
+  expect(document.querySelectorAll('body > div[style*="100svh"]')).toHaveLength(0);
+  rect.mockRestore();
 });
