@@ -10,7 +10,7 @@ import { currentSize, panelSize, radii, savedSize, tallestSectionSize, type Notc
 import { Motion } from '../machine/springs';
 import { ListPickerMenu } from './ListPickerMenu';
 import { useMotionPrefs } from './motionPrefs';
-import { NotchSilhouette, useNotchGeometry, useNotchPath, type ShapeTarget } from './NotchSilhouette';
+import { NotchSilhouette, pointerCanHover, useNotchGeometry, useNotchPath, type ShapeTarget } from './NotchSilhouette';
 import { QuickReminderView } from './QuickReminderView';
 import { useCore, usePanel, useRecreationState } from './RecreationContext';
 import { SavedCheckView } from './SavedCheckView';
@@ -169,8 +169,8 @@ export function NotchContainer(): JSX.Element {
             '--qr-hit-w': px(sizes.closedSize.width), '--qr-hit-h': px(sizes.closedSize.height),
             pointerEvents: phase.type === 'closed' ? 'auto' : 'none',
           } as CSSProperties}
-          onPointerEnter={(e) => onHoverChange(true, e.relatedTarget)}
-          onPointerLeave={(e) => onHoverChange(false, e.relatedTarget)}
+          onPointerEnter={(e) => { if (pointerCanHover(e.pointerType)) onHoverChange(true, e.relatedTarget); }}
+          onPointerLeave={(e) => { if (pointerCanHover(e.pointerType)) onHoverChange(false, e.relatedTarget); }}
           onPointerDown={() => void controller.show('click', true)}
         />
         {/* Landing §9: the closed notch is reachable by keyboard. A transparent button over the closed

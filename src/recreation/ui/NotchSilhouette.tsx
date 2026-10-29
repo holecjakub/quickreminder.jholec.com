@@ -82,12 +82,20 @@ export function useNotchPath(geometry: NotchGeometry, containerWidth: number): M
   );
 }
 
+/** Review focus R1: a touch has no hover, and a tap fires `pointerenter` before `pointerdown`, so a
+ *  touch pointer must never arm the 90 ms dwell (the open spring would start from 257 × 44). Mouse
+ *  and pen hover; an unreported type ('') is treated like the mouse the app was built for. */
+export function pointerCanHover(pointerType: string): boolean {
+  return pointerType !== 'touch';
+}
+
 /** The black silhouette over the whole canvas; only the painted shape takes the pointer. */
 export function NotchSilhouette(props: {
   geometry: NotchGeometry;
   canvas: Size;
-  /** `relatedTarget` is where the pointer came from / went to, so the owner can tell a crossing
-   *  between the path and a sibling of its own (the closed notch's hit layer) from a real change. */
+  /** Called for hover-capable pointers only (`pointerCanHover`). `relatedTarget` is where the pointer
+   *  came from / went to, so the owner can tell a crossing between the path and a sibling of its own
+   *  (the closed notch's hit layer) from a real change. */
   onHoverChange(entered: boolean, relatedTarget: EventTarget | null): void;
   onPress(): void;
 }): JSX.Element {
@@ -104,8 +112,8 @@ export function NotchSilhouette(props: {
         fill="#000000"
         data-qr-target="notch"
         style={{ pointerEvents: 'visiblePainted' }}
-        onPointerEnter={(e) => onHoverChange(true, e.relatedTarget)}
-        onPointerLeave={(e) => onHoverChange(false, e.relatedTarget)}
+        onPointerEnter={(e) => { if (pointerCanHover(e.pointerType)) onHoverChange(true, e.relatedTarget); }}
+        onPointerLeave={(e) => { if (pointerCanHover(e.pointerType)) onHoverChange(false, e.relatedTarget); }}
         onPointerDown={() => onPress()}
       />
     </svg>

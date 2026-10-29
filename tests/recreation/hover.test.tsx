@@ -54,3 +54,13 @@ test('reduce motion: no swell', async () => {
   expect(ref.current!.getState().hoverSwollen).toBe(false);
   expect(path.getAttribute('d')).toBe(CLOSED);
 });
+test('review focus: a touch pointer does not swell; the tap opens from the closed size', async () => {
+  const { ref, path } = mount();
+  fireEvent.pointerEnter(path, { pointerType: 'touch' });
+  await act(async () => { vi.advanceTimersByTime(200); });
+  expect(ref.current!.machine()).toMatchObject({ hoverDwellPending: false, hoverSwollen: false });
+  expect(path.getAttribute('d')).toBe(CLOSED);
+  fireEvent.pointerDown(path, { pointerType: 'touch' });
+  await act(async () => { vi.advanceTimersByTime(500); });
+  expect(ref.current!.machine().phase).toEqual({ type: 'open' });
+});
