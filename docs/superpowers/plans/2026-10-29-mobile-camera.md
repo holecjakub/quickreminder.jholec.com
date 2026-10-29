@@ -20,7 +20,7 @@
   - `phoneNotchPt = clamp(min((w − 32) / 600, (SH − 28 − 16) / 751), 0.4, 1)`
   - notch keyframe: `s = phoneNotchPt`, `nx = w / 2`, `ny = 28`
   - `cameraFor(progress)` on phones = `cameraAt(lerpKeyframe(hero, notch, clamp(progress, 0, 1)))`; `clipFor` stays `{ right: 0 }`; `renderPtFor = max(phoneHeroPt, phoneNotchPt)`.
-  - Reference values at 390 × 844: `SH = 472.64`, `phoneHeroPt = 0.210588`, hero `ny = 111.459`, hero `translateX = 35.7953` (= 195 − 756 · 0.210588), `phoneNotchPt = 0.570759`, notch `translateX = −236.494` (= 195 − 756 · 0.570759); midway (progress 0.5): `scale 0.390674`, `originY 69.7295`, `translateX −100.349`.
+  - Reference values at 390 × 844: `SH = 472.64`, `phoneHeroPt = 0.210588`, hero `ny = 111.446`, hero `translateX = 35.7953` (= 195 − 756 · 0.210588), `phoneNotchPt = 0.570759`, notch `translateX = −236.494` (= 195 − 756 · 0.570759); midway (progress 0.5): `scale 0.390674`, `originY 69.723`, `translateX −100.349`.
   - Reference at 390 × 667: `SH = 373.52`, `phoneHeroPt = 0.199551` (height-bound: 213.52 / 1070), `phoneNotchPt = 0.438775` (= 329.52 / 751).
 - Phone title opacity: `phoneTitleOpacityFor(p) = 1 − clamp(p / 0.5, 0, 1)`.
 - Phones ≤ 809 px are detected with the existing `DESKTOP_QUERY` / `useIsDesktop()`; nothing new reads `matchMedia`.
@@ -69,8 +69,8 @@ it('phoneNotchPt fills the width with the panel, clamped to the calendar and the
   expect(phoneNotchPt(V390S)).toBeCloseTo((0.56 * 667 - 44) / 751, 6);
   expect(phoneNotchPt(V740L)).toBe(0.4);
 });
-it('390 × 844 hero', () => close(cameraFor(0, V390, 390), { scale: 0.210588, originX: 195, originY: 111.459, translateX: 35.7953, translateY: 111.459 }));
-it('390 × 844 midway', () => close(cameraFor(0.5, V390, 390), { scale: 0.390674, originX: 195, originY: 69.7295, translateX: -100.349 }));
+it('390 × 844 hero', () => close(cameraFor(0, V390, 390), { scale: 0.210588, originX: 195, originY: 111.446, translateX: 35.7953, translateY: 111.446 }));
+it('390 × 844 midway', () => close(cameraFor(0.5, V390, 390), { scale: 0.390674, originX: 195, originY: 69.723, translateX: -100.349 }));
 it('390 × 844 notch: the panel fills the width, notch top at 28 px', () => close(cameraFor(1, V390, 390), { scale: 0.570759, originX: 195, originY: 28, translateX: -236.494, translateY: 28 }));
 it('phone progress is clamped and never clips', () => {
   expect(cameraFor(-1, V390, 390)).toEqual(cameraFor(0, V390, 390));
