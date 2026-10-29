@@ -172,3 +172,31 @@ it('a hidden tab pauses the deadline of a running action with a pending successo
   expect(fake.methods()).toContain('cancel');
   expect(reconcileMock).toHaveBeenLastCalledWith(fake, SECTION_SNAPSHOTS['02'], expect.objectContaining({ cps: 18, direction: 'down' }));
 });
+it('a visitor interrupt is not replayed on tab return (dirty pauses the section until the next one enters)', async () => {
+  vi.useFakeTimers();
+  reconcileMock.mockImplementation((_h, _s, opts) => new Promise<ReconcileResult>((resolve) => {
+    opts.signal.addEventListener('abort', () => resolve({ performed: 'typeTitle', keptVisitorEdits: true, aborted: true }));
+  }));
+  await mount();
+  act(() => vars(1).onEnter());
+  act(() => fake.visitorEdit({ title: 'x' }));
+  await act(async () => {});
+  expect(reconcileMock).toHaveBeenCalledTimes(1);
+  setVisibility('hidden');
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  setVisibility('visible');
+  await act(async () => {});
+  expect(reconcileMock).toHaveBeenCalledTimes(1);
+});
+it('the next section entering after a visitor interrupt runs normally', async () => {
+  reconcileMock.mockImplementation((_h, _s, opts) => new Promise<ReconcileResult>((resolve) => {
+    opts.signal.addEventListener('abort', () => resolve({ performed: 'typeTitle', keptVisitorEdits: true, aborted: true }));
+  }));
+  await mount();
+  act(() => vars(0).onEnter());
+  act(() => fake.visitorEdit({ title: 'x' }));
+  await act(async () => {});
+  act(() => vars(1).onEnter());
+  expect(reconcileMock).toHaveBeenCalledTimes(2);
+  expect(reconcileMock).toHaveBeenLastCalledWith(fake, SECTION_SNAPSHOTS['02'], expect.objectContaining({ direction: 'down' }));
+});

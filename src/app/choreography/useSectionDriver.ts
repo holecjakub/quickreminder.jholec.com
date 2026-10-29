@@ -27,6 +27,8 @@ interface SectionQueueOptions<R> {
   maxDurationMs?: number;
   timeScale?: () => number;
   onAbort?(): void;
+  /** A rejected run is a bug (reconcile resolves aborts); it is reported here, default console.error. */
+  onError?(error: unknown): void;
 }
 
 interface RunningJob {
@@ -111,7 +113,10 @@ export class SectionQueue<R = unknown> {
     this.activeSince = Date.now();
     this.opts.run(job, running.controller.signal).then(
       (value) => this.finish(running, value),
-      () => this.finish(running, null),
+      (error: unknown) => {
+        this.finish(running, null);
+        (this.opts.onError ?? console.error)(error);
+      },
     );
   }
 
@@ -175,8 +180,11 @@ export function useSectionDriver(args: {
   const triggers = useRef(new Map<SectionId, ScrollTrigger>());
   const queueRef = useRef<SectionQueue<ReconcileResult | null> | null>(null);
   const currentRef = useRef<SectionId>('hero');
+  /** Contracts §4.4: a visitor edit pauses the current section until the next one enters. */
+  const visitorInterrupted = useRef(false);
 
   const go = useCallback((job: SectionJob) => {
+    visitorInterrupted.current = false;
     currentRef.current = job.id;
     setCurrent(job.id);
     queueRef.current?.enqueue(job);
@@ -244,19 +252,23 @@ export function useSectionDriver(args: {
     // Visitor edits win: the first change that makes the draft dirty interrupts the running action.
     let wasDirty = handle.current?.getState().dirty ?? false;
     const unsubscribe = handle.current?.subscribe((state) => {
-      if (state.dirty && !wasDirty) queue.interrupt();
+      if (state.dirty && !wasDirty) {
+        visitorInterrupted.current = true;
+        queue.interrupt();
+      }
       wasDirty = state.dirty;
     });
 
     // Background tabs throttle timers to >= 1 s: the deadline clock stops while hidden, and a section
-    // whose action was aborted is replayed on the instant path when the visitor comes back.
+    // whose action was aborted is replayed on the instant path when the visitor comes back, unless the
+    // visitor interrupted it (their edit pauses the section until the next one enters).
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         queue.pause();
         return;
       }
       queue.resume();
-      if (!queue.running && !queue.pending && queue.lastResult?.aborted) {
+      if (!queue.running && !queue.pending && queue.lastResult?.aborted && !visitorInterrupted.current) {
         const replay: SectionJob = { id: currentRef.current, direction: 'down' };
         instantJobs.add(replay);
         queue.enqueue(replay);

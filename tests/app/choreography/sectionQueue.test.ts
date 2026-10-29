@@ -134,3 +134,30 @@ it('lastResult holds what the last settled job resolved to', async () => {
   await vi.advanceTimersByTimeAsync(100);
   expect(queue.lastResult).toBe('02');
 });
+it('a rejected run is reported through onError and the pending job still starts', async () => {
+  const boom = new Error('handle threw');
+  const onError = vi.fn();
+  const run = vi.fn((job: SectionJob) =>
+    job.id === '02' ? new Promise<SectionId>((_, reject) => setTimeout(() => reject(boom), 100)) : Promise.resolve(job.id),
+  );
+  const queue = new SectionQueue({ run, onError });
+  queue.enqueue(down('02'));
+  queue.enqueue(down('03'));
+  await vi.advanceTimersByTimeAsync(100);
+  expect(onError).toHaveBeenCalledTimes(1);
+  expect(onError).toHaveBeenCalledWith(boom);
+  expect(run.mock.calls.map((c) => c[0].id)).toEqual(['02', '03']);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(queue.lastResult).toBe('03');
+});
+it('without onError a rejected run is logged to console.error', async () => {
+  const boom = new Error('handle threw');
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const queue = new SectionQueue({ run: () => Promise.reject(boom) });
+  queue.enqueue(down('02'));
+  await vi.advanceTimersByTimeAsync(0);
+  expect(log).toHaveBeenCalledWith(boom);
+  expect(queue.running).toBeNull();
+  expect(queue.lastResult).toBeNull();
+  log.mockRestore();
+});
