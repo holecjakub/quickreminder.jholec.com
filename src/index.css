@@ -20,6 +20,26 @@
     color: var(--jh-fg);
     font-family: var(--jh-font-sans);
   }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    overflow-x: clip;
+    background: var(--jh-white);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--jh-fg);
+    outline-offset: 2px;
+  }
+
+  [data-section="dark"] :focus-visible {
+    outline-color: var(--jh-white);
+  }
 }
 
 .qr-font {
