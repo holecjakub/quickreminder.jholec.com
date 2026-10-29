@@ -9,7 +9,7 @@ export function HeaderView(): JSX.Element {
   const { controller } = useCore();
   const { listId, listPickerOpen } = useRecreationState();
   return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div data-qr-header="" style={{ display: 'flex', alignItems: 'center' }}>
       <HoverButton
         aria-label="Choose list" aria-haspopup="menu" aria-expanded={listPickerOpen} target="header"
         onClick={() => controller.toggleListPicker()}
