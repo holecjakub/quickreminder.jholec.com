@@ -259,3 +259,33 @@ it('review focus: crossing 810 px re-creates the trigger, recomputes --pt and re
   expect(el('[data-runway]').style.height).toBe('160svh');
   expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe('1');
 });
+
+it('the runway follows the layout query at once, before the viewport catches up one frame later', () => {
+  const mm = mountDesktop();
+  act(() => mm.set(DESKTOP, false));
+  // No resize frame yet: the band and the runway already agree on the phone layout.
+  expect(el('[data-stage]').style.height).toBe('56svh');
+  expect(el('[data-runway]').style.height).toBe('100svh');
+  expect(el('[data-runway]').style.marginTop).toBe('-56svh');
+});
+
+it('the camera reads the small viewport (100 svh), not the dynamic innerHeight', () => {
+  const SVH = 844;
+  const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    const height = this.style.position === 'fixed' && this.style.height === '100svh' ? SVH : 0;
+    return { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: height, width: 0, height, toJSON: () => ({}) } as DOMRect;
+  });
+  const expected = cameraTransform(cameraFor(0, V390, 390), renderPtFor(V390, 390));
+  installMatchMedia({ [DESKTOP]: false });
+  innerSize(390, 934); // iOS Safari with the toolbars retracted
+  render(
+    <Stage title="T" subtitle="S">
+      <p>copy</p>
+    </Stage>,
+  );
+  expect(el('[data-camera]').style.transform).toBe(expected);
+  resize(390, 754); // toolbars back: innerHeight shrinks, the small viewport does not
+  expect(el('[data-camera]').style.transform).toBe(expected);
+  expect(document.querySelectorAll('body > div[style*="100svh"]')).toHaveLength(0);
+  rect.mockRestore();
+});

@@ -34,7 +34,6 @@ import {
   phoneTitleOpacityFor,
   pinnedColumnWidth,
   renderPtFor,
-  runwayVhFor,
   titleOpacityFor,
   type Viewport,
   useIsDesktop,
@@ -72,13 +71,27 @@ const STAGE_BACKGROUND = 'var(--jh-white)';
 
 const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
 
+/**
+ * The small viewport height (100 svh) in px, the unit the stage and runway are painted in. iOS Safari's
+ * innerHeight follows the dynamic viewport and grows when the toolbars retract; a fixed 100 svh probe does
+ * not. Falls back to innerHeight where layout is unavailable (jsdom) or svh is unsupported.
+ */
+function smallViewportHeight(): number {
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none';
+  document.body.appendChild(probe);
+  const height = probe.getBoundingClientRect().height;
+  probe.remove();
+  return height > 0 ? height : window.innerHeight;
+}
+
 function readViewport(): Viewport {
-  return { width: window.innerWidth, height: window.innerHeight };
+  return { width: window.innerWidth, height: smallViewportHeight() };
 }
 
 /** Scroll progress along the runway, used before the ScrollTrigger exists (first paint). */
-function progressFromScroll(viewport: Viewport): number {
-  return clamp01(window.scrollY / ((runwayVhFor(viewport) / 100) * viewport.height));
+function progressFromScroll(runwayVh: number, viewport: Viewport): number {
+  return clamp01(window.scrollY / ((runwayVh / 100) * viewport.height));
 }
 
 /** Reduced motion: no zoom motion, the camera snaps at half progress. */
@@ -96,6 +109,9 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
   }));
   const [viewport, setViewport] = useState<Viewport>(readViewport);
   const isDesktop = useIsDesktop();
+  // One source decides the layout: the runway follows the same media query as the stage and the trigger,
+  // so a breakpoint flip never renders a desktop runway under a phone band (or the reverse) for a frame.
+  const runwayVh = isDesktop ? CAMERA.runwayVh : CAMERA.phoneRunwayVh;
   const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   const scheme = useColorScheme('auto');
 
@@ -130,8 +146,8 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
   // Before paint: the camera for the current scroll position (no layout shift on load or resize).
   useLayoutEffect(() => {
     writeFrameRef.current = writeFrame;
-    writeFrame(progressFromScroll(viewport));
-  }, [writeFrame, viewport]);
+    writeFrame(progressFromScroll(runwayVh, viewport));
+  }, [writeFrame, viewport, runwayVh]);
 
   // Viewport updates, one per animation frame.
   useEffect(() => {
@@ -140,7 +156,9 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
-        setViewport(readViewport());
+        const next = readViewport();
+        // iOS fires resize as the toolbars move; the small viewport, and so the layout, stays the same.
+        setViewport((prev) => (prev.width === next.width && prev.height === next.height ? prev : next));
       });
     };
     window.addEventListener('resize', onResize);
@@ -242,13 +260,13 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
               />
             </div>
           </div>
-          <div style={titleBlockStyle}>{heroTitle}</div>
+          <div data-hero-title-block="" style={titleBlockStyle}>{heroTitle}</div>
         </div>
         <div
           ref={runwayRef}
           data-runway=""
           style={{
-            height: `${runwayVhFor(viewport)}svh`,
+            height: `${runwayVh}svh`,
             marginTop: isDesktop ? '-100svh' : `-${PHONE_STAGE_HEIGHT}`,
             pointerEvents: 'none',
           }}
