@@ -111,3 +111,26 @@ it('dispose aborts and drops everything', async () => {
   expect(ids()).toEqual(['02']);
   expect(queue.running).toBeNull();
 });
+it('pause stops the deadline clock; resume re-arms it with the remaining time', async () => {
+  const { queue, onAbort, signals } = harness({ '02': 10000 });
+  queue.enqueue(down('02'));
+  await vi.advanceTimersByTimeAsync(500);
+  queue.enqueue(down('03'));
+  await vi.advanceTimersByTimeAsync(1000);
+  queue.pause();
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(signals.get('02')!.aborted).toBe(false);
+  queue.resume();
+  await vi.advanceTimersByTimeAsync(999);
+  expect(signals.get('02')!.aborted).toBe(false);
+  await vi.advanceTimersByTimeAsync(1);
+  expect(signals.get('02')!.aborted).toBe(true);
+  expect(onAbort).toHaveBeenCalledTimes(1);
+});
+it('lastResult holds what the last settled job resolved to', async () => {
+  const { queue } = harness({ '02': 100 });
+  expect(queue.lastResult).toBeNull();
+  queue.enqueue(down('02'));
+  await vi.advanceTimersByTimeAsync(100);
+  expect(queue.lastResult).toBe('02');
+});

@@ -58,6 +58,13 @@ async function mount(enabled = true) {
   return view;
 }
 
+function setVisibility(state: 'hidden' | 'visible') {
+  Object.defineProperty(document, 'visibilityState', { value: state, configurable: true });
+  act(() => {
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   installMatchMedia({});
@@ -70,6 +77,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
   vi.useRealTimers();
 });
 
@@ -132,4 +140,35 @@ it('kills its triggers on unmount', async () => {
   view.unmount();
   expect(triggers).toHaveLength(2);
   for (const t of triggers) expect(t.kill).toHaveBeenCalledTimes(1);
+});
+it('review focus: a hidden tab pauses the deadline and an aborted section is replayed instantly on return', async () => {
+  vi.useFakeTimers();
+  reconcileMock.mockImplementation(async () => ({ performed: 'typeTitle', keptVisitorEdits: false, aborted: true }));
+  await mount();
+  act(() => vars(1).onEnter());
+  await act(async () => {});
+  expect(reconcileMock).toHaveBeenCalledTimes(1);
+  setVisibility('hidden');
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(fake.methods()).not.toContain('cancel');
+  expect(reconcileMock).toHaveBeenCalledTimes(1);
+  setVisibility('visible');
+  expect(reconcileMock).toHaveBeenCalledTimes(2);
+  expect(reconcileMock).toHaveBeenLastCalledWith(fake, SECTION_SNAPSHOTS['02'], expect.objectContaining({ cps: Infinity, cursor: null, direction: 'down' }));
+});
+it('a hidden tab pauses the deadline of a running action with a pending successor', async () => {
+  vi.useFakeTimers();
+  reconcileMock.mockImplementation((_h, _s, opts) => new Promise<ReconcileResult>((resolve) => {
+    opts.signal.addEventListener('abort', () => resolve({ performed: 'typeTitle', keptVisitorEdits: false, aborted: true }));
+  }));
+  await mount();
+  act(() => vars(0).onEnter());
+  act(() => vars(1).onEnter());
+  setVisibility('hidden');
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(fake.methods()).not.toContain('cancel');
+  setVisibility('visible');
+  await act(() => vi.advanceTimersByTimeAsync(2500));
+  expect(fake.methods()).toContain('cancel');
+  expect(reconcileMock).toHaveBeenLastCalledWith(fake, SECTION_SNAPSHOTS['02'], expect.objectContaining({ cps: 18, direction: 'down' }));
 });

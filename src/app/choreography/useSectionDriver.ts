@@ -40,8 +40,12 @@ export class SectionQueue<R = unknown> {
   private current: RunningJob | null = null;
   private next: SectionJob | null = null;
   private deadline: ReturnType<typeof setTimeout> | null = null;
-  private startedAt = 0;
+  /** Deadline clock of the running job: time run before the last pause plus time since `activeSince`. */
+  private elapsedMs = 0;
+  private activeSince = 0;
+  private paused = false;
   private disposed = false;
+  private settled: R | null = null;
 
   constructor(opts: SectionQueueOptions<R>) {
     this.opts = opts;
@@ -53,6 +57,11 @@ export class SectionQueue<R = unknown> {
 
   get pending(): SectionJob | null {
     return this.next;
+  }
+
+  /** What the last settled job resolved to (null before the first one, or when it rejected). */
+  get lastResult(): R | null {
+    return this.settled;
   }
 
   /** Idle → starts now; running → becomes the single pending job (latest wins) and arms the deadline. */
@@ -71,6 +80,22 @@ export class SectionQueue<R = unknown> {
     this.abortRunning();
   }
 
+  /** Stops the deadline clock (hidden tab: timers are throttled, so the running job would overrun). */
+  pause(): void {
+    if (this.paused) return;
+    this.elapsedMs = this.elapsed();
+    this.paused = true;
+    this.clearDeadline();
+  }
+
+  /** Restarts the deadline clock with the time the running job had left. */
+  resume(): void {
+    if (!this.paused) return;
+    this.paused = false;
+    this.activeSince = Date.now();
+    this.armDeadline();
+  }
+
   dispose(): void {
     this.disposed = true;
     this.next = null;
@@ -82,15 +107,17 @@ export class SectionQueue<R = unknown> {
   private start(job: SectionJob): void {
     const running: RunningJob = { job, controller: new AbortController() };
     this.current = running;
-    this.startedAt = Date.now();
+    this.elapsedMs = 0;
+    this.activeSince = Date.now();
     this.opts.run(job, running.controller.signal).then(
-      () => this.finish(running),
-      () => this.finish(running),
+      (value) => this.finish(running, value),
+      () => this.finish(running, null),
     );
   }
 
-  private finish(running: RunningJob): void {
+  private finish(running: RunningJob, value: R | null): void {
     if (this.current !== running) return;
+    this.settled = value;
     this.current = null;
     this.clearDeadline();
     const next = this.next;
@@ -98,14 +125,18 @@ export class SectionQueue<R = unknown> {
     if (next) this.start(next);
   }
 
+  private elapsed(): number {
+    return this.paused ? this.elapsedMs : this.elapsedMs + (Date.now() - this.activeSince);
+  }
+
   private armDeadline(): void {
     this.clearDeadline();
-    if (!this.current || !this.next || this.current.controller.signal.aborted) return;
+    if (!this.current || !this.next || this.paused || this.current.controller.signal.aborted) return;
     const budget = (this.opts.maxDurationMs ?? MAX_ACTION_MS) * (this.opts.timeScale?.() ?? 1);
     this.deadline = setTimeout(() => {
       this.deadline = null;
       this.abortRunning();
-    }, Math.max(0, budget - (Date.now() - this.startedAt)));
+    }, Math.max(0, budget - this.elapsed()));
   }
 
   private clearDeadline(): void {
@@ -143,8 +174,10 @@ export function useSectionDriver(args: {
   const elements = useRef(new Map<SectionId, HTMLElement>());
   const triggers = useRef(new Map<SectionId, ScrollTrigger>());
   const queueRef = useRef<SectionQueue<ReconcileResult | null> | null>(null);
+  const currentRef = useRef<SectionId>('hero');
 
   const go = useCallback((job: SectionJob) => {
+    currentRef.current = job.id;
     setCurrent(job.id);
     queueRef.current?.enqueue(job);
   }, []);
@@ -179,20 +212,23 @@ export function useSectionDriver(args: {
     if (!enabled) return;
     let alive = true;
     const live = triggers.current;
+    /** Jobs replayed on the instant path (a run aborted while the tab was hidden, review focus R4). */
+    const instantJobs = new WeakSet<SectionJob>();
 
     const queue = new SectionQueue<ReconcileResult | null>({
       run: (job, signal) => {
         const recreation = handle.current;
         if (!recreation) return Promise.resolve(null);
         const { clock, calendar, reduce: reduced } = latest.current;
+        const instant = reduced || instantJobs.has(job);
         return reconcile(recreation, SECTION_SNAPSHOTS[job.id], {
           now: clock(),
           calendar,
           direction: job.direction,
           signal,
-          cursor: reduced ? null : cursor.current,
+          cursor: instant ? null : cursor.current,
           maxDurationMs: MAX_ACTION_MS,
-          cps: reduced ? Infinity : DEMO_CPS,
+          cps: instant ? Infinity : DEMO_CPS,
         });
       },
       maxDurationMs: MAX_ACTION_MS,
@@ -212,6 +248,22 @@ export function useSectionDriver(args: {
       wasDirty = state.dirty;
     });
 
+    // Background tabs throttle timers to >= 1 s: the deadline clock stops while hidden, and a section
+    // whose action was aborted is replayed on the instant path when the visitor comes back.
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        queue.pause();
+        return;
+      }
+      queue.resume();
+      if (!queue.running && !queue.pending && queue.lastResult?.aborted) {
+        const replay: SectionJob = { id: currentRef.current, direction: 'down' };
+        instantJobs.add(replay);
+        queue.enqueue(replay);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     void (document.fonts?.ready ?? Promise.resolve()).then(() => {
       if (!alive) return;
       ScrollTrigger.refresh();
@@ -225,6 +277,7 @@ export function useSectionDriver(args: {
 
     return () => {
       alive = false;
+      document.removeEventListener('visibilitychange', onVisibility);
       unsubscribe?.();
       for (const trigger of live.values()) trigger.kill();
       live.clear();
