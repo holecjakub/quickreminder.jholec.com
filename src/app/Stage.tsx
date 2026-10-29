@@ -34,6 +34,7 @@ import {
   renderPtFor,
   titleOpacityFor,
   type Viewport,
+  useIsDesktop,
 } from './stageCamera';
 
 export interface StageContextValue {
@@ -58,7 +59,6 @@ export function useStage(): StageContextValue {
   return value;
 }
 
-const DESKTOP_QUERY = `(min-width: ${CAMERA.phoneBreakpoint}px)`;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const RUNWAY_HEIGHT = `${CAMERA.runwayVh}svh`;
 const PINNED_COLUMN_PERCENT = Math.round(CAMERA.pinnedColumnRatio * 100);
@@ -92,7 +92,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
     calendar: currentCalendar(),
   }));
   const [viewport, setViewport] = useState<Viewport>(readViewport);
-  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const isDesktop = useIsDesktop();
   const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   const scheme = useColorScheme('auto');
 

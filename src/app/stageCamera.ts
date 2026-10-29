@@ -1,5 +1,6 @@
 // The Stage camera (landing §7.2, §11.1): pure maths from scroll progress and viewport to the scene transform.
 // Three keyframes, hero → overview → features; the notch top centre (scene 756, 0) is the visual origin.
+import { useMediaQuery } from '../desktop/useMediaQuery';
 import { NotchLayout } from '../recreation/machine/notchLayout';
 import { SCENE } from '../desktop/scene';
 import { FRAME } from './MacBookFrame';
@@ -48,6 +49,14 @@ export const CAMERA: {
   phoneTopPx: 64,
   phoneBottomPx: 16,
 };
+
+/** At or above the phone breakpoint: the pinned two-column layout (landing §7.2). */
+export const DESKTOP_QUERY = `(min-width: ${CAMERA.phoneBreakpoint}px)`;
+
+/** Whether the viewport matches DESKTOP_QUERY (live). */
+export function useIsDesktop(): boolean {
+  return useMediaQuery(DESKTOP_QUERY);
+}
 
 /** Where the notch top centre lands in the viewport (nx, ny) at scene scale s. */
 interface Keyframe {

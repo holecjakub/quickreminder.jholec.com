@@ -2,19 +2,17 @@
 // section driver so the recreation plays its state when the copy reaches the viewport middle.
 // Section 07 (Integrations) is static and lives outside the stage.
 import { useMemo, type JSX } from 'react';
-import { useMediaQuery } from '../../desktop/useMediaQuery';
 import { FEATURE_COPY } from '../choreography/copy';
 import { useSectionDriver } from '../choreography/useSectionDriver';
 import { useStage } from '../Stage';
-import { CAMERA } from '../stageCamera';
+import { useIsDesktop } from '../stageCamera';
 import { FeatureSection } from './FeatureSection';
 
-const DESKTOP_QUERY = `(min-width: ${CAMERA.phoneBreakpoint}px)`;
 
 export function Features(): JSX.Element {
   const { recreationRef, cursorRef, clock, calendar } = useStage();
   const { register } = useSectionDriver({ handle: recreationRef, cursor: cursorRef, clock, calendar, enabled: true });
-  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const isDesktop = useIsDesktop();
 
   // Stable ref callbacks, one per section, so React does not re-register on every render.
   const refs = useMemo(

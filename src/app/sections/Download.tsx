@@ -1,12 +1,10 @@
 // Section 08 (landing §7.4): the dark download block the nav links to. Static, outside the stage.
 import { DownloadSimple, GithubLogo } from '@phosphor-icons/react';
 import type { CSSProperties, JSX } from 'react';
-import { useMediaQuery } from '../../desktop/useMediaQuery';
 import { DOWNLOAD_COPY } from '../choreography/copy';
 import { LINKS } from '../Nav';
-import { CAMERA } from '../stageCamera';
+import { useIsDesktop } from '../stageCamera';
 
-const TABLET_QUERY = `(min-width: ${CAMERA.phoneBreakpoint}px)`;
 const GRAY = 'var(--jh-gray)';
 
 const sectionStyle: CSSProperties = {
@@ -35,7 +33,7 @@ const factDetailStyle: CSSProperties = { margin: 'var(--jh-space-8) 0 0', fontSi
 const smallStyle: CSSProperties = { margin: 'var(--jh-space-48) 0 0', fontSize: 14, fontWeight: 400, lineHeight: 'var(--jh-leading-body)', color: GRAY };
 
 export function Download(): JSX.Element {
-  const isTablet = useMediaQuery(TABLET_QUERY);
+  const isTablet = useIsDesktop();
 
   return (
     <section id="download" data-section="dark" aria-labelledby="download-title" style={sectionStyle}>

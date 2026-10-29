@@ -1,17 +1,15 @@
 // One `(0n) Label /` feature section (landing §7.3, contracts §6.1): numbered label, 24-semibold
 // headline, 18-medium paragraph, an optional muted second line and 2–3 Phosphor bullets.
 import { forwardRef, type CSSProperties, type ReactNode } from 'react';
-import { useMediaQuery } from '../../desktop/useMediaQuery';
 import { DEMO_REMINDER } from '../choreography/demo';
 import type { FeatureCopy } from '../choreography/copy';
-import { CAMERA } from '../stageCamera';
+import { useIsDesktop } from '../stageCamera';
 
 export interface FeatureSectionProps {
   copy: FeatureCopy;
   tone?: 'light' | 'dark';
 }
 
-const DESKTOP_QUERY = `(min-width: ${CAMERA.phoneBreakpoint}px)`;
 const BULLET_ICON_SIZE = 20;
 
 const DESKTOP_LAYOUT: CSSProperties = {
@@ -74,7 +72,7 @@ function withCzechExample(text: string): ReactNode {
 }
 
 export const FeatureSection = forwardRef<HTMLElement, FeatureSectionProps>(function FeatureSection({ copy, tone = 'light' }, ref) {
-  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const isDesktop = useIsDesktop();
   const sectionId = `feature-${copy.id}`;
   const titleId = `${sectionId}-title`;
   const dark = tone === 'dark';

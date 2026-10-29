@@ -4,12 +4,11 @@ import { Fragment, useEffect, useRef, useState, type CSSProperties, type JSX, ty
 import { useMediaQuery } from '../../desktop/useMediaQuery';
 import { INTEGRATIONS_COPY, sectionTitle } from '../choreography/copy';
 import { LINKS } from '../Nav';
-import { CAMERA } from '../stageCamera';
+import { useIsDesktop } from '../stageCamera';
 
 export const COPIED_MS = 1600 as const;
 
-const TABLET_QUERY = `(min-width: ${CAMERA.phoneBreakpoint}px)`;
-const DESKTOP_QUERY = '(min-width: 1200px)';
+const WIDE_QUERY = '(min-width: 1200px)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const CARET_KEYFRAMES = '@keyframes qr-caret-blink { 50% { opacity: 0 } }';
 const GRAY = 'var(--jh-gray)';
@@ -154,8 +153,8 @@ function richBody(body: string): ReactNode {
 }
 
 export function Integrations(): JSX.Element {
-  const isTablet = useMediaQuery(TABLET_QUERY);
-  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const isTablet = useIsDesktop();
+  const isDesktop = useMediaQuery(WIDE_QUERY);
   const columns = isDesktop ? 4 : isTablet ? 2 : 1;
 
   return (
