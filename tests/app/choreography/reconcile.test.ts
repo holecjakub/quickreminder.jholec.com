@@ -148,6 +148,13 @@ it('abort during a sleep cancels the cursor too and stops the sequence', async (
   await vi.runAllTimersAsync(); expect(await p).toEqual({ performed: 'schedule', keptVisitorEdits: false, aborted: true });
   expect(h.methods()).toEqual(['markClean', 'openSchedule', 'cancel']); expect(cursor.cancel).toHaveBeenCalledTimes(1);
 });
+it('a visitor edit while the panel opens (abort during show) keeps the edit and writes nothing', async () => {
+  const h = new FakeRecreationHandle(); const ac = new AbortController();
+  const show = h.show.bind(h);
+  h.show = async (o) => { await show(o); h.visitorEdit({ title: 'Buy milk' }); ac.abort(); };
+  expect(await run(reconcile(h, SECTION_SNAPSHOTS['01'], opts({ signal: ac.signal })))).toEqual({ performed: 'none', keptVisitorEdits: false, aborted: true });
+  expect(h.methods()).toEqual(['show', 'cancel']); expect(h.getState()).toMatchObject({ title: 'Buy milk', dirty: true });
+});
 it('a signal aborted before the call performs nothing', async () => {
   const h = new FakeRecreationHandle({ state: { phase: { type: 'open' } } }); const ac = new AbortController(); ac.abort();
   expect(await run(reconcile(h, SECTION_SNAPSHOTS['02'], opts({ signal: ac.signal })))).toEqual({ performed: 'none', keptVisitorEdits: false, aborted: true });

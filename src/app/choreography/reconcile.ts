@@ -107,6 +107,8 @@ export async function reconcile(handle: RecreationHandle, snapshot: SectionSnaps
     // 3. Panel.
     if ((snapshot.panel === 'open' || snapshot.action === 'save') && !isVisible(handle.getState())) {
       await handle.show({ source: 'scroll' });
+      // A visitor edit while the panel opened aborted this run: their draft stands, nothing is written.
+      if (signal.aborted) return result(true);
       handle.markClean();   // show resets the draft, so the visitor's edits are gone
       keep = false;
     }
