@@ -210,11 +210,24 @@ visitor scrolls on to the next section (no fighting).
    macOS 26, works on Macs without a notch (virtual pill at the top).
 5. **Footer**: jholec.com link, "Made by Jakub Holec", trademark disclaimer, repo link.
 
-Mobile (< 810 px): the hero still shows the desktop at 16:10 inside the viewport width; the
-MacBook sits on top and the feature copy flows below it, each section still triggering the
-state. The recreation is scaled with `transform: scale()` to fit (it is laid out in points
-at 1×, never reflowed), remains tappable; keyboard shortcuts are replaced by on-screen
-controls that already exist (notch tap, ✓, ⓧ). No pinning on phones (sticky only ≥ 810 px).
+Mobile (< 810 px, revised 2026-10-29 — Jakub: "víc close na ten notch"): the stage is
+pinned on phones too, as a sticky band of **56 svh** at the top of the viewport, above the
+copy (the copy scrolls underneath it, so the band paints over it). Two camera keyframes over
+a **100 svh** runway, no overview:
+
+- **Hero**: the whole MacBook fitted into the band between the nav (64 px) and a 96 px title
+  reserve at the bottom, with 16 px side gutters; the title and subtitle sit inside the band
+  at the bottom and fade out over the first half of the runway.
+- **Notch**: the camera zooms so the open panel (600 pt) fills the width minus the gutters,
+  clamped so the tallest in-notch section (the 751 pt calendar) fits under the notch inside
+  the band (notch top at 28 px, 16 px of air below), never below 0.4 px/pt. The lid's top bezel
+  stays visible above the notch, so it reads as a zoom into the laptop. On 390 × 844 the scale
+  is 0.571 (panel 343 px wide).
+
+Feature sections trigger their state when their top reaches **78 %** of the viewport (not the
+centre, which lies under the band). The recreation stays tappable while pinned; keyboard
+shortcuts are replaced by on-screen controls that already exist (notch tap, ✓, ⓧ). Reduced
+motion snaps the camera at half progress, as on desktop.
 
 ## 8. Design tokens (page)
 
@@ -260,6 +273,9 @@ keeps the app's own colours (Theme.swift), not the page's.
 - Hero: the whole MacBook (1700 × 1070 pt with the deck) is scaled to fit the viewport minus
   the gutters and the air. At 1440 × 900 the scale is 0.75, so the panel is ~450 px wide,
   legible and typeable.
+- Phones (< 810 px): the band is 56 svh; hero scale = min((w − 32) / 1700, (0.56 h − 64 − 96) / 1070);
+  notch scale = clamp(min((w − 32) / 600, (0.56 h − 28 − 16) / 751), 0.4, 1). The camera
+  lerps hero → notch over the 100 svh runway; `--pt` is the larger of the two.
 - Features: the pinned MacBook is **zoomed and cropped to the top of the lid**. Target scale
   is 1 CSS px per point (the open panel 600 px wide), clamped to fit the pinned column (never
   below 0.75). The transform origin is the notch (top centre); the lower lid and the keyboard
