@@ -150,12 +150,19 @@ function phoneHeroBandHeight(viewport: Viewport): number {
   return phoneStageHeight(viewport) - CAMERA.phoneTopPx - CAMERA.phoneTitleReservePx;
 }
 
-/** Phone hero scale: the whole MacBook fits the width minus two gutters and the band under the nav, above the title. */
+/** Floor of the phone hero scale: below ≈ 286 px of viewport height the band under the nav is empty or negative. */
+const MIN_PHONE_HERO_PT = 0.05;
+
+/**
+ * Phone hero scale: the whole MacBook fits the width minus two gutters and the band under the nav, above the
+ * title; floored at MIN_PHONE_HERO_PT so a very short viewport (landscape) never mirrors the scene.
+ */
 export function phoneHeroPt(viewport: Viewport): number {
-  return Math.min(
+  const fit = Math.min(
     (viewport.width - 2 * CAMERA.phoneGutterPx) / FRAME.deckWidth,
     phoneHeroBandHeight(viewport) / FRAME_HEIGHT,
   );
+  return Math.max(fit, MIN_PHONE_HERO_PT);
 }
 
 /** Phone notch scale: the panel fills the width, the calendar fits the band under the notch; clamped to [0.4, 1]. */

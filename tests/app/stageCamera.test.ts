@@ -52,6 +52,12 @@ it('phoneHeroPt fits the MacBook into the band under the nav and above the title
   expect(phoneHeroPt(V390)).toBeCloseTo(358 / 1700, 6);
   expect(phoneHeroPt(V390S)).toBeCloseTo((0.56 * 667 - 160) / 1070, 6);
 });
+it('phoneHeroPt stays positive on a very short viewport (landscape 740 × 250: the band under the nav is negative)', () => {
+  const short = { width: 740, height: 250 };
+  expect(0.56 * short.height - 160).toBeLessThan(0);
+  expect(phoneHeroPt(short)).toBe(0.05);
+  expect(cameraFor(0, short, 740).scale).toBeGreaterThan(0);
+});
 it('phoneNotchPt fills the width with the panel, clamped to the calendar and the 0.4 floor', () => {
   expect(phoneNotchPt(V390)).toBeCloseTo((0.56 * 844 - 44) / 751, 6);
   expect(phoneNotchPt(V390S)).toBeCloseTo((0.56 * 667 - 44) / 751, 6);
