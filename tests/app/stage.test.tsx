@@ -95,9 +95,9 @@ it('≥ 810 px: sticky full-height stage, 160svh runway that ignores the pointer
 it('applies the hero camera before paint (no layout shift)', () => {
   mountDesktop();
   const camera = el('[data-camera]');
-  expect(camera.style.transform).toBe('translate3d(27.13px, 0.00px, 0) scale(0.91650)');
+  expect(camera.style.transform).toBe('translate3d(151.94px, 61.53px, 0) scale(0.75140)');
   expect(camera.style.transformOrigin).toBe('0 0');
-  expect(el('[data-stage]').style.getPropertyValue('--reveal')).toBe('0');
+  expect(el('[data-rim]').getAttribute('stroke-dashoffset')).toBe('0'); // the frame is drawn from the start
   expect(el('[data-clip]').style.clipPath).toBe('inset(0px 0px 0px 0px)');
 });
 
@@ -105,6 +105,7 @@ it('renders the desktop at renderPt', () => {
   mountDesktop();
   expect(lastRecreation.props!.sceneScale).toBe(1);
   expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe('1');
+  expect(el('[data-camera]').style.getPropertyValue('--pt')).toBe('1'); // the MacBookFrame scales with the scene
 });
 
 it('creates one scrubbed ScrollTrigger on the runway', () => {
@@ -122,7 +123,6 @@ it('creates one scrubbed ScrollTrigger on the runway', () => {
   onUpdate(1);
   expect(el('[data-camera]').style.transform).toBe('translate3d(-338.50px, 64.00px, 0) scale(1.00000)');
   expect(el('[data-clip]').style.clipPath).toBe('inset(0px 605px 0px 0px)');
-  expect(el('[data-stage]').style.getPropertyValue('--reveal')).toBe('1');
   expect(el('[data-hero-title]').style.opacity).toBe('0');
   expect(el('[data-rim]').getAttribute('stroke-dashoffset')).toBe('0');
 });

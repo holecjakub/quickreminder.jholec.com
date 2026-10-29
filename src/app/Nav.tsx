@@ -2,7 +2,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { SCENE } from '../desktop/scene';
 import { useMediaQuery } from '../desktop/useMediaQuery';
-import { CAMERA, heroPt, type Viewport } from './stageCamera';
+import { CAMERA, heroScreenRect, type Viewport } from './stageCamera';
 
 export const LINKS: {
   readonly appRepo: 'https://github.com/holecjakub/QuickReminder';
@@ -27,10 +27,8 @@ export const NAV_HIDE_AFTER_VH = 0.6 as const;
 /** ≥ 810: on the desktop's top-right, under its menu bar; phone: a fixed corner. */
 export function navPosition(viewport: Viewport): { top: number; right: number } {
   if (viewport.width < CAMERA.phoneBreakpoint) return { top: 12, right: 16 };
-  const pt = heroPt(viewport);
-  const sceneTop = (viewport.height - SCENE.height * pt) / 2;
-  const sceneGapX = (viewport.width - SCENE.width * pt) / 2;
-  return { top: sceneTop + SCENE.menuBarHeight * pt + 12, right: sceneGapX + 16 };
+  const screen = heroScreenRect(viewport);
+  return { top: screen.y + SCENE.menuBarHeight * screen.pt + 12, right: screen.x + 16 };
 }
 
 const readViewport = (): Viewport => ({ width: window.innerWidth, height: window.innerHeight });

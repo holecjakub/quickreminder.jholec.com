@@ -80,7 +80,9 @@ export const MacBookFrame = forwardRef<SVGSVGElement, MacBookFrameProps>(functio
       viewBox={`${DECK_X} 0 ${FRAME.deckWidth} ${TOTAL_HEIGHT}`}
       style={{
         position: 'absolute',
-        left: ptCss(-FRAME.bezelSide),
+        // The viewBox starts at DECK_X (the deck overhangs the lid by 76 pt each side), so the svg's left
+        // edge is the lid's left edge (−bezelSide) plus that overhang.
+        left: ptCss(-FRAME.bezelSide + DECK_X),
         top: ptCss(-FRAME.bezelTop),
         width: ptCss(FRAME.deckWidth),
         height: ptCss(TOTAL_HEIGHT),

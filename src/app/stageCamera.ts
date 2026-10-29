@@ -1,5 +1,7 @@
 // The Stage camera (landing §7.2, §11.1): pure maths from scroll progress and viewport to the scene transform.
 // Three keyframes, hero → overview → features; the notch top centre (scene 756, 0) is the visual origin.
+// The hero shows the whole MacBook (lid + deck) on the page background, fitted into the viewport with air
+// around it; the overview shrinks it under the title; features zoom to the notch in the pinned column.
 import { useMediaQuery } from '../desktop/useMediaQuery';
 import { NotchLayout } from '../recreation/machine/notchLayout';
 import { SCENE } from '../desktop/scene';
@@ -16,8 +18,6 @@ export interface Camera {
   readonly originY: number;
   readonly translateX: number;
   readonly translateY: number;
-  readonly frameOpacity: number;
-  readonly pageReveal: number;
 }
 
 export const CAMERA: {
@@ -27,8 +27,10 @@ export const CAMERA: {
   readonly minFeaturesPt: 0.75;
   readonly featuresNotchTopPx: 64;
   readonly featuresBottomAirPx: 24;
+  readonly heroGutterPx: 24;
+  readonly heroAirPx: 48;
   readonly overviewProgress: 0.625;
-  readonly overviewScaleRatio: 0.62;
+  readonly overviewScaleRatio: 0.72;
   readonly overviewCenterYRatio: 0.42;
   readonly runwayVh: 160;
   readonly phoneGutterPx: 16;
@@ -41,8 +43,10 @@ export const CAMERA: {
   minFeaturesPt: 0.75,
   featuresNotchTopPx: 64,
   featuresBottomAirPx: 24,
+  heroGutterPx: 24,
+  heroAirPx: 48,
   overviewProgress: 0.625,
-  overviewScaleRatio: 0.62,
+  overviewScaleRatio: 0.72,
   overviewCenterYRatio: 0.42,
   runwayVh: 160,
   phoneGutterPx: 16,
@@ -81,8 +85,21 @@ export function pinnedColumnWidth(viewport: Viewport): number {
   return isPhone(viewport) ? viewport.width : Math.round(viewport.width * CAMERA.pinnedColumnRatio);
 }
 
+const FRAME_HEIGHT = FRAME.lidHeight + FRAME.deckHeight;
+
+/** Hero scale: the whole MacBook (deck width, lid + deck height) fits the viewport minus the gutters and the air. */
 export function heroPt(viewport: Viewport): number {
-  return Math.min(viewport.width / SCENE.width, viewport.height / SCENE.height);
+  return Math.min(
+    (viewport.width - 2 * CAMERA.heroGutterPx) / FRAME.deckWidth,
+    (viewport.height - 2 * CAMERA.heroAirPx) / FRAME_HEIGHT,
+  );
+}
+
+/** The fake screen's rectangle in the hero (viewport px): the MacBook is centred, the screen sits inside its bezel. */
+export function heroScreenRect(viewport: Viewport): { readonly x: number; readonly y: number; readonly pt: number } {
+  const pt = heroPt(viewport);
+  const lidTop = (viewport.height - FRAME_HEIGHT * pt) / 2;
+  return { x: viewport.width / 2 - (SCENE.width / 2) * pt, y: lidTop + FRAME.bezelTop * pt, pt };
 }
 
 export function featuresPt(pinnedColumnWidth: number): number {
@@ -97,8 +114,8 @@ export function featuresScale(viewport: Viewport, pinnedColumnWidth: number): nu
 }
 
 function heroKeyframe(viewport: Viewport): Keyframe {
-  const s = heroPt(viewport);
-  return { s, nx: viewport.width / 2, ny: (viewport.height - SCENE.height * s) / 2 };
+  const { y, pt } = heroScreenRect(viewport);
+  return { s: pt, nx: viewport.width / 2, ny: y };
 }
 
 function overviewKeyframe(viewport: Viewport): Keyframe {
@@ -110,15 +127,13 @@ function featuresKeyframe(viewport: Viewport, pinnedColumnWidth: number): Keyfra
   return { s: featuresScale(viewport, pinnedColumnWidth), nx: pinnedColumnWidth / 2, ny: CAMERA.featuresNotchTopPx };
 }
 
-function cameraAt(k: Keyframe, reveal: number): Camera {
+function cameraAt(k: Keyframe): Camera {
   return {
     scale: k.s,
     originX: k.nx,
     originY: k.ny,
     translateX: k.nx - SCENE.notchOrigin.x * k.s,
     translateY: k.ny,
-    frameOpacity: reveal,
-    pageReveal: reveal,
   };
 }
 
@@ -135,15 +150,15 @@ function secondSegmentT(progress: number): number | null {
 export function cameraFor(progress: number, viewport: Viewport, pinnedColumnWidth: number): Camera {
   if (isPhone(viewport)) {
     const s = phoneScale(viewport.width);
-    return cameraAt({ s, nx: viewport.width / 2, ny: CAMERA.phoneTopPx + FRAME.bezelTop * s }, 1);
+    return cameraAt({ s, nx: viewport.width / 2, ny: CAMERA.phoneTopPx + FRAME.bezelTop * s });
   }
   const overview = overviewKeyframe(viewport);
   const t2 = secondSegmentT(progress);
   if (t2 === null) {
     const t = clamp(progress, 0, 1) / CAMERA.overviewProgress;
-    return cameraAt(lerpKeyframe(heroKeyframe(viewport), overview, t), t);
+    return cameraAt(lerpKeyframe(heroKeyframe(viewport), overview, t));
   }
-  return cameraAt(lerpKeyframe(overview, featuresKeyframe(viewport, pinnedColumnWidth), t2), 1);
+  return cameraAt(lerpKeyframe(overview, featuresKeyframe(viewport, pinnedColumnWidth), t2));
 }
 
 /** The `--pt` the scene renders at: the sharpest scale the camera reaches, so it never upscales a bitmap. */
@@ -170,7 +185,7 @@ export function titleOpacityFor(progress: number): number {
 /** Height of the unpinned phone block: top air + lid and deck at the phone scale + bottom air. */
 export function phoneStageHeight(viewportWidth: number): number {
   return (
-    CAMERA.phoneTopPx + (FRAME.lidHeight + FRAME.deckHeight) * phoneScale(viewportWidth) + CAMERA.phoneBottomPx
+    CAMERA.phoneTopPx + FRAME_HEIGHT * phoneScale(viewportWidth) + CAMERA.phoneBottomPx
   );
 }
 

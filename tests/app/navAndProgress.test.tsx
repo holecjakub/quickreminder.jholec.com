@@ -47,14 +47,14 @@ it('ScrollProgress kills its trigger on unmount', () => {
 
 it('navPosition 1920 × 1080', () => {
   const p = navPosition({ width: 1920, height: 1080 });
-  expect(p.top).toBeCloseTo(53.792, 3);
-  expect(p.right).toBeCloseTo(144.554, 3);
+  expect(p.top).toBeCloseTo(111.499, 3);
+  expect(p.right).toBeCloseTo(280.763, 3);
 });
 
 it('navPosition 1440 × 900', () => {
   const p = navPosition({ width: 1440, height: 900 });
-  expect(p.top).toBeCloseTo(46.827, 3);
-  expect(p.right).toBeCloseTo(43.128, 3);
+  expect(p.top).toBeCloseTo(102.079, 3);
+  expect(p.right).toBeCloseTo(167.940, 3);
 });
 
 it('navPosition phone', () => expect(navPosition({ width: 390, height: 844 })).toEqual({ top: 12, right: 16 }));

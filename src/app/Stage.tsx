@@ -22,7 +22,7 @@ import type { RecreationHandle } from '../recreation';
 import { AppClock, type Clock } from '../recreation/clock';
 import { currentCalendar, type Calendar } from '../recreation/core/calendar';
 import { ScrollTrigger } from './gsap';
-import { MacBookFrame, applyDrawIn } from './MacBookFrame';
+import { MacBookFrame } from './MacBookFrame';
 import { MOTION_TIME_SCALE } from './motionDebug';
 import {
   CAMERA,
@@ -65,7 +65,7 @@ const PINNED_COLUMN_PERCENT = Math.round(CAMERA.pinnedColumnRatio * 100);
 const PINNED_COLUMN = `${PINNED_COLUMN_PERCENT}%`;
 const FEATURES_COLUMN = `${100 - PINNED_COLUMN_PERCENT}%`;
 /** The hero letterbox is black; the page white reveals with the camera (landing §7.2). */
-const STAGE_BACKGROUND = 'color-mix(in srgb, var(--jh-white) calc(var(--reveal) * 100%), var(--jh-black))';
+const STAGE_BACKGROUND = 'var(--jh-white)';
 
 const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
 
@@ -113,9 +113,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
       const cameraProgress = cameraProgressFor(p, reduced);
       const camera = cameraFor(cameraProgress, viewport, column);
       if (cameraRef.current) cameraRef.current.style.transform = cameraTransform(camera, renderPt);
-      if (frameRef.current) applyDrawIn(frameRef.current, camera.frameOpacity);
       if (clipRef.current) clipRef.current.style.clipPath = `inset(0px ${clipFor(cameraProgress, viewport, column).right}px 0px 0px)`;
-      stageRef.current?.style.setProperty('--reveal', String(camera.pageReveal));
       if (!isDesktop) return; // the phone title sits in normal flow below the stage
       const titleOpacity = String(titleOpacityFor(p));
       if (titleRef.current) titleRef.current.style.opacity = titleOpacity;
@@ -215,15 +213,16 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
         <div
           ref={stageRef}
           data-stage=""
-          style={{ ...stageStyle, overflow: 'hidden', backgroundColor: STAGE_BACKGROUND, '--reveal': isDesktop ? '0' : '1' } as CSSProperties}
+          style={{ ...stageStyle, overflow: 'hidden', backgroundColor: STAGE_BACKGROUND }}
         >
           <div ref={clipRef} data-clip="" style={{ position: 'absolute', inset: 0 }}>
             <div
               ref={cameraRef}
               data-camera=""
-              style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '0 0', willChange: 'transform' }}
+              // `--pt` here is for the MacBookFrame; the DesktopScene sets the same value on its own root.
+              style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '0 0', willChange: 'transform', '--pt': String(renderPt) } as CSSProperties}
             >
-              <MacBookFrame ref={frameRef} drawIn={isDesktop ? 0 : 1} scheme={scheme} />
+              <MacBookFrame ref={frameRef} drawIn={1} scheme={scheme} />
               <DesktopScene
                 recreationRef={context.recreationRef}
                 cursorRef={context.cursorRef}

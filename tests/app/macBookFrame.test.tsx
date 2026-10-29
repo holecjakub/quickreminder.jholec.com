@@ -26,7 +26,7 @@ describe('<MacBookFrame>', () => {
   it('draws the lid around the screen origin and the deck below it', () => {
     const { svg, part } = renderFrame(1);
     expect(svg.getAttribute('aria-hidden')).toBe('true');
-    expect(svg.style.left).toBe(ptCss(-18));
+    expect(svg.style.left).toBe(ptCss(-18 - 76)); // lid bezel plus the deck overhang the viewBox starts at
     expect(svg.style.top).toBe(ptCss(-18));
     expect(part('lid').getAttribute('d')).toBe(roundedRectPath(1548, 1036, 36, 20));
     const deck = part('deck');
