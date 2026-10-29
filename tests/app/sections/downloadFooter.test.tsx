@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from '@testing-library/react';
-import { DOWNLOAD_COPY } from '../../../src/app/choreography/copy';
+import { DOWNLOAD_COPY, FOOTER_COPY } from '../../../src/app/choreography/copy';
 import { LINKS } from '../../../src/app/Nav';
 import { Download } from '../../../src/app/sections/Download';
+import { Footer } from '../../../src/app/sections/Footer';
 import { installMatchMedia } from '../../fakes/matchMedia';
 
 afterEach(cleanup);
@@ -80,5 +81,38 @@ describe('Download', () => {
     expect(img.getAttribute('height')).toBe('96');
     expect(img.getAttribute('loading')).toBe('lazy');
     expect(img.getAttribute('decoding')).toBe('async');
+  });
+});
+
+describe('Footer', () => {
+  it('disclaimer is the app README’s, verbatim', () =>
+    expect(FOOTER_COPY.disclaimer).toBe(
+      'Not affiliated with, endorsed by or sponsored by Apple Inc. Apple, macOS, iOS, Xcode, SF Symbols and Reminders are trademarks of Apple Inc. ' +
+        'QuickReminder is an independent, from-scratch implementation using only public Apple frameworks; it contains no Apple source code or assets and uses no private APIs. ' +
+        'It reads and writes your reminders through the public EventKit framework.',
+    ));
+
+  it('site note', () =>
+    expect(FOOTER_COPY.siteNote).toBe(
+      'The desktop, wallpaper, window and cursor on this page are original drawings, and the icons are Phosphor. Nothing on this page is an Apple asset.',
+    ));
+
+  it('links: jholec.com, the app repo, the site source, NOTICE', () => {
+    render(<Footer />);
+    expect(screen.getByRole('link', { name: 'Made by Jakub Holec' }).getAttribute('href')).toBe('https://jholec.com');
+    expect(screen.getByRole('link', { name: 'QuickReminder on GitHub' }).getAttribute('href')).toBe(LINKS.appRepo);
+    expect(screen.getByRole('link', { name: 'Source of this site' }).getAttribute('href')).toBe(LINKS.siteRepo);
+    expect(screen.getByRole('link', { name: 'Trademarks and acknowledgements' }).getAttribute('href')).toBe(LINKS.notice);
+  });
+
+  it('shows the disclaimer and the site note', () => {
+    render(<Footer />);
+    expect(screen.getByText(FOOTER_COPY.disclaimer)).toBeTruthy();
+    expect(screen.getByText(FOOTER_COPY.siteNote)).toBeTruthy();
+  });
+
+  it('is a dark contentinfo landmark', () => {
+    render(<Footer />);
+    expect(screen.getByRole('contentinfo').getAttribute('data-section')).toBe('dark');
   });
 });
