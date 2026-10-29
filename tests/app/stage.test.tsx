@@ -14,9 +14,25 @@ const REDUCED = '(prefers-reduced-motion: reduce)';
 const V1440 = { width: 1440, height: 900 };
 
 let rafQueue: FrameRequestCallback[] = [];
+function runRaf() {
+  const callbacks = rafQueue;
+  rafQueue = [];
+  act(() => {
+    for (const cb of callbacks) cb(performance.now());
+  });
+}
+
 function innerSize(width: number, height: number) {
   Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: width });
   Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: height });
+}
+
+function resize(width: number, height: number) {
+  innerSize(width, height);
+  act(() => {
+    window.dispatchEvent(new Event('resize'));
+  });
+  runRaf();
 }
 
 beforeEach(() => {
@@ -178,4 +194,26 @@ it('useStage throws outside <Stage>', () => {
   expect(() => render(<Orphan />)).toThrow(/useStage/);
   error.mockRestore();
   window.removeEventListener('error', swallow);
+});
+
+it('review focus: resizing across 810 px swaps layouts, recomputes --pt and refreshes the triggers', () => {
+  const mm = mountDesktop();
+  expect(ScrollTrigger.create).toHaveBeenCalledTimes(1);
+  const { trigger } = createdTrigger();
+
+  act(() => mm.set(DESKTOP, false));
+  resize(800, 900);
+  expect(trigger.kill).toHaveBeenCalledTimes(1);
+  expect(ScrollTrigger.refresh).toHaveBeenCalled();
+  const stage = el('[data-stage]');
+  expect(stage.style.position).not.toBe('sticky');
+  expect(stage.style.height).toBe(`${phoneStageHeight(800)}px`);
+  expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe(String(renderPtFor({ width: 800, height: 900 }, 800)));
+
+  act(() => mm.set(DESKTOP, true));
+  resize(1440, 900);
+  expect(ScrollTrigger.create).toHaveBeenCalledTimes(2);
+  expect(trigger.kill).toHaveBeenCalledTimes(1);
+  expect(el('[data-stage]').style.position).toBe('sticky');
+  expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe('1');
 });

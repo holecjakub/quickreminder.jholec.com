@@ -165,6 +165,14 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
     return () => trigger.kill();
   }, [isDesktop]);
 
+  // Crossing the breakpoint drops or adds the sticky pin: re-measure every trigger on the page (review focus R3).
+  const layoutRef = useRef(isDesktop);
+  useEffect(() => {
+    if (layoutRef.current === isDesktop) return;
+    layoutRef.current = isDesktop;
+    ScrollTrigger.refresh();
+  }, [isDesktop]);
+
   const stageStyle: CSSProperties = isDesktop
     ? { position: 'sticky', top: 0, height: '100svh' }
     : { position: 'relative', height: `${phoneStageHeight(viewport.width)}px` };
