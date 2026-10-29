@@ -46,7 +46,7 @@ wins. Values are copied, never eyeballed.
 
 ## Deploy
 
-Vercel static build (`vercel.json`). `main` deploys to production (`main deploys to production`); `develop` and
+Vercel static build (`vercel.json`). `main` deploys to production; `develop` and
 pull requests get preview URLs. The domain `quickreminder.jholec.com` is a GoDaddy CNAME `quickreminder` ->
 `cname.vercel-dns.com`; the runbook is `~/Developer/jholec.com/GODADDY-DNS.md`.
 

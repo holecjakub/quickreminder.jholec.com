@@ -303,5 +303,12 @@ has `NotchSection` = none / schedule(controls | calendar) / location. The recrea
 this code; §5.1 and §5.3 above are updated, and the plan's "contract deviations" table lists
 every value that changed against the contracts.
 
+One deliberate departure from the code (R-T46-1, plan deviation B-D7): in en-US the Set Date
+hour chips ("9:00 AM" … "7:00 PM") are about 15 pt wider than the 522 pt row, and SwiftUI at
+`144d620` squeezes them until two labels wrap mid-word. The recreation shrinks the chips' 10 pt
+side pads instead (to about 8.2 pt in en-US) so every label stays on one line inside the row;
+the Czech labels fit and keep the full pads. This keeps SPEC §1's "7:00 PM" legible and is a
+decision, not a fidelity gap.
+
 ### 11.5 Visual references
 See §9: code is the reference; existing 2× shots are a bonus; fresh captures optional.

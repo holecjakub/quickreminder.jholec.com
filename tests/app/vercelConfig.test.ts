@@ -25,7 +25,7 @@ it('README names the flags and the deploy rule', () => {
     '?debug=motion',
     'npm run e2e',
     'npm run lighthouse',
-    'main deploys to production',
+    '`main` deploys to production',
     'cname.vercel-dns.com',
     'Not affiliated with, endorsed by or sponsored by Apple Inc.',
   ])
