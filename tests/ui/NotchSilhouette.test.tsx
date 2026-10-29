@@ -43,6 +43,7 @@ test('hover and press on the black shape only', () => {
   expect((container.querySelector('svg') as SVGElement).style.pointerEvents).toBe('none');
   expect(path.style.pointerEvents).toBe('visiblepainted');  // `visiblePainted`; CSSOM serialises keywords in lower case
   fireEvent.pointerEnter(path); fireEvent.pointerLeave(path); fireEvent.pointerDown(path);
-  expect(onHover.mock.calls).toEqual([[true], [false]]);
+  // React reports the window as `relatedTarget` when the pointer comes from / goes to nothing of its own.
+  expect(onHover.mock.calls).toEqual([[true, window], [false, window]]);
   expect(onPress).toHaveBeenCalledTimes(1);
 });

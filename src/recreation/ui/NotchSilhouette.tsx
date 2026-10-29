@@ -86,7 +86,9 @@ export function useNotchPath(geometry: NotchGeometry, containerWidth: number): M
 export function NotchSilhouette(props: {
   geometry: NotchGeometry;
   canvas: Size;
-  onHoverChange(entered: boolean): void;
+  /** `relatedTarget` is where the pointer came from / went to, so the owner can tell a crossing
+   *  between the path and a sibling of its own (the closed notch's hit layer) from a real change. */
+  onHoverChange(entered: boolean, relatedTarget: EventTarget | null): void;
   onPress(): void;
 }): JSX.Element {
   const { geometry, canvas, onHoverChange, onPress } = props;
@@ -102,8 +104,8 @@ export function NotchSilhouette(props: {
         fill="#000000"
         data-qr-target="notch"
         style={{ pointerEvents: 'visiblePainted' }}
-        onPointerEnter={() => onHoverChange(true)}
-        onPointerLeave={() => onHoverChange(false)}
+        onPointerEnter={(e) => onHoverChange(true, e.relatedTarget)}
+        onPointerLeave={(e) => onHoverChange(false, e.relatedTarget)}
         onPointerDown={() => onPress()}
       />
     </svg>

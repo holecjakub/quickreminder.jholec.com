@@ -83,6 +83,15 @@ function useContentMotion(visible: boolean, animation: FlagAnimation): ContentMo
 
 const SHAPE_SELECTOR = '[data-qr-content], path[data-qr-target="notch"]';
 
+/** The closed notch's hover region is the path plus the hit layer over it, one tracking area like
+ *  the app's: while swollen the silhouette sticks out of the 235 × 39 rectangle, and a pointer
+ *  crossing between the two must neither exit (un-swell, re-arm) nor enter (dwell, swell again). */
+const HOVER_REGION_SELECTOR = 'path[data-qr-target="notch"], [data-qr-target="notchHit"]';
+
+function insideHoverRegion(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(HOVER_REGION_SELECTOR) !== null;
+}
+
 /** `installLocalEventMonitor` + `installGlobalClickMonitor` while the panel is visible: a press
  *  outside the black shape collapses the panel; one inside the shape while the list picker is up
  *  closes just the picker (a popover's own presses are its own). With a `[data-qr-screen]`
@@ -128,6 +137,11 @@ export function NotchContainer(): JSX.Element {
 
   useClickOutside(rootRef, phase.type === 'open' || phase.type === 'saving');
 
+  // One hover region for the path and the hit layer: a crossing between them is not a change.
+  const onHoverChange = (entered: boolean, relatedTarget: EventTarget | null): void => {
+    if (!insideHoverRegion(relatedTarget)) controller.hover(entered);
+  };
+
   const badge = badgeOrigin(sizes, canvas.width);
   const canvasStyle = {
     position: 'relative', width: px(canvas.width), height: px(canvas.height), pointerEvents: 'none',
@@ -141,7 +155,7 @@ export function NotchContainer(): JSX.Element {
           <NotchSilhouette
             geometry={geometry}
             canvas={canvas}
-            onHoverChange={(entered) => controller.hover(entered)}
+            onHoverChange={onHoverChange}
             onPress={() => void controller.show('click', true)}
           />
         </div>
@@ -155,8 +169,8 @@ export function NotchContainer(): JSX.Element {
             '--qr-hit-w': px(sizes.closedSize.width), '--qr-hit-h': px(sizes.closedSize.height),
             pointerEvents: phase.type === 'closed' ? 'auto' : 'none',
           } as CSSProperties}
-          onPointerEnter={() => controller.hover(true)}
-          onPointerLeave={() => controller.hover(false)}
+          onPointerEnter={(e) => onHoverChange(true, e.relatedTarget)}
+          onPointerLeave={(e) => onHoverChange(false, e.relatedTarget)}
           onPointerDown={() => void controller.show('click', true)}
         />
         <motion.div

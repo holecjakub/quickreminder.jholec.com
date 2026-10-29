@@ -85,3 +85,29 @@ test('review focus: closed notch hit layer is at least 44 × 44 CSS px and opens
   expect(core.runtime.machine.phase).toEqual({ type: 'open' });
   expect(hit.style.pointerEvents).toBe('none');
 });
+test('fix round 1: the hit layer and the path are one hover region; crossing between them keeps the swell', async () => {
+  const { container, core } = renderWithCore(<NotchContainer />);
+  const hit = container.querySelector('[data-qr-target="notchHit"]') as HTMLElement;
+  const path = container.querySelector('path[data-qr-target="notch"]') as SVGPathElement;
+  const swollen = translatedNotchPath({ width: 257, height: 44, top: 6, bottom: 14 }, 648);
+  fireEvent.pointerEnter(hit);
+  await adv(100);
+  expect(core.runtime.machine).toMatchObject({ hoverSwollen: true, hoverDwellPending: false });
+  await waitFor(() => expect(path.getAttribute('d')).toBe(swollen));
+  const dispatch = vi.spyOn(core.runtime, 'dispatch');
+  // Out of the 235 × 39 rectangle onto the swollen silhouette: React delivers the leave on the hit
+  // layer and the matching enter on the path from this one event; neither is a hover change.
+  fireEvent.pointerLeave(hit, { relatedTarget: path });
+  expect(dispatch).not.toHaveBeenCalled();
+  // And back from the silhouette into the rectangle.
+  fireEvent.pointerLeave(path, { relatedTarget: hit });
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(core.runtime.machine).toMatchObject({ hoverSwollen: true, hoverDwellPending: false });
+  await adv(300);
+  expect(path.getAttribute('d')).toBe(swollen);
+  // Leaving the region altogether still un-swells.
+  fireEvent.pointerLeave(hit);
+  expect(dispatch).toHaveBeenCalledTimes(1);
+  expect(dispatch).toHaveBeenCalledWith({ type: 'hoverExited' });
+  expect(core.runtime.machine.hoverSwollen).toBe(false);
+});
