@@ -173,6 +173,21 @@ export function NotchContainer(): JSX.Element {
           onPointerLeave={(e) => onHoverChange(false, e.relatedTarget)}
           onPointerDown={() => void controller.show('click', true)}
         />
+        {/* Landing §9: the closed notch is reachable by keyboard. A transparent button over the closed
+            silhouette that Enter / Space activate natively; the pointer stays with the path and the hit layer. */}
+        {phase.type === 'closed' && (
+          <button
+            type="button"
+            aria-label="New reminder"
+            data-qr-target="notchButton"
+            style={{
+              position: 'absolute', top: 0, left: px((canvas.width - sizes.closedSize.width) / 2),
+              width: px(sizes.closedSize.width), height: px(sizes.closedSize.height),
+              background: 'transparent', pointerEvents: 'none',
+            }}
+            onClick={() => void controller.show('click', true)}
+          />
+        )}
         <motion.div
           data-qr-content=""
           aria-hidden={flags.isOpen ? undefined : true}
