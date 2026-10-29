@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import './setup';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { screen, act, fireEvent, waitFor } from '@testing-library/react';
 import { NotchContainer, canvasFor, contentTransition, badgeOrigin } from '../../src/recreation/ui/NotchContainer';
 import { translatedNotchPath } from '../../src/recreation/ui/NotchSilhouette';
@@ -68,4 +70,18 @@ test('reduce motion: no blur and no scale on the content', () => {
   const content = container.querySelector('[data-qr-content]') as HTMLElement;
   expect(content.style.filter).toBe('blur(calc(0 * var(--pt) * 1px))');
   expect(['', 'none'].includes(content.style.transform)).toBe(true);
+});
+test('review focus: closed notch hit layer is at least 44 × 44 CSS px and opens on press', async () => {
+  const { container, core } = renderWithCore(<NotchContainer />);
+  const hit = container.querySelector('[data-qr-target="notchHit"]') as HTMLElement;
+  expect(ptOf(hit.style.getPropertyValue('--qr-hit-w'))).toBe(235);
+  expect(ptOf(hit.style.getPropertyValue('--qr-hit-h'))).toBe(39);
+  // Not `new URL('…', import.meta.url)`: Vite rewrites that literal form into a served asset URL.
+  expect(readFileSync(join(import.meta.dirname, '../../src/recreation/ui/recreation.css'), 'utf8'))
+    .toMatch(/\.qr-notch-hit\s*\{[^}]*width:\s*max\(var\(--qr-hit-w\),\s*44px\)[^}]*height:\s*max\(var\(--qr-hit-h\),\s*44px\)/);
+  expect(hit.style.pointerEvents).toBe('auto');
+  fireEvent.pointerDown(hit);
+  await adv(500);
+  expect(core.runtime.machine.phase).toEqual({ type: 'open' });
+  expect(hit.style.pointerEvents).toBe('none');
 });

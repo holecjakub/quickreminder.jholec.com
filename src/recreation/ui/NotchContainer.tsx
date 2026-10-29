@@ -145,6 +145,20 @@ export function NotchContainer(): JSX.Element {
             onPress={() => void controller.show('click', true)}
           />
         </div>
+        {/* Landing §7 "remains tappable": at phone scale the closed silhouette is 61 × 10 CSS px, so an
+            invisible layer of at least 44 × 44 px over it takes the press and the hover while closed. */}
+        <div
+          data-qr-target="notchHit"
+          className="qr-notch-hit"
+          aria-hidden="true"
+          style={{
+            '--qr-hit-w': px(sizes.closedSize.width), '--qr-hit-h': px(sizes.closedSize.height),
+            pointerEvents: phase.type === 'closed' ? 'auto' : 'none',
+          } as CSSProperties}
+          onPointerEnter={() => controller.hover(true)}
+          onPointerLeave={() => controller.hover(false)}
+          onPointerDown={() => void controller.show('click', true)}
+        />
         <motion.div
           data-qr-content=""
           aria-hidden={flags.isOpen ? undefined : true}

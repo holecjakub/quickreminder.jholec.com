@@ -7,3 +7,5 @@
 .qr-tabular { font-variant-numeric: tabular-nums; }
 .qr-root :focus-visible { outline: calc(2 * var(--pt) * 1px) solid var(--qr-accent-70); outline-offset: calc(1 * var(--pt) * 1px); }
 .qr-root input:focus-visible, .qr-root [data-qr-own-ring]:focus-visible { outline: none; }
+/* The closed notch's press target, never below 44 × 44 CSS px at any `--pt` (landing §7): centred on the canvas top. */
+.qr-notch-hit { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: max(var(--qr-hit-w), 44px); height: max(var(--qr-hit-h), 44px); }
