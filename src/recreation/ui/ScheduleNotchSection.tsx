@@ -256,6 +256,8 @@ function PresetCardText(props: { title: string; hint: string; detail: string }):
 const DAY = Theme.dayButton;
 const TIME = Theme.timeField;
 const CHIP = Theme.timeChip;
+/** The chip's side padding as a flex item: `CHIP.padX` when the row has room, less when it has not. */
+const CHIP_PAD: CSSProperties = { width: px(CHIP.padX), flexShrink: 1, minWidth: 0 };
 const ROW = Theme.dayTimeRow;
 const FOOTER = Theme.footer;
 
@@ -292,7 +294,7 @@ export function DayTimeRow(props: { draft: ScheduleDraft; showsCalendar: boolean
       </NotchFillButton>
       <TimeField />
       <div style={{ flex: '1 0 auto', minWidth: px(ROW.spacerMin) }} />
-      <div style={{ display: 'flex', gap: px(CHIP.gap) }}>
+      <div style={{ display: 'flex', gap: px(CHIP.gap), flex: '0 1 auto', minWidth: 0 }}>
         {ScheduleText.chipHours.map((hour) => (
           <TimeChip key={hour} hour={hour} draft={draft} />
         ))}
@@ -365,7 +367,14 @@ function TimeField(): JSX.Element {
   );
 }
 
-/** One hour chip: prominent while the draft is exactly `hour`:00. */
+/**
+ * One hour chip: prominent while the draft is exactly `hour`:00.
+ *
+ * Swift pads the label 10 pt a side and lets the HStack squeeze the chips when the row is wider
+ * than the section (en-US "9:00 AM" … "7:00 PM" overrun the 522 pt by ~15 pt; the Czech labels
+ * fit): there the squeezed `Text` wraps mid-word. Here the two pads give instead, so the row
+ * still never leaves the section and the labels stay whole (SPEC §1: "7:00 PM in en_US").
+ */
 function TimeChip(props: { hour: (typeof ScheduleText.chipHours)[number]; draft: ScheduleDraft }): JSX.Element {
   const { hour, draft } = props;
   const { controller, formatter, calendar } = useCore();
@@ -380,12 +389,14 @@ function TimeChip(props: { hour: (typeof ScheduleText.chipHours)[number]; draft:
       onClick={() => controller.setTime(hour, 0, 'user')}
       className="qr-tabular"
       style={{
-        whiteSpace: 'nowrap', height: px(M.dayTimeRow), paddingLeft: px(CHIP.padX), paddingRight: px(CHIP.padX),
+        height: px(M.dayTimeRow), flex: '0 1 auto', minWidth: 0,
         fontSize: px(CHIP.size), fontWeight: CHIP.weight,
         color: selected ? AccentContrast.label(accent) : `rgba(255, 255, 255, ${CHIP.alpha})`,
       }}
     >
-      {label}
+      <span data-qr-chip-pad="" style={CHIP_PAD} />
+      <span style={{ whiteSpace: 'nowrap', flex: 'none' }}>{label}</span>
+      <span data-qr-chip-pad="" style={CHIP_PAD} />
     </NotchFillButton>
   );
 }

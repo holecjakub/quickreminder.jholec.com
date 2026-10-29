@@ -43,7 +43,10 @@ test('time chips 9 / 12 / 15 / 19, the current one prominent', async () => {
   expect(chips.map(c => c.dataset.kind)).toEqual(['prominent', 'neutral', 'neutral', 'neutral']);
   expect(chips[0]!.style.color).toBe('rgb(255, 255, 255)');
   expect(chips[1]!.style.color).toBe('rgba(255, 255, 255, 0.75)');
-  expect([ptOf(chips[1]!.style.height), ptOf(chips[1]!.style.paddingLeft), ptOf(chips[1]!.style.fontSize)]).toEqual([30, 10, 12]);
+  // Swift pads the label 10 pt a side; here the pads are what gives when the row is too narrow (en-US).
+  const pads = Array.from(chips[1]!.querySelectorAll('[data-qr-chip-pad]')) as HTMLElement[];
+  expect([ptOf(chips[1]!.style.height), ptOf(chips[1]!.style.fontSize)]).toEqual([30, 12]);
+  expect(pads.map(pad => [ptOf(pad.style.width), pad.style.flexShrink, pad.style.minWidth])).toEqual([[10, '1', '0px'], [10, '1', '0px']]);
   fireEvent.click(chips[2]!);
   expect(core.store.scheduleDraft!.draft).toEqual(new Date('2026-09-19T13:00:00Z'));
 });
