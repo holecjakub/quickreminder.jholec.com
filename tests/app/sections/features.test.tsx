@@ -139,9 +139,10 @@ it('< 810 px: sections flow below the stage and the column ends with the section
 
 it('registers 01…06 with the driver (one ScrollTrigger each)', async () => {
   const { container } = await mount();
-  const create = vi.mocked(ScrollTrigger.create);
-  expect(create).toHaveBeenCalledTimes(6);
+  // The Stage's own camera trigger (on the runway) is created too; only the section triggers count here.
+  const calls = vi.mocked(ScrollTrigger.create).mock.calls.filter(([vars]) => (vars.trigger as Element).tagName === 'SECTION');
+  expect(calls).toHaveLength(6);
   const sections = [...container.querySelectorAll('section[aria-labelledby]')];
-  expect(create.mock.calls.map(([vars]) => vars.trigger)).toEqual(sections);
-  expect(create.mock.calls.every(([vars]) => vars.start === 'top center')).toBe(true);
+  expect(calls.map(([vars]) => vars.trigger)).toEqual(sections);
+  expect(calls.every(([vars]) => vars.start === 'top center')).toBe(true);
 });

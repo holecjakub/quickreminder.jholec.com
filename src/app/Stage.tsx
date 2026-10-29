@@ -1,7 +1,8 @@
-// The stage (landing §7.2, §11.1): the fake desktop inside the MacBook frame under a scroll-scrubbed camera.
-// On ≥ 810 px the stage is sticky for a 160svh runway and GSAP ScrollTrigger scrubs the camera from the
-// letterboxed hero to the notch crop; below 810 px it is a static block at the phone scale with the title
-// in normal flow. Per-frame writes go straight to the DOM (no React render); React owns the layout only.
+// The stage (landing §7 Mobile, §7.2, §11.1): the fake desktop inside the MacBook frame under a scroll-scrubbed
+// camera. The stage is sticky on both layouts and one GSAP ScrollTrigger scrubs the camera along the runway:
+// ≥ 810 px a full-height stage over a 160svh runway, hero → overview → notch crop; below 810 px a 56svh band
+// pinned above the copy over a 100svh runway, hero → notch. The hero title sits inside the stage on both.
+// Per-frame writes go straight to the DOM (no React render); React owns the layout only.
 import {
   createContext,
   useCallback,
@@ -29,9 +30,10 @@ import {
   cameraFor,
   cameraTransform,
   clipFor,
-  phoneStageHeight,
+  phoneTitleOpacityFor,
   pinnedColumnWidth,
   renderPtFor,
+  runwayVhFor,
   titleOpacityFor,
   type Viewport,
   useIsDesktop,
@@ -60,7 +62,7 @@ export function useStage(): StageContextValue {
 }
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
-const RUNWAY_HEIGHT = `${CAMERA.runwayVh}svh`;
+const PHONE_STAGE_HEIGHT = `${CAMERA.phoneStageSvh}svh`;
 const PINNED_COLUMN_PERCENT = Math.round(CAMERA.pinnedColumnRatio * 100);
 const PINNED_COLUMN = `${PINNED_COLUMN_PERCENT}%`;
 const FEATURES_COLUMN = `${100 - PINNED_COLUMN_PERCENT}%`;
@@ -74,8 +76,8 @@ function readViewport(): Viewport {
 }
 
 /** Scroll progress along the runway, used before the ScrollTrigger exists (first paint). */
-function progressFromScroll(viewportHeight: number): number {
-  return clamp01(window.scrollY / ((CAMERA.runwayVh / 100) * viewportHeight));
+function progressFromScroll(viewport: Viewport): number {
+  return clamp01(window.scrollY / ((runwayVhFor(viewport) / 100) * viewport.height));
 }
 
 /** Reduced motion: no zoom motion, the camera snaps at half progress. */
@@ -114,8 +116,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
       const camera = cameraFor(cameraProgress, viewport, column);
       if (cameraRef.current) cameraRef.current.style.transform = cameraTransform(camera, renderPt);
       if (clipRef.current) clipRef.current.style.clipPath = `inset(0px ${clipFor(cameraProgress, viewport, column).right}px 0px 0px)`;
-      if (!isDesktop) return; // the phone title sits in normal flow below the stage
-      const titleOpacity = String(titleOpacityFor(p));
+      const titleOpacity = String(isDesktop ? titleOpacityFor(p) : phoneTitleOpacityFor(p));
       if (titleRef.current) titleRef.current.style.opacity = titleOpacity;
       if (subtitleRef.current) subtitleRef.current.style.opacity = titleOpacity;
     },
@@ -128,8 +129,8 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
   // Before paint: the camera for the current scroll position (no layout shift on load or resize).
   useLayoutEffect(() => {
     writeFrameRef.current = writeFrame;
-    writeFrame(isDesktop ? progressFromScroll(viewport.height) : 0);
-  }, [writeFrame, isDesktop, viewport.height]);
+    writeFrame(progressFromScroll(viewport));
+  }, [writeFrame, viewport]);
 
   // Viewport updates, one per animation frame.
   useEffect(() => {
@@ -148,10 +149,10 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
     };
   }, []);
 
-  // ≥ 810 px: one scrubbed trigger on the runway, killed when the layout flips or the stage unmounts.
+  // One scrubbed trigger on the runway, re-created when the layout flips and killed when the stage unmounts.
   useEffect(() => {
     const runway = runwayRef.current;
-    if (!isDesktop || !runway) return;
+    if (!runway) return;
     const trigger = ScrollTrigger.create({
       trigger: runway,
       start: 'top top',
@@ -163,7 +164,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
     return () => trigger.kill();
   }, [isDesktop]);
 
-  // Crossing the breakpoint drops or adds the sticky pin: re-measure every trigger on the page (review focus R3).
+  // Crossing the breakpoint changes the stage and runway heights: re-measure every trigger on the page (review focus R3).
   const layoutRef = useRef(isDesktop);
   useEffect(() => {
     if (layoutRef.current === isDesktop) return;
@@ -173,7 +174,10 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
 
   const stageStyle: CSSProperties = isDesktop
     ? { position: 'sticky', top: 0, height: '100svh' }
-    : { position: 'relative', height: `${phoneStageHeight(viewport)}px` };
+    : { position: 'sticky', top: 0, height: PHONE_STAGE_HEIGHT, zIndex: 20 };
+  const titleBlockStyle: CSSProperties = isDesktop
+    ? { position: 'absolute', insetInline: 0, bottom: '7svh', textAlign: 'center', pointerEvents: 'none' }
+    : { position: 'absolute', insetInline: 0, bottom: '16px', padding: '0 var(--jh-page-margin-x)', textAlign: 'center', pointerEvents: 'none' };
 
   const heroTitle = (
     <>
@@ -186,7 +190,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
           fontWeight: 600,
           lineHeight: 'var(--jh-leading-heading)',
           color: 'var(--jh-fg)',
-          opacity: isDesktop ? 0 : undefined,
+          opacity: isDesktop ? 0 : 1,
         }}
       >
         {title}
@@ -199,7 +203,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
           fontWeight: 500,
           lineHeight: 'var(--jh-leading-body)',
           color: 'var(--jh-muted)',
-          opacity: isDesktop ? 0 : undefined,
+          opacity: isDesktop ? 0 : 1,
         }}
       >
         {subtitle}
@@ -233,18 +237,17 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
               />
             </div>
           </div>
-          {isDesktop && (
-            <div style={{ position: 'absolute', insetInline: 0, bottom: '7svh', textAlign: 'center', pointerEvents: 'none' }}>
-              {heroTitle}
-            </div>
-          )}
+          <div style={titleBlockStyle}>{heroTitle}</div>
         </div>
-        {isDesktop && (
-          <div ref={runwayRef} data-runway="" style={{ height: RUNWAY_HEIGHT, marginTop: '-100svh', pointerEvents: 'none' }} />
-        )}
-        {!isDesktop && (
-          <div style={{ padding: 'var(--jh-space-24) var(--jh-page-margin-x) 0', textAlign: 'center' }}>{heroTitle}</div>
-        )}
+        <div
+          ref={runwayRef}
+          data-runway=""
+          style={{
+            height: `${runwayVhFor(viewport)}svh`,
+            marginTop: isDesktop ? '-100svh' : `-${PHONE_STAGE_HEIGHT}`,
+            pointerEvents: 'none',
+          }}
+        />
         <div
           data-features-column=""
           style={isDesktop ? { marginLeft: PINNED_COLUMN, width: FEATURES_COLUMN, position: 'relative', zIndex: 10 } : { position: 'relative', zIndex: 10 }}
