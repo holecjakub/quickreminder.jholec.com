@@ -2,7 +2,7 @@
 // silhouette, whose size and both corner radii spring together in one transaction.
 import { useEffect, useMemo } from 'react';
 import { animate, motion, useMotionValue, useTransform, type MotionValue, type Transition } from 'motion/react';
-import { notchPathSegments } from '../machine/notchShape';
+import { notchPathSegments, serializeSegments } from '../machine/notchShape';
 import type { Size } from '../machine/notchLayout';
 import { Motion } from '../machine/springs';
 import { INSTANT, effective, toTransition, type FlagAnimation } from './transitions';
@@ -32,15 +32,10 @@ export function geometryTransition(animation: FlagAnimation, reduceMotion: boole
   }
 }
 
-const round3 = (x: number): string => String(Number(x.toFixed(3)));
-
 /** notchPathSegments(w, h, top, bottom) shifted right by (containerWidth − w) / 2, numbers rounded to 3 decimals, closed with "Z". */
 export function translatedNotchPath(shape: ShapeTarget, containerWidth: number): string {
   const dx = (containerWidth - shape.width) / 2;
-  const body = notchPathSegments(shape.width, shape.height, shape.top, shape.bottom)
-    .map((s) => s.cmd + s.args.map((v, i) => round3(i % 2 === 0 ? v + dx : v)).join(' '))
-    .join(' ');
-  return `${body} Z`;
+  return serializeSegments(notchPathSegments(shape.width, shape.height, shape.top, shape.bottom), dx);
 }
 
 export interface NotchGeometry {

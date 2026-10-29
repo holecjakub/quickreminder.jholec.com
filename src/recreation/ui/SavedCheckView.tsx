@@ -3,6 +3,7 @@
 // `matchedGeometryEffect(id: "save")` come from `NotchContainerView`.
 import { motion, useAnimate, type Transition } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { formatNumber } from '../machine/notchShape';
 import { Motion } from '../machine/springs';
 import { useMotionPrefs } from './motionPrefs';
 import { toTransition } from './transitions';
@@ -15,11 +16,9 @@ const STROKE = BADGE.size * BADGE.strokeRatio; // 2.64
 const INSET = BADGE.size * BADGE.insetRatio; // 6.48
 const TICK = BADGE.size - 2 * INSET; // 11.04
 
-const round3 = (n: number): number => Number(n.toFixed(3));
-
 /** `CheckmarkShape` in a w × h rect: (0, 0.55h) → (0.38w, 0.92h) → (w, 0.12h), 3 decimals. */
 export function checkmarkPath(w: number, h: number): string {
-  return `M0 ${round3(h * 0.55)} L${round3(w * 0.38)} ${round3(h * 0.92)} L${round3(w)} ${round3(h * 0.12)}`;
+  return `M0 ${formatNumber(h * 0.55)} L${formatNumber(w * 0.38)} ${formatNumber(h * 0.92)} L${formatNumber(w)} ${formatNumber(h * 0.12)}`;
 }
 
 export interface BadgeTimeline {

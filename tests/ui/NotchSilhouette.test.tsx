@@ -4,6 +4,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react';
 import { useNotchGeometry, NotchSilhouette, translatedNotchPath, geometryTransition, type ShapeTarget } from '../../src/recreation/ui/NotchSilhouette';
 import type { FlagAnimation } from '../../src/recreation/ui/transitions';
 import { ptOf } from './support';
+import { notchPath } from '../../src/recreation/machine/notchShape';
 type Spring = { stiffness: number; damping: number };
 const spring = (a: FlagAnimation): Spring => geometryTransition(a, false, 1) as Spring;
 const CLOSED: ShapeTarget = { width: 235, height: 39, top: 6, bottom: 14 };
@@ -16,6 +17,10 @@ test('path is centred in the canvas', () => {
   const d = translatedNotchPath(CLOSED, 648);
   expect(d.startsWith('M206.5 0 Q212.5 0 212.5 6 ')).toBe(true);  // (648 − 235) / 2 = 206.5; fillet control (6, 0) → (6, 6)
   expect(d.endsWith('Z')).toBe(true);
+});
+test('a container as wide as the shape gives notchPath exactly', () => {
+  expect(translatedNotchPath(OPEN, OPEN.width)).toBe(notchPath(OPEN.width, OPEN.height, OPEN.top, OPEN.bottom));
+  expect(translatedNotchPath({ width: 235.3333, height: 39.1, top: 6, bottom: 14 }, 235.3333)).toBe(notchPath(235.3333, 39.1, 6, 14));
 });
 test('transition per animation', () => {
   expect(spring('open').stiffness).toBeCloseTo(223.80, 2);

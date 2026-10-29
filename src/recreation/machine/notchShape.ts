@@ -43,14 +43,20 @@ export function notchPathSegments(
   ];
 }
 
-const formatNumber = (x: number): string => String(Number(x.toFixed(3)));
+/** A path number rounded to 3 decimals, without trailing zeros. */
+export const formatNumber = (x: number): string => String(Number(x.toFixed(3)));
+
+/** SVG `d` of `segments`, x coordinates shifted by `dx`, numbers via formatNumber, closed with "Z". */
+export function serializeSegments(segments: readonly PathSegment[], dx = 0): string {
+  const body = segments
+    .map((s) => s.cmd + s.args.map((v, i) => formatNumber(i % 2 === 0 ? v + dx : v)).join(' '))
+    .join(' ');
+  return `${body} Z`;
+}
 
 /** SVG `d` of the silhouette; drawing keeps the true quadratic curves. */
 export function notchPath(width: number, height: number, topCornerRadius: number, bottomCornerRadius: number): string {
-  const body = notchPathSegments(width, height, topCornerRadius, bottomCornerRadius)
-    .map((s) => s.cmd + s.args.map(formatNumber).join(' '))
-    .join(' ');
-  return `${body} Z`;
+  return serializeSegments(notchPathSegments(width, height, topCornerRadius, bottomCornerRadius));
 }
 
 /** `NotchShape.width(forNotchWidth:topCornerRadius:)`. */
