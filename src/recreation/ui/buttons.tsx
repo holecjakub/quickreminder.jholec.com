@@ -5,12 +5,10 @@ import {
 } from 'react';
 import { motion, type HTMLMotionProps, type Transition } from 'motion/react';
 import { Motion, type Easing, type PhysicalSpring } from '../machine/springs';
+import type { PointerTarget } from '../Recreation';
 import { INSTANT, toTransition } from './transitions';
 import { useMotionPrefs } from './motionPrefs';
 import { px } from './units';
-
-// Replaced by the type declared in Recreation.tsx (Task 23 Step 5).
-type PointerTarget = string;
 
 export type PressState = 'rest' | 'hover' | 'pressed';
 

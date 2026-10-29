@@ -366,7 +366,7 @@ function TimeField(): JSX.Element {
 }
 
 /** One hour chip: prominent while the draft is exactly `hour`:00. */
-function TimeChip(props: { hour: number; draft: ScheduleDraft }): JSX.Element {
+function TimeChip(props: { hour: (typeof ScheduleText.chipHours)[number]; draft: ScheduleDraft }): JSX.Element {
   const { hour, draft } = props;
   const { controller, formatter, calendar } = useCore();
   const { accent } = useRecreationState();

@@ -134,7 +134,7 @@ function MonthCrossfade(props: { monthKey: number; children: ReactNode }): JSX.E
 function PageButton(props: {
   symbol: 'chevron.left' | 'chevron.right';
   label: string;
-  target: string;
+  target: 'calendarPrev' | 'calendarNext';
   enabled: boolean;
   onClick(): void;
 }): JSX.Element {
