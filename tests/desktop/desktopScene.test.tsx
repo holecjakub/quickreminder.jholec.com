@@ -138,11 +138,39 @@ it('returns focus to the desktop when the panel closes with focus inside it', as
   const input = root.querySelector<HTMLInputElement>('[data-qr-root] input')!;
   input.focus();
   expect(document.activeElement).toBe(input);
-  act(() => {
+  // The real controller blurs the field when the close starts (resignFirstResponder → blurAll).
+  await act(async () => {
+    input.blur();
     void fake.hide();
   });
   act(() => vi.advanceTimersByTime(360));
   expect(document.activeElement).toBe(root);
+});
+
+it('keeps the shortcuts enabled after a keyboard close that blurred the field', async () => {
+  const { root, fake } = setup();
+  await openPanel(fake);
+  const input = root.querySelector<HTMLInputElement>('[data-qr-root] input')!;
+  input.focus();
+  await act(async () => {
+    input.blur();
+    void fake.hide();
+  });
+  act(() => vi.advanceTimersByTime(360));
+  expect(document.activeElement).toBe(root);
+  expect(lastRecreation.props?.shortcutsEnabled).toBe(true);
+});
+
+it('drops the focus latch when the field blurs while the panel stays open', async () => {
+  const { root, fake } = setup();
+  await openPanel(fake);
+  const input = root.querySelector<HTMLInputElement>('[data-qr-root] input')!;
+  act(() => input.focus());
+  expect(lastRecreation.props?.shortcutsEnabled).toBe(true);
+  await act(async () => {
+    input.blur();
+  });
+  expect(lastRecreation.props?.shortcutsEnabled).toBe(false);
 });
 
 it('colorScheme "dark" sets data-scheme', () => {

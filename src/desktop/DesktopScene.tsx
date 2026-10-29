@@ -138,7 +138,22 @@ export function DesktopScene({
 
   const onBlurCapture = (e: FocusEvent<HTMLDivElement>) => {
     const next = e.relatedTarget as Node | null;
-    if (!next || !rootRef.current?.contains(next)) setFocusInside(false);
+    if (next && rootRef.current?.contains(next)) return;
+    if (next === null && slotRef.current?.contains(e.target as Node)) {
+      // A close blurs the panel's field (resignFirstResponder → host.blurAll) with no relatedTarget.
+      // The runtime has already moved the machine on by the next microtask: when the panel is going
+      // away, keep the latch so the focus-return effect hands focus back to the desktop; otherwise
+      // (the window or tab lost focus, the visitor tabbed out) focus really left the desktop.
+      queueMicrotask(() => {
+        const phase = recreationRef.current?.getState().phase.type;
+        if (phase === 'closing' || phase === 'closed') return;
+        const active = document.activeElement;
+        if (active !== null && rootRef.current?.contains(active)) return;
+        setFocusInside(false);
+      });
+      return;
+    }
+    setFocusInside(false);
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
