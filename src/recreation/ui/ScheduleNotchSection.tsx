@@ -1,16 +1,21 @@
-// Port of Views/ScheduleNotchSection.swift, rows 1: the type field, the live preview line and the
-// 3 × 2 preset cards of the in-notch Set Date. Each row reads the open `ScheduleDraft` it is handed
+// Port of Views/ScheduleNotchSection.swift, rows: the type field, the live preview line, the
+// 3 × 2 preset cards, the day / time row and the footer of the in-notch Set Date. Each row reads the open `ScheduleDraft` it is handed
 // and re-renders on every `scheduleVersion` bump; heights are `ScheduleMetrics`.
+import { motion } from 'motion/react';
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { AccentContrast } from '../core/accentContrast';
+import { components } from '../core/calendar';
 import { DATE_PRESETS, DatePresets, type DatePreset } from '../core/datePresets';
+import { ScheduleDefaults } from '../core/scheduleDefaults';
 import type { ScheduleDraft } from '../core/scheduleDraft';
 import { ScheduleText } from '../core/scheduleText';
 import { RelativeDistance, type SuggestionDateFormatter } from '../core/suggestionDateFormatter';
 import { ScheduleMetrics, Theme } from '../machine/notchLayout';
 import { Motion } from '../machine/springs';
-import { KeyHint, NotchFillButton } from './buttons';
+import { KeyHint, NotchFillButton, NotchTextButton } from './buttons';
 import { SFIcon } from './icons';
 import { useMotionPrefs } from './motionPrefs';
+import { NumericText } from './NumericText';
 import { useCore, useRecreationState, useScheduleDraft } from './RecreationContext';
 import { toTransition } from './transitions';
 import { px } from './units';
@@ -240,5 +245,183 @@ function PresetCardText(props: { title: string; hint: string; detail: string }):
         {detail}
       </span>
     </span>
+  );
+}
+
+const DAY = Theme.dayButton;
+const TIME = Theme.timeField;
+const CHIP = Theme.timeChip;
+const ROW = Theme.dayTimeRow;
+const FOOTER = Theme.footer;
+
+/** The day button (toggles the month grid), the typed time field and the four hour chips. */
+export function DayTimeRow(props: { draft: ScheduleDraft; showsCalendar: boolean }): JSX.Element {
+  const { draft, showsCalendar } = props;
+  useScheduleDraft();
+  const { controller, formatter } = useCore();
+  const { timeScale } = useMotionPrefs();
+  return (
+    <div data-qr-day-time-row="" style={{ display: 'flex', alignItems: 'center', gap: px(ROW.gap), height: px(M.dayTimeRow) }}>
+      <NotchFillButton
+        kind={showsCalendar ? 'selected' : 'neutral'} radius={null} target="dayButton"
+        aria-label="Calendar" aria-description={formatter.format(draft.draft, 'EEEE d MMMM')}
+        aria-expanded={showsCalendar} title="Calendar ⌘K"
+        onClick={() => controller.toggleCalendar('user')}
+        style={{ display: 'flex', alignItems: 'center', gap: px(6), flex: 'none', height: px(M.dayTimeRow), paddingLeft: px(DAY.padX), paddingRight: px(DAY.padX) }}
+      >
+        <span aria-hidden="true" style={{ display: 'inline-flex', color: 'var(--qr-list-accent)' }}>
+          <SFIcon name="calendar" pointSize={DAY.iconSize} />
+        </span>
+        <span className="qr-tabular" style={{ whiteSpace: 'nowrap', fontSize: px(DAY.textSize), fontWeight: DAY.textWeight, color: 'var(--qr-white)' }}>
+          {formatter.format(draft.draft, 'EEE d MMM')}
+        </span>
+        <motion.span
+          aria-hidden="true" data-qr-glyph="" data-rotation={showsCalendar ? '180' : '0'}
+          style={{ display: 'inline-flex', color: `rgba(255, 255, 255, ${DAY.chevronAlpha})` }}
+          initial={false}
+          animate={{ rotate: showsCalendar ? 180 : 0 }}
+          transition={toTransition(Motion.focusRing, timeScale)}
+        >
+          <SFIcon name="chevron.down" pointSize={DAY.chevronSize} />
+        </motion.span>
+      </NotchFillButton>
+      <TimeField />
+      <div style={{ flex: '1 0 auto', minWidth: px(ROW.spacerMin) }} />
+      <div style={{ display: 'flex', gap: px(CHIP.gap) }}>
+        {ScheduleText.chipHours.map((hour) => (
+          <TimeChip key={hour} hour={hour} draft={draft} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Typed digital time ("14", "1430", "14:30", "2pm"). The text is the store's `timeText`; leaving
+ * the field applies it without a beep (Swift `.onChange(of: focus)`), an invalid one reverts.
+ */
+function TimeField(): JSX.Element {
+  const { controller, store, focus } = useCore();
+  const { timeScale } = useMotionPrefs();
+  const [focused, setFocused] = useState(false);
+  const input = useRef<HTMLInputElement | null>(null);
+  const register = useCallback(
+    (el: HTMLInputElement | null) => {
+      input.current = el;
+      focus.register('timeField', el);
+    },
+    [focus],
+  );
+  const fade = toTransition(Motion.focusRing, timeScale);
+  const stroke = focused ? `inset 0 0 0 ${px(1)} var(--qr-accent-70)` : 'none';
+  return (
+    <div
+      data-qr-time-field=""
+      onClick={() => input.current?.focus({ preventScroll: true })}
+      style={{
+        display: 'flex', alignItems: 'center', gap: px(5), flex: 'none',
+        width: px(TIME.width), height: px(M.dayTimeRow), paddingLeft: px(TIME.padX), paddingRight: px(TIME.padX),
+        borderRadius: px(999), background: `rgba(255, 255, 255, ${TIME.fillAlpha})`, boxShadow: stroke,
+        transition: `box-shadow ${fade.duration}s cubic-bezier(${Motion.focusRing.ease.join(', ')})`,
+      }}
+    >
+      <span aria-hidden="true" style={{ display: 'inline-flex', color: `rgba(255, 255, 255, ${TIME.iconAlpha})` }}>
+        <SFIcon name="clock" pointSize={TIME.iconSize} />
+      </span>
+      <input
+        ref={register}
+        type="text"
+        value={store.timeText}
+        onFocus={() => {
+          setFocused(true);
+          store.setTimeFieldEditing(true);
+        }}
+        onChange={(e) => store.setTimeText(e.target.value)}
+        onBlur={() => {
+          setFocused(false);
+          controller.applyTypedTime(false);
+          store.setTimeFieldEditing(false);
+        }}
+        aria-label="Time"
+        aria-description="Type a time, or use the up and down arrows to change it by 15 minutes"
+        data-qr-field="timeField"
+        data-qr-target="timeField"
+        className="qr-tabular"
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        style={{
+          flex: '1 1 auto', minWidth: 0,
+          fontSize: px(TIME.textSize), fontWeight: TIME.textWeight, color: 'var(--qr-white)', caretColor: 'var(--qr-list-accent)',
+        }}
+      />
+    </div>
+  );
+}
+
+/** One hour chip: prominent while the draft is exactly `hour`:00. */
+function TimeChip(props: { hour: number; draft: ScheduleDraft }): JSX.Element {
+  const { hour, draft } = props;
+  const { controller, formatter, calendar } = useCore();
+  const { accent } = useRecreationState();
+  const label = formatter.time(ScheduleDefaults.at(hour, 0, draft.draft, calendar));
+  const parts = components(calendar, draft.draft);
+  const selected = parts.hour === hour && parts.minute === 0;
+  return (
+    <NotchFillButton
+      kind={selected ? 'prominent' : 'neutral'} radius={null} target={`timeChip:${hour}`}
+      aria-label={`Set time to ${label}`} aria-pressed={selected}
+      onClick={() => controller.setTime(hour, 0, 'user')}
+      className="qr-tabular"
+      style={{
+        whiteSpace: 'nowrap', height: px(M.dayTimeRow), paddingLeft: px(CHIP.padX), paddingRight: px(CHIP.padX),
+        fontSize: px(CHIP.size), fontWeight: CHIP.weight,
+        color: selected ? AccentContrast.label(accent) : `rgba(255, 255, 255, ${CHIP.alpha})`,
+      }}
+    >
+      {label}
+    </NotchFillButton>
+  );
+}
+
+/** Clear (only while the reminder has a date) · spacer · Cancel · Set · <detail>. */
+export function ScheduleFooter(props: { draft: ScheduleDraft }): JSX.Element {
+  const { draft } = props;
+  useScheduleDraft();
+  const { controller, formatter } = useCore();
+  const { dueDate, accent } = useRecreationState();
+  const invalid = draft.isInvalid;
+  return (
+    <div data-qr-footer="" style={{ display: 'flex', alignItems: 'center', gap: px(FOOTER.gap), height: px(M.footer) }}>
+      {dueDate !== null && (
+        <NotchTextButton target="clear" aria-description="Removes the date from the reminder" onClick={() => controller.clearDueDate('user')}>
+          Clear
+        </NotchTextButton>
+      )}
+      <div style={{ flex: '1 0 0', minWidth: 0 }} />
+      <NotchFillButton
+        kind="neutral" radius={M.controlRadius} target="cancel"
+        onClick={() => controller.cancelSchedule('user')}
+        style={{
+          fontSize: px(FOOTER.cancelSize), fontWeight: FOOTER.cancelWeight, color: `rgba(255, 255, 255, ${FOOTER.cancelAlpha})`,
+          paddingLeft: px(FOOTER.cancelPadX), paddingRight: px(FOOTER.cancelPadX), height: px(M.footer),
+        }}
+      >
+        Cancel
+      </NotchFillButton>
+      <NotchFillButton
+        kind="prominent" radius={M.controlRadius} target="set" disabled={invalid}
+        aria-label={`Set, ${formatter.presetDetail(draft.draft, draft.now, true)}`}
+        onClick={() => controller.commitSchedule('user')}
+        className="qr-tabular"
+        style={{
+          fontSize: px(FOOTER.setSize), fontWeight: FOOTER.setWeight, color: invalid ? '#FFFFFF' : AccentContrast.label(accent),
+          paddingLeft: px(FOOTER.setPadX), paddingRight: px(FOOTER.setPadX), height: px(M.footer),
+        }}
+      >
+        <NumericText text={`Set · ${formatter.presetDetail(draft.draft, draft.now)}`} />
+      </NotchFillButton>
+    </div>
   );
 }
