@@ -534,7 +534,9 @@ function OpenScheduleSection(props: CapturedSection): JSX.Element {
 /**
  * The month grid under the day / time row, wired to the store's month and the controller's pick.
  * Whether the grid has the keyboard (Swift `focus == .calendar`) is this slot's own state, so a
- * grid that unmounts while focused (browsers fire no blur then) comes back fresh.
+ * grid that unmounts while focused (browsers fire no blur then) comes back fresh. React's
+ * onFocus / onBlur bubble (focusin / focusout), so only the grid's own element counts: the month
+ * buttons and a clicked day (tabIndex −1, focused by a mouse press in Chromium and Firefox) do not.
  */
 function CalendarSlot(props: { draft: ScheduleDraft; slotRef: MutableRefObject<HTMLDivElement | null> }): JSX.Element {
   const { draft, slotRef } = props;
@@ -549,8 +551,8 @@ function CalendarSlot(props: { draft: ScheduleDraft; slotRef: MutableRefObject<H
       style={{ marginTop: px(M.calendarGap) }}
       initial={hidden} animate={shown} exit={hidden}
       transition={effective('schedule', reduceMotion, timeScale)}
-      onFocus={() => setGridFocused(true)}
-      onBlur={() => setGridFocused(false)}
+      onFocus={(e) => setGridFocused(isGridElement(e.target))}
+      onBlur={(e) => { if (isGridElement(e.target)) setGridFocused(false); }}
     >
       <ScheduleMonthGrid
         draft={draft.draft} month={store.calendarMonth} now={draft.now} keyboardFocused={gridFocused}
@@ -559,6 +561,11 @@ function CalendarSlot(props: { draft: ScheduleDraft; slotRef: MutableRefObject<H
       />
     </motion.div>
   );
+}
+
+/** The grid's own focusable root (`data-qr-field="calendar"`), as opposed to a control inside it. */
+function isGridElement(target: EventTarget): boolean {
+  return target instanceof HTMLElement && target.dataset.qrField === 'calendar';
 }
 
 /**

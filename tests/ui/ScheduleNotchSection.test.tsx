@@ -136,3 +136,22 @@ test('the grid is wired to the store month and the controller pick; it keeps ren
   expect(core.store.scheduleDraft).toBeNull();
   expect(container.querySelector('[data-qr-calendar]')).not.toBeNull();   // the captured draft and depth render the exit
 });
+test('the keyboard ring shows only while the grid itself has focus, not its month buttons or a clicked day', async () => {
+  const core = createTestCore(); await openPanel(core);
+  act(() => core.controller.openCalendar('user'));
+  const { container } = renderWithCore(<ScheduleNotchSection />, core);
+  const grid = container.querySelector('[data-qr-field="calendar"]') as HTMLElement;
+  const selected = grid.querySelector('[data-qr-cell][aria-pressed="true"]') as HTMLElement;   // Saturday, September 19
+  const ring = () => (selected.querySelector('[data-qr-day-ring]') as HTMLElement).style.opacity;
+  expect(ring()).toBe('0');
+  act(() => grid.focus());
+  expect(ring()).toBe('1');
+  act(() => screen.getByRole('button', { name: 'Next month' }).focus());   // Tab onward: focus-within, not the grid
+  expect(ring()).toBe('0');
+  act(() => selected.focus());   // a mouse click focuses the tabIndex −1 day button in Chromium and Firefox
+  expect(ring()).toBe('0');
+  act(() => grid.focus());
+  expect(ring()).toBe('1');
+  act(() => grid.blur());
+  expect(ring()).toBe('0');
+});
