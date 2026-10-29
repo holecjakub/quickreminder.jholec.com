@@ -146,7 +146,7 @@ it('< 810 px: static block of phoneStageHeight, title below, no ScrollTrigger', 
   );
   const stage = el('[data-stage]');
   expect(stage.style.position).toBe('relative');
-  expect(stage.style.height).toBe(`${phoneStageHeight(390)}px`);
+  expect(stage.style.height).toBe(`${phoneStageHeight({ width: 390, height: 844 })}px`);
   expect(ScrollTrigger.create).not.toHaveBeenCalled();
   expect(el('[data-features-column]').style.marginLeft).toBe('');
   const h1 = screen.getByRole('heading', { level: 1, name: 'T' });
@@ -207,7 +207,7 @@ it('review focus: resizing across 810 px swaps layouts, recomputes --pt and refr
   expect(ScrollTrigger.refresh).toHaveBeenCalled();
   const stage = el('[data-stage]');
   expect(stage.style.position).not.toBe('sticky');
-  expect(stage.style.height).toBe(`${phoneStageHeight(800)}px`);
+  expect(stage.style.height).toBe(`${phoneStageHeight({ width: 800, height: 900 })}px`);
   expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe(String(renderPtFor({ width: 800, height: 900 }, 800)));
 
   act(() => mm.set(DESKTOP, true));

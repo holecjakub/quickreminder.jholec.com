@@ -173,7 +173,7 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
 
   const stageStyle: CSSProperties = isDesktop
     ? { position: 'sticky', top: 0, height: '100svh' }
-    : { position: 'relative', height: `${phoneStageHeight(viewport.width)}px` };
+    : { position: 'relative', height: `${phoneStageHeight(viewport)}px` };
 
   const heroTitle = (
     <>

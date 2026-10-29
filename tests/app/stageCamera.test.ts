@@ -8,9 +8,13 @@ import {
   featuresScale,
   heroPt,
   heroScreenRect,
+  phoneHeroPt,
+  phoneNotchPt,
   phoneStageHeight,
+  phoneTitleOpacityFor,
   pinnedColumnWidth,
   renderPtFor,
+  runwayVhFor,
   titleOpacityFor,
 } from '../../src/app/stageCamera';
 
@@ -36,9 +40,31 @@ it('1280 × 800 features', () => close(cameraFor(1, V1280, 742), { scale: 0.9480
 it('1920 × 1080 hero and features', () => { close(cameraFor(0, V1920, 1114), { scale: 0.919626, translateX: 264.7626, translateY: 64.5533 }); close(cameraFor(1, V1920, 1114), { scale: 1, originX: 557, translateX: -199 }); });
 it('1024 × 700 features keep the 0.75 floor out of reach', () => close(cameraFor(1, V1024, 594), { scale: 0.781579, translateX: -293.8737 }));
 it('progress is clamped', () => { expect(cameraFor(-1, V1440, 835)).toEqual(cameraFor(0, V1440, 835)); expect(cameraFor(2, V1440, 835)).toEqual(cameraFor(1, V1440, 835)); });
-it('phones ignore progress', () => { const c = cameraFor(0.4, V390, 390); close(c, { scale: 0.231266, originX: 195, originY: 68.1628, translateX: 20.1628 }); expect(cameraFor(1, V390, 390)).toEqual(c); });
-it('renderPtFor is the sharper of hero and features', () => { expect(renderPtFor(V1440, 835)).toBe(1); expect(renderPtFor(V1920, 1114)).toBe(1); expect(renderPtFor({ width: 2560, height: 1600 }, 1485)).toBeCloseTo(1504 / 1070, 6); expect(renderPtFor(V390, 390)).toBeCloseTo(0.231266, 6); });
+it('renderPtFor is the sharper of hero and features', () => { expect(renderPtFor(V1440, 835)).toBe(1); expect(renderPtFor(V1920, 1114)).toBe(1); expect(renderPtFor({ width: 2560, height: 1600 }, 1485)).toBeCloseTo(1504 / 1070, 6); });
 it('clipFor crops to the pinned column in the second half', () => { expect(clipFor(0.5, V1440, 835).right).toBe(0); expect(clipFor(0.8125, V1440, 835).right).toBeCloseTo(302.5, 6); expect(clipFor(1, V1440, 835).right).toBe(605); expect(clipFor(1, V390, 390).right).toBe(0); });
 it('titleOpacityFor', () => { expect(titleOpacityFor(0.3)).toBe(0); expect(titleOpacityFor(0.45)).toBeCloseTo(0.5, 6); expect(titleOpacityFor(0.6)).toBe(1); expect(titleOpacityFor(0.775)).toBeCloseTo(0.5, 6); expect(titleOpacityFor(0.9)).toBe(0); });
-it('phoneStageHeight', () => expect(phoneStageHeight(390)).toBeCloseTo(64 + 1070 * (358 / 1548) + 16, 6));
 it('cameraTransform', () => expect(cameraTransform(cameraFor(0, V1440, 835), 1)).toBe('translate3d(151.94px, 61.53px, 0) scale(0.75140)'));
+
+const V390S = { width: 390, height: 667 };
+const V740L = { width: 740, height: 360 };
+it('phoneStageHeight is 56 svh', () => expect(phoneStageHeight(V390)).toBeCloseTo(472.64, 6));
+it('phoneHeroPt fits the MacBook into the band under the nav and above the title', () => {
+  expect(phoneHeroPt(V390)).toBeCloseTo(358 / 1700, 6);
+  expect(phoneHeroPt(V390S)).toBeCloseTo((0.56 * 667 - 160) / 1070, 6);
+});
+it('phoneNotchPt fills the width with the panel, clamped to the calendar and the 0.4 floor', () => {
+  expect(phoneNotchPt(V390)).toBeCloseTo((0.56 * 844 - 44) / 751, 6);
+  expect(phoneNotchPt(V390S)).toBeCloseTo((0.56 * 667 - 44) / 751, 6);
+  expect(phoneNotchPt(V740L)).toBe(0.4);
+});
+it('390 × 844 hero', () => close(cameraFor(0, V390, 390), { scale: 0.210588, originX: 195, originY: 111.446, translateX: 35.7953, translateY: 111.446 }));
+it('390 × 844 midway', () => close(cameraFor(0.5, V390, 390), { scale: 0.390674, originX: 195, originY: 69.723, translateX: -100.349 }));
+it('390 × 844 notch: the panel fills the width, notch top at 28 px', () => close(cameraFor(1, V390, 390), { scale: 0.570759, originX: 195, originY: 28, translateX: -236.494, translateY: 28 }));
+it('phone progress is clamped and never clips', () => {
+  expect(cameraFor(-1, V390, 390)).toEqual(cameraFor(0, V390, 390));
+  expect(cameraFor(2, V390, 390)).toEqual(cameraFor(1, V390, 390));
+  expect(clipFor(0.5, V390, 390).right).toBe(0);
+});
+it('renderPtFor on phones is the notch scale', () => expect(renderPtFor(V390, 390)).toBeCloseTo(0.570759, 6));
+it('phoneTitleOpacityFor fades over the first half', () => { expect(phoneTitleOpacityFor(0)).toBe(1); expect(phoneTitleOpacityFor(0.25)).toBeCloseTo(0.5, 6); expect(phoneTitleOpacityFor(0.5)).toBe(0); expect(phoneTitleOpacityFor(1)).toBe(0); });
+it('runwayVhFor', () => { expect(runwayVhFor(V390)).toBe(100); expect(runwayVhFor(V1440)).toBe(160); });
