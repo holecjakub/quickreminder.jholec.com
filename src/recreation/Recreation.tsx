@@ -25,6 +25,7 @@ import { NotchContainer, canvasFor } from './ui/NotchContainer';
 import { RecreationProvider } from './ui/RecreationContext';
 import { px } from './ui/units';
 import { useReducedMotion } from './ui/useReducedMotion';
+import './ui/recreation.css';
 
 export type { ShowSource, EscapeResult };
 
