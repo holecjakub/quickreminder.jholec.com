@@ -202,7 +202,9 @@ export function DesktopScene({
       <div
         ref={slotRef}
         data-desktop-slot="notch"
-        style={{ position: 'absolute', left: ptCss(SCENE.notchOrigin.x), top: 0, transform: 'translateX(-50%)', zIndex: 30 }}
+        // The Recreation places its own canvas at `notchOrigin` (Recreation.tsx), so the slot sits at
+        // the screen origin; offsetting it too would move the notch to 2 × notchOrigin.x (merge fix R-15).
+        style={{ position: 'absolute', left: 0, top: 0, zIndex: 30 }}
       >
         <Recreation
           ref={recreation}
