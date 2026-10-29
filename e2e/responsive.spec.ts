@@ -47,14 +47,22 @@ test('the hero shows the whole MacBook under the nav with the title in the band'
 });
 
 test('the hero title block sits below the MacBook deck', async ({ page }) => {
-  // Known failure, escalated: the phone title block is ~150 px tall (2-line h3 + 3-line subtitle),
-  // more than the spec's 96 px reserve, so at 390 × 844 it overlaps the deck by ~26 px. The fix is
-  // the phone subtitle (size or length), not the camera; drop test.fail() once that lands.
-  test.fail();
+  // Phones show the title only (2-line h3, ~55 px), which fits the 96 px reserve with the 16 px bottom offset.
   await page.goto(`/?now=${NOW}`);
   const deckBox = (await page.locator('[data-deck]').boundingBox())!;
   const titleBlockBox = (await page.locator('[data-hero-title]').locator('..').boundingBox())!;
   expect(titleBlockBox.y).toBeGreaterThanOrEqual(deckBox.y + deckBox.height - 1);
+});
+
+test.describe('short phone (390 × 667)', () => {
+  test.use({ viewport: { width: 390, height: 667 } });
+
+  test('the hero title block sits below the MacBook deck', async ({ page }) => {
+    await page.goto(`/?now=${NOW}`);
+    const deckBox = (await page.locator('[data-deck]').boundingBox())!;
+    const titleBlockBox = (await page.locator('[data-hero-title]').locator('..').boundingBox())!;
+    expect(titleBlockBox.y).toBeGreaterThanOrEqual(deckBox.y + deckBox.height - 1);
+  });
 });
 
 test('tapping the notch opens the panel; ⓧ closes it', async ({ page }) => {

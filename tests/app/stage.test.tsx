@@ -169,6 +169,12 @@ it('phones apply the hero camera before paint and keep the title inside the band
   expect(el('[data-hero-title]').style.opacity).toBe('1');
 });
 
+it('phones show only the title in the band: the subtitle would paint over the deck', () => {
+  mountPhone();
+  expect(screen.getByRole('heading', { level: 1, name: 'T' })).toBeTruthy();
+  expect(screen.queryByText('S')).toBeNull();
+});
+
 it('phones scrub the camera to the notch and fade the title', () => {
   mountPhone();
   expect(ScrollTrigger.create).toHaveBeenCalledTimes(1);

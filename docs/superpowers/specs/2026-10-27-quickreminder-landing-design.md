@@ -216,8 +216,10 @@ copy (the copy scrolls underneath it, so the band paints over it). Two camera ke
 a **100 svh** runway, no overview:
 
 - **Hero**: the whole MacBook fitted into the band between the nav (64 px) and a 96 px title
-  reserve at the bottom, with 16 px side gutters; the title and subtitle sit inside the band
-  at the bottom and fade out over the first half of the runway.
+  reserve at the bottom, with 16 px side gutters; the title sits inside the band at the
+  bottom and fades out over the first half of the runway. Phones drop the subtitle: with it
+  the block is ~150 px tall and paints over the keyboard deck; the tap hint carries its call
+  to action.
 - **Notch**: the camera zooms so the open panel (600 pt) fills the width minus the gutters,
   clamped so the tallest in-notch section (the 751 pt calendar) fits under the notch inside
   the band (notch top at 28 px, 16 px of air below), never below 0.4 px/pt. The lid's top bezel

@@ -1,7 +1,8 @@
 // The stage (landing §7 Mobile, §7.2, §11.1): the fake desktop inside the MacBook frame under a scroll-scrubbed
 // camera. The stage is sticky on both layouts and one GSAP ScrollTrigger scrubs the camera along the runway:
 // ≥ 810 px a full-height stage over a 160svh runway, hero → overview → notch crop; below 810 px a 56svh band
-// pinned above the copy over a 100svh runway, hero → notch. The hero title sits inside the stage on both.
+// pinned above the copy over a 100svh runway, hero → notch. The hero title sits inside the stage on both
+// (the subtitle on desktop only: on phones it would not fit the title reserve).
 // Per-frame writes go straight to the DOM (no React render); React owns the layout only.
 import {
   createContext,
@@ -195,19 +196,23 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
       >
         {title}
       </h1>
-      <p
-        ref={subtitleRef}
-        style={{
-          margin: 'var(--jh-space-8) 0 0',
-          fontSize: 'var(--jh-text-body-l)',
-          fontWeight: 500,
-          lineHeight: 'var(--jh-leading-body)',
-          color: 'var(--jh-muted)',
-          opacity: isDesktop ? 0 : 1,
-        }}
-      >
-        {subtitle}
-      </p>
+      {/* Phones show the title only: with the subtitle the block outgrows the 96 px reserve and
+          paints over the keyboard deck; the band's tap hint carries the subtitle's call to action. */}
+      {isDesktop && (
+        <p
+          ref={subtitleRef}
+          style={{
+            margin: 'var(--jh-space-8) 0 0',
+            fontSize: 'var(--jh-text-body-l)',
+            fontWeight: 500,
+            lineHeight: 'var(--jh-leading-body)',
+            color: 'var(--jh-muted)',
+            opacity: 0,
+          }}
+        >
+          {subtitle}
+        </p>
+      )}
     </>
   );
 
