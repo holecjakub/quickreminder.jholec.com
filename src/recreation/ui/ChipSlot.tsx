@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useIsPresent, type Transition, type Variants } from 'motion/react';
 import { useState } from 'react';
 import type { DateSuggestion } from '../core/naturalDateParser';
-import { EASE_OUT, Motion } from '../machine/springs';
+import { Motion } from '../machine/springs';
 import { HoverButton } from './buttons';
 import { CalendarClockIcon, SFIcon } from './icons';
 import { useMotionPrefs } from './motionPrefs';
@@ -15,11 +15,8 @@ import { px } from './units';
  *  `withAnimation` calls): the due date appearing or going, the live phrase, a dismissed suggestion. */
 export type ChipChange = 'dueDate' | 'suggestion' | 'dismiss';
 
-/** The ⓧ on the suggestion: `withAnimation(.easeOut(duration: 0.15)) { suggestion = nil }`. */
-const DISMISS = { type: 'tween', ease: EASE_OUT, duration: 0.15 } as const;
-
 export function chipTransition(change: ChipChange, timeScale: number): Transition {
-  const m = change === 'dueDate' ? Motion.chip : change === 'suggestion' ? Motion.suggestion : DISMISS;
+  const m = change === 'dueDate' ? Motion.chip : change === 'suggestion' ? Motion.suggestion : Motion.dismiss;
   return toTransition(m, timeScale);
 }
 

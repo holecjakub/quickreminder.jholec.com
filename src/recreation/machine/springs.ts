@@ -64,6 +64,7 @@ export const Motion = {
   chip: springFromResponse(0.3, 0.8),
   suggestion: easeOut(0.18),
   error: easeOut(0.2),
+  dismiss: easeOut(0.15), // the ⓧ on the suggestion: withAnimation(.easeOut(duration: 0.15)) { suggestion = nil }
   // SavedCheckView.swift
   tickTrim: easeOut(0.28, 0.32),
   badgeBounce: springFromResponse(0.28, 0.45), // delay 0.55 s, to 1.18x
@@ -77,10 +78,7 @@ export const Motion = {
   // ScheduleMonthGrid.swift / ScheduleNotchSection.swift
   monthPage: easeOut(0.15),
   focusRing: easeOut(0.15),
-  calendarScroll: easeOut(0.25),
-  // Contracts section 7 (no Swift counterpart)
+  // Contracts section 7 (no Swift counterpart); unused by B-D1 (the chip slot and bar stay live).
   regularBottomIn: easeOut(0.18, 0.12),
   regularBottomOut: easeOut(0.08),
-  calendarIn: easeOut(0.12), // section transition, content enters from y -8
-  dismiss: easeOut(0.15),
 } as const;

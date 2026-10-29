@@ -32,6 +32,7 @@ describe('springs', () => {
     expect(Motion.canSave).toEqual({ type: 'tween', ease: EASE_IN_OUT, duration: 0.18 });
     expect(Motion.tickTrim).toEqual({ type: 'tween', ease: EASE_OUT, duration: 0.28, delay: 0.32 });
     expect(Motion.badgeFade).toEqual({ type: 'tween', ease: EASE_OUT, duration: 0.16 });
+    expect(Motion.dismiss).toEqual({ type: 'tween', ease: EASE_OUT, duration: 0.15 });
     expect(Motion.stagger(2).delay).toBeCloseTo(0.13, 10);
     expect(Motion.stagger(0)).toEqual({ type: 'tween', ease: EASE_OUT, duration: 0.24, delay: 0.06 });
   });
