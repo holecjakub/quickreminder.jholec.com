@@ -98,8 +98,11 @@ function cursorFor(disabled: boolean): 'pointer' | 'default' {
   return disabled ? 'default' : 'pointer';
 }
 
-/** Scales its label on hover / press while the button frame (the hit area) stays put. */
-export const HoverButton = forwardRef<HTMLButtonElement, BaseProps>(function HoverButton(props, ref) {
+/** Scales its label on hover / press while the button frame (the hit area) stays put. `labelStyle`
+ *  styles the scaled label itself (Swift modifiers inside the `label:` closure, e.g. a capsule fill). */
+export const HoverButton = forwardRef<HTMLButtonElement, BaseProps & { labelStyle?: CSSProperties }>(function HoverButton(
+  { labelStyle, ...props }, ref,
+) {
   const { target, style, disabled, children, rest } = split(props);
   const { reduceMotion } = useMotionPrefs();
   const { state, handlers } = usePressState(disabled);
@@ -111,7 +114,7 @@ export const HoverButton = forwardRef<HTMLButtonElement, BaseProps>(function Hov
       style={{ cursor: cursorFor(disabled), ...style }}
     >
       <motion.span
-        style={{ display: 'inline-flex' }}
+        style={{ display: 'inline-flex', ...labelStyle }}
         initial={false}
         animate={{ scale: hoverScaleFor(state, reduceMotion) }}
         transition={transition}
