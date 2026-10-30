@@ -27,6 +27,17 @@
     }
   }
 
+  /* Phones pin the stage as a 56 svh band over the copy (landing §7 Mobile): browser-initiated scrolls to
+     anything in the features column (focus, #feature-0n anchors, find-in-page, scrollIntoView) land below
+     it. scroll-margin on the column's elements, not scroll-padding on html: padding would also apply to a
+     tap or focus inside the band itself and scroll the page away. The vh line is the fallback without svh. */
+  @media not all and (min-width: 810px) {
+    [data-features-column] :is(section, h2, h3, p, li, a, button) {
+      scroll-margin-top: 56vh;
+      scroll-margin-top: 56svh;
+    }
+  }
+
   body {
     overflow-x: clip;
     background: var(--jh-white);

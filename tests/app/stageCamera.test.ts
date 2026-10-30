@@ -1,6 +1,6 @@
 import { NotchLayout } from '../../src/recreation/machine/notchLayout';
 import {
-  type Camera,
+  CAMERA,
   cameraFor,
   cameraTransform,
   clipFor,
@@ -10,12 +10,14 @@ import {
   heroScreenRect,
   phoneHeroPt,
   phoneNotchPt,
+  phoneSectionLeadPx,
   phoneStageHeight,
   phoneTitleOpacityFor,
   pinnedColumnWidth,
   renderPtFor,
   runwayVhFor,
   titleOpacityFor,
+  type Camera,
 } from '../../src/app/stageCamera';
 
 const V1440 = { width: 1440, height: 900 }, V1280 = { width: 1280, height: 800 }, V1920 = { width: 1920, height: 1080 }, V1024 = { width: 1024, height: 700 }, V390 = { width: 390, height: 844 };
@@ -74,3 +76,18 @@ it('phone progress is clamped and never clips', () => {
 it('renderPtFor on phones is the notch scale', () => expect(renderPtFor(V390, 390)).toBeCloseTo(0.570759, 6));
 it('phoneTitleOpacityFor fades over the first half', () => { expect(phoneTitleOpacityFor(0)).toBe(1); expect(phoneTitleOpacityFor(0.25)).toBeCloseTo(0.5, 6); expect(phoneTitleOpacityFor(0.5)).toBe(0); expect(phoneTitleOpacityFor(1)).toBe(0); });
 it('runwayVhFor', () => { expect(runwayVhFor(V390)).toBe(100); expect(runwayVhFor(V1440)).toBe(160); });
+it('the layout flag on the viewport decides the camera, not the width', () => {
+  const wideButPhone = { ...V1440, phone: true };
+  const narrowButDesktop = { ...V390, phone: false };
+  expect(runwayVhFor(wideButPhone)).toBe(100);
+  expect(runwayVhFor(narrowButDesktop)).toBe(160);
+  expect(pinnedColumnWidth(wideButPhone)).toBe(1440);
+  expect(pinnedColumnWidth(narrowButDesktop)).toBe(226);
+  expect(renderPtFor(wideButPhone, 1440)).toBeCloseTo(phoneNotchPt(V1440), 6);
+  expect(clipFor(1, narrowButDesktop, 226).right).toBe(390 - 226);
+  expect(cameraFor(1, wideButPhone, 1440).originY).toBe(28);
+});
+it('phoneSectionLeadPx keeps the first section behind the zoom: 78 % of the viewport, the trigger share', () => {
+  expect(phoneSectionLeadPx(V390)).toBeCloseTo(658.32, 6);
+  expect(CAMERA.phoneSectionStart).toBe(`top ${CAMERA.phoneSectionLeadPercent}%`);
+});

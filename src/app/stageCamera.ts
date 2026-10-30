@@ -11,7 +11,14 @@ import { FRAME } from './MacBookFrame';
 
 export interface Viewport {
   readonly width: number;
+  /** The small viewport height (100 svh) in px. */
   readonly height: number;
+  /**
+   * The layout, decided once by the `DESKTOP_QUERY` media query (the Stage sets it): true below 810 px.
+   * When absent, it is derived from `width`; the Stage always sets it, so the camera, the band and the
+   * trigger never disagree during a breakpoint flip or at a zoom level where innerWidth rounds across 810.
+   */
+  readonly phone?: boolean;
 }
 
 export interface Camera {
@@ -43,8 +50,11 @@ export const CAMERA: {
   readonly phoneNotchBottomAirPx: 16;
   readonly phonePanelWidthPt: 600;
   readonly minPhoneNotchPt: 0.4;
+  readonly minPhoneHeroPt: 0.05;
   readonly phoneRunwayVh: 100;
   readonly phoneTitleFadeEnd: 0.5;
+  /** Sections start when their top reaches this share of the viewport; the lead above the first section is the same share. */
+  readonly phoneSectionLeadPercent: 78;
   readonly phoneSectionStart: 'top 78%';
 } = {
   phoneBreakpoint: 810,
@@ -67,8 +77,10 @@ export const CAMERA: {
   phoneNotchBottomAirPx: 16,
   phonePanelWidthPt: 600,
   minPhoneNotchPt: 0.4,
+  minPhoneHeroPt: 0.05,
   phoneRunwayVh: 100,
   phoneTitleFadeEnd: 0.5,
+  phoneSectionLeadPercent: 78,
   phoneSectionStart: 'top 78%',
 };
 
@@ -91,7 +103,7 @@ const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.m
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 function isPhone(viewport: Viewport): boolean {
-  return viewport.width < CAMERA.phoneBreakpoint;
+  return viewport.phone ?? viewport.width < CAMERA.phoneBreakpoint;
 }
 
 export function pinnedColumnWidth(viewport: Viewport): number {
@@ -150,19 +162,17 @@ function phoneHeroBandHeight(viewport: Viewport): number {
   return phoneStageHeight(viewport) - CAMERA.phoneTopPx - CAMERA.phoneTitleReservePx;
 }
 
-/** Floor of the phone hero scale: below ≈ 286 px of viewport height the band under the nav is empty or negative. */
-const MIN_PHONE_HERO_PT = 0.05;
-
 /**
  * Phone hero scale: the whole MacBook fits the width minus two gutters and the band under the nav, above the
- * title; floored at MIN_PHONE_HERO_PT so a very short viewport (landscape) never mirrors the scene.
+ * title; floored at CAMERA.minPhoneHeroPt (below ≈ 286 px of viewport height the band under the nav is empty
+ * or negative) so a very short viewport (landscape) never mirrors the scene.
  */
 export function phoneHeroPt(viewport: Viewport): number {
   const fit = Math.min(
     (viewport.width - 2 * CAMERA.phoneGutterPx) / FRAME.deckWidth,
     phoneHeroBandHeight(viewport) / FRAME_HEIGHT,
   );
-  return Math.max(fit, MIN_PHONE_HERO_PT);
+  return Math.max(fit, CAMERA.minPhoneHeroPt);
 }
 
 /** Phone notch scale: the panel fills the width, the calendar fits the band under the notch; clamped to [0.4, 1]. */
@@ -247,6 +257,14 @@ export function phoneTitleOpacityFor(progress: number): number {
 /** Scroll runway of the stage camera: 100 svh on phones, 160 svh on desktop. */
 export function runwayVhFor(viewport: Viewport): number {
   return isPhone(viewport) ? CAMERA.phoneRunwayVh : CAMERA.runwayVh;
+}
+
+/**
+ * Lead above the first feature section on phones (viewport px): the column starts at the runway's end, so
+ * a section whose top must reach 78 % of the viewport fires only once the camera has finished its zoom.
+ */
+export function phoneSectionLeadPx(viewport: Viewport): number {
+  return (CAMERA.phoneSectionLeadPercent / 100) * viewport.height;
 }
 
 /** CSS transform of the camera layer (transform-origin `0 0`), with the scene rendered at `renderPt`. */

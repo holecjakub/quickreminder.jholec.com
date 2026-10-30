@@ -148,18 +148,20 @@ it('reduced motion snaps the camera at half progress but fades the title by raw 
   expect(el('[data-hero-title]').style.opacity).toBe('1');
 });
 
-it('phones pin a 56svh band above the copy', () => {
+it('phones pin a 56 svh band (in px from the small viewport) above the copy', () => {
   mountPhone();
   const stage = el('[data-stage]');
   expect(stage.style.position).toBe('sticky');
   expect(stage.style.top).toBe('0px');
-  expect(stage.style.height).toBe('56svh');
+  expect(stage.style.height).toBe('472.64px');
   expect(stage.style.zIndex).toBe('20');
   expect(stage.style.overflow).toBe('hidden');
-  expect(el('[data-runway]').style.height).toBe('100svh');
-  expect(el('[data-runway]').style.marginTop).toBe('-56svh');
+  expect(el('[data-runway]').style.height).toBe('844px');
+  expect(el('[data-runway]').style.marginTop).toBe('-472.64px');
   expect(el('[data-features-column]').style.marginLeft).toBe('');
   expect(el('[data-features-column]').style.zIndex).toBe('10');
+  // The lead above the first section: its 'top 78%' trigger fires once the zoom has finished (runway end).
+  expect(el('[data-features-column]').style.paddingTop).toBe('658.32px');
 });
 
 it('phones apply the hero camera before paint and keep the title inside the band', () => {
@@ -246,8 +248,8 @@ it('review focus: crossing 810 px re-creates the trigger, recomputes --pt and re
   expect(ScrollTrigger.refresh).toHaveBeenCalled();
   const stage = el('[data-stage]');
   expect(stage.style.position).toBe('sticky');
-  expect(stage.style.height).toBe('56svh');
-  expect(el('[data-runway]').style.height).toBe('100svh');
+  expect(stage.style.height).toBe('472.64px');
+  expect(el('[data-runway]').style.height).toBe('844px');
   expect(screen.getByRole('application').style.getPropertyValue('--pt')).toBe(String(renderPtFor(V390, 390)));
   expect(el('[data-camera]').style.transform).toBe(cameraTransform(cameraFor(0, V390, 390), renderPtFor(V390, 390)));
 
@@ -263,10 +265,12 @@ it('review focus: crossing 810 px re-creates the trigger, recomputes --pt and re
 it('the runway follows the layout query at once, before the viewport catches up one frame later', () => {
   const mm = mountDesktop();
   act(() => mm.set(DESKTOP, false));
-  // No resize frame yet: the band and the runway already agree on the phone layout.
-  expect(el('[data-stage]').style.height).toBe('56svh');
-  expect(el('[data-runway]').style.height).toBe('100svh');
-  expect(el('[data-runway]').style.marginTop).toBe('-56svh');
+  // No resize frame yet (still 1440 × 900): the band, the runway and the camera already agree on the phone layout.
+  expect(el('[data-stage]').style.height).toBe('504px');
+  expect(el('[data-runway]').style.height).toBe('900px');
+  expect(el('[data-runway]').style.marginTop).toBe('-504px');
+  const phoneAt1440 = { width: 1440, height: 900, phone: true };
+  expect(el('[data-camera]').style.transform).toBe(cameraTransform(cameraFor(0, phoneAt1440, 1440), renderPtFor(phoneAt1440, 1440)));
 });
 
 it('the camera reads the small viewport (100 svh), not the dynamic innerHeight', () => {
