@@ -79,8 +79,25 @@ test('scrolling zooms to the notch and sections drive the state', async ({ page 
   const box = (await desktop(page).boundingBox())!;
   expectNear(box.width, 1512 * NOTCH_PT, 2);
   expectNear(box.y, NOTCH_Y, 1);
-  // The band still covers the top of the viewport.
+  // The band still covers the top of the viewport, and the section's scroll-margin kept it below the band.
   expect((await page.locator('[data-stage]').boundingBox())!.y).toBe(0);
+  expect((await page.locator('#feature-02').boundingBox())!.y).toBeGreaterThanOrEqual(BAND_HEIGHT - 1);
+});
+
+test('the first section waits for the zoom to finish', async ({ page }) => {
+  await page.goto(`/?now=${NOW}`);
+  // Halfway along the runway the panel is still closed: section 01's trigger lies behind the lead.
+  await page.evaluate(() => window.scrollTo(0, window.innerHeight * 0.5));
+  await page.mouse.wheel(0, 1);
+  await page.waitForTimeout(1500);
+  await expect(desktop(page)).toHaveAttribute('data-phase', 'closed');
+  const halfway = (await desktop(page).boundingBox())!;
+  expect(halfway.width).toBeLessThan(1512 * NOTCH_PT - 2);
+  // At the runway's end the zoom is complete and section 01 fires.
+  await page.evaluate(() => window.scrollTo(0, window.innerHeight));
+  await page.mouse.wheel(0, 1);
+  await expect(desktop(page)).toHaveAttribute('data-phase', 'open', { timeout: 6000 });
+  expectNear((await desktop(page).boundingBox())!.width, 1512 * NOTCH_PT, 2);
 });
 
 test('the pinned panel stays tappable', async ({ page }) => {

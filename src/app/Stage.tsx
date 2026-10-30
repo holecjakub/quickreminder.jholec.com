@@ -10,6 +10,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -31,9 +32,12 @@ import {
   cameraFor,
   cameraTransform,
   clipFor,
+  phoneSectionLeadPx,
+  phoneStageHeight,
   phoneTitleOpacityFor,
   pinnedColumnWidth,
   renderPtFor,
+  runwayVhFor,
   titleOpacityFor,
   type Viewport,
   useIsDesktop,
@@ -62,7 +66,6 @@ export function useStage(): StageContextValue {
 }
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
-const PHONE_STAGE_HEIGHT = `${CAMERA.phoneStageSvh}svh`;
 const PINNED_COLUMN_PERCENT = Math.round(CAMERA.pinnedColumnRatio * 100);
 const PINNED_COLUMN = `${PINNED_COLUMN_PERCENT}%`;
 const FEATURES_COLUMN = `${100 - PINNED_COLUMN_PERCENT}%`;
@@ -89,6 +92,8 @@ function readViewport(): Viewport {
   return { width: window.innerWidth, height: smallViewportHeight() };
 }
 
+const px = (v: number): string => `${Math.round(v * 100) / 100}px`;
+
 /** Scroll progress along the runway, used before the ScrollTrigger exists (first paint). */
 function progressFromScroll(runwayVh: number, viewport: Viewport): number {
   return clamp01(window.scrollY / ((runwayVh / 100) * viewport.height));
@@ -107,11 +112,13 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
     clock: AppClock.now,
     calendar: currentCalendar(),
   }));
-  const [viewport, setViewport] = useState<Viewport>(readViewport);
+  const [size, setViewport] = useState<Viewport>(readViewport);
   const isDesktop = useIsDesktop();
-  // One source decides the layout: the runway follows the same media query as the stage and the trigger,
-  // so a breakpoint flip never renders a desktop runway under a phone band (or the reverse) for a frame.
-  const runwayVh = isDesktop ? CAMERA.runwayVh : CAMERA.phoneRunwayVh;
+  // One source decides the layout: the media query. It is carried on the viewport, so the camera maths, the
+  // band, the runway and the trigger all flip together (innerWidth catches up a frame later and may round
+  // across 810 at some zoom levels).
+  const viewport = useMemo<Viewport>(() => ({ ...size, phone: !isDesktop }), [size, isDesktop]);
+  const runwayVh = runwayVhFor(viewport);
   const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   const scheme = useColorScheme('auto');
 
@@ -191,9 +198,12 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
     ScrollTrigger.refresh();
   }, [isDesktop]);
 
+  // Phones paint the band and the runway in px from the measured small viewport (readViewport), so a browser
+  // without `svh` (iOS 15.0–15.3) still gets a band; desktop keeps the CSS units.
+  const bandPx = phoneStageHeight(viewport);
   const stageStyle: CSSProperties = isDesktop
     ? { position: 'sticky', top: 0, height: '100svh' }
-    : { position: 'sticky', top: 0, height: PHONE_STAGE_HEIGHT, zIndex: 20 };
+    : { position: 'sticky', top: 0, height: px(bandPx), zIndex: 20 };
   const titleBlockStyle: CSSProperties = isDesktop
     ? { position: 'absolute', insetInline: 0, bottom: '7svh', textAlign: 'center', pointerEvents: 'none' }
     : { position: 'absolute', insetInline: 0, bottom: '16px', padding: '0 var(--jh-page-margin-x)', textAlign: 'center', pointerEvents: 'none' };
@@ -265,15 +275,20 @@ export function Stage({ title, subtitle, children }: StageProps): JSX.Element {
         <div
           ref={runwayRef}
           data-runway=""
-          style={{
-            height: `${runwayVh}svh`,
-            marginTop: isDesktop ? '-100svh' : `-${PHONE_STAGE_HEIGHT}`,
-            pointerEvents: 'none',
-          }}
+          style={
+            isDesktop
+              ? { height: `${runwayVh}svh`, marginTop: '-100svh', pointerEvents: 'none' }
+              : { height: px((runwayVh / 100) * viewport.height), marginTop: `-${px(bandPx)}`, pointerEvents: 'none' }
+          }
         />
         <div
           data-features-column=""
-          style={isDesktop ? { marginLeft: PINNED_COLUMN, width: FEATURES_COLUMN, position: 'relative', zIndex: 10 } : { position: 'relative', zIndex: 10 }}
+          // Phones: the lead keeps the first section's 78 % trigger behind the end of the camera's zoom.
+          style={
+            isDesktop
+              ? { marginLeft: PINNED_COLUMN, width: FEATURES_COLUMN, position: 'relative', zIndex: 10 }
+              : { position: 'relative', zIndex: 10, paddingTop: px(phoneSectionLeadPx(viewport)) }
+          }
         >
           {children}
         </div>
