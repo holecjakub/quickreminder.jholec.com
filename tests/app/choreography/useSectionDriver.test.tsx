@@ -32,8 +32,8 @@ let cursorRef: RefObject<FakeCursorHandle | null>;
 const driver = { current: 'hero' as SectionId };
 let tops: Partial<Record<SectionId, number>>;
 
-function Harness({ enabled = true }: { enabled?: boolean }) {
-  const { register, current } = useSectionDriver({ handle: handleRef, cursor: cursorRef, clock: clockNow, calendar: pragueCalendar, enabled });
+function Harness({ enabled = true, start }: { enabled?: boolean; start?: string }) {
+  const { register, current } = useSectionDriver({ handle: handleRef, cursor: cursorRef, clock: clockNow, calendar: pragueCalendar, enabled, start });
   useEffect(() => {
     driver.current = current;
   }, [current]);
@@ -52,8 +52,8 @@ function withTop(id: SectionId, el: HTMLElement | null): HTMLElement | null {
   return el;
 }
 
-async function mount(enabled = true) {
-  const view = render(<Harness enabled={enabled} />);
+async function mount(enabled = true, start?: string) {
+  const view = render(<Harness enabled={enabled} start={start} />);
   await act(async () => {});
   return view;
 }
@@ -199,4 +199,31 @@ it('the next section entering after a visitor interrupt runs normally', async ()
   act(() => vars(1).onEnter());
   expect(reconcileMock).toHaveBeenCalledTimes(2);
   expect(reconcileMock).toHaveBeenLastCalledWith(fake, SECTION_SNAPSHOTS['02'], expect.objectContaining({ direction: 'down' }));
+});
+it('start is forwarded to every trigger and recreated when it changes', async () => {
+  const view = await mount(true, 'top 78%');
+  expect(create).toHaveBeenCalledTimes(2);
+  expect(vars(0).start).toBe('top 78%');
+  expect(vars(1).start).toBe('top 78%');
+  const old = create.mock.results.map((r) => r.value as { kill: ReturnType<typeof vi.fn> });
+  view.rerender(<Harness start="top center" />);
+  await act(async () => {});
+  for (const t of old) expect(t.kill).toHaveBeenCalledTimes(1);
+  expect(create).toHaveBeenCalledTimes(4);
+  expect(vars(2).start).toBe('top center');
+  expect(vars(3).start).toBe('top center');
+  // Only the triggers are recreated: the font-ready reached pass does not run again.
+  expect(ScrollTrigger.refresh).toHaveBeenCalledTimes(1);
+});
+it('the reached pass uses the start fraction', async () => {
+  tops = { '01': 0.7 * 900 };
+  const phone = await mount(true, 'top 78%');
+  expect(driver.current).toBe('01');
+  expect(reconcileMock).toHaveBeenCalledWith(fake, SECTION_SNAPSHOTS['01'], expect.objectContaining({ direction: 'down' }));
+  phone.unmount();
+  vi.clearAllMocks();
+  driver.current = 'hero';
+  await mount(true, 'top center');
+  expect(driver.current).toBe('hero');
+  expect(reconcileMock).not.toHaveBeenCalled();
 });
